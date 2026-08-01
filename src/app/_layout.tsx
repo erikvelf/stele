@@ -1,0 +1,23 @@
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { preventAutoHideAsync } from 'expo-splash-screen';
+import { useColorScheme } from 'react-native';
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
+
+import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import AppTabs from '@/components/app-tabs';
+
+preventAutoHideAsync();
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  return (
+    <PaperProvider theme={isDark ? MD3DarkTheme : MD3LightTheme}>
+      <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+        <AnimatedSplashOverlay />
+        <AppTabs />
+      </ThemeProvider>
+    </PaperProvider>
+  );
+}

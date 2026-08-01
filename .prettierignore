@@ -1,0 +1,15 @@
+node_modules/
+docs/
+.expo/
+dist/
+build/
+android/
+ios/
+.git/
+.claude/
+supabase/functions/
+*.log
+*.lock
+package-lock.json
+yarn.lock
+.DS_Store
