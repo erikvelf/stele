@@ -97,6 +97,42 @@ module.exports = defineConfig([
       'security/detect-pseudoRandomBytes': 'error',
 
       // === Import Rules for AI Import Issues ===
+      // The dependency graph of docs/guides/project-structure.md §3. Each new
+      // domain under src/modules adds a zone forbidding the other domains.
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            { target: './src/lib', from: './src' },
+            { target: './src/constants', from: './src' },
+            {
+              target: './src/modules',
+              from: ['./src/app', './src/components', './src/hooks'],
+            },
+            { target: './src/components', from: './src/app' },
+            {
+              target: './src/modules/notes',
+              from: './src/modules',
+              except: ['./notes', './types', './db'],
+            },
+            {
+              target: './src/modules/palette',
+              from: './src/modules',
+              except: ['./palette', './types', './db'],
+            },
+            {
+              target: './src/modules/settings',
+              from: './src/modules',
+              except: ['./settings', './types', './db'],
+            },
+            {
+              target: './src/modules/types',
+              from: './src/modules',
+              except: ['./types'],
+            },
+          ],
+        },
+      ],
       'import/no-cycle': 'error',
       'import/no-self-import': 'error',
       'import/no-useless-path-segments': 'error',
