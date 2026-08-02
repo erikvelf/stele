@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo/ui": "^57.0.8",
     "@expo/vector-icons": "^15.1.1",
     "@material/material-color-utilities": "^0.4.0",
     "date-fns": "^4.4.0",

@@ -5,12 +5,14 @@ import {
   Stack,
   ThemeProvider,
 } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 
 import { AppThemeProvider, useAppTheme } from '@/hooks/useAppTheme';
+import { NewFolderDraftProvider } from '@/hooks/useNewFolderDraft';
 import { db, migrations } from '@/modules/db';
+import { seedJournalFolder } from '@/modules/folders';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -53,6 +55,10 @@ function RootLayoutNavigator() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="note/[id]" options={{ title: 'Sasso' }} />
           <Stack.Screen name="folder/[id]" options={{ title: 'Tavola' }} />
+          <Stack.Screen
+            name="folder/new-color"
+            options={{ title: 'Colore', presentation: 'modal' }}
+          />
           <Stack.Screen name="appearance" options={{ title: 'Aspetto' }} />
         </Stack>
       </ThemeProvider>
@@ -62,18 +68,39 @@ function RootLayoutNavigator() {
 
 export default function RootLayout() {
   const { success, error } = useMigrations(db, migrations);
+  const [seedError, setSeedError] = useState<Error | null>(null);
+  const [isSeeded, setIsSeeded] = useState(false);
+
+  useEffect(() => {
+    if (!success) {
+      return;
+    }
+    void seedJournalFolder().then(result => {
+      if (!result.success) {
+        setSeedError(new Error(result.error.cause));
+        return;
+      }
+      setIsSeeded(true);
+    });
+  }, [success]);
 
   if (error) {
     throw error;
   }
 
-  if (!success) {
+  if (seedError) {
+    throw seedError;
+  }
+
+  if (!success || !isSeeded) {
     return null;
   }
 
   return (
     <AppThemeProvider>
-      <RootLayoutNavigator />
+      <NewFolderDraftProvider>
+        <RootLayoutNavigator />
+      </NewFolderDraftProvider>
     </AppThemeProvider>
   );
 }
