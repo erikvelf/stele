@@ -13,7 +13,7 @@ import {
   noteFolderTable,
   noteTable,
 } from './schema';
-import type { DateDayRange, DateDayRanges, Note } from './schema';
+import type { DateDayRange, DateDayRanges, Note, NoteFolder } from './schema';
 import type { FreeRun, NoteEntry } from './types';
 
 export async function readNote(id: string): Promise<Result<Note | null>> {
@@ -43,6 +43,23 @@ export async function writeNote(note: Note): Promise<Result<void>> {
 export async function deleteNote(id: string): Promise<Result<void>> {
   try {
     await db.delete(noteTable).where(eq(noteTable.id, id));
+    return ok(undefined);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+export async function writeNoteFolder(
+  noteFolder: NoteFolder
+): Promise<Result<void>> {
+  try {
+    await db
+      .insert(noteFolderTable)
+      .values(noteFolder)
+      .onConflictDoUpdate({
+        target: noteFolderTable.note_id,
+        set: { folder_id: noteFolder.folder_id },
+      });
     return ok(undefined);
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));

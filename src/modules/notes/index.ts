@@ -10,6 +10,7 @@ export {
   readNote,
   writeDateDayRange,
   writeNote,
+  writeNoteFolder,
 } from './queries';
 export { NOTES_LIST_PAGE_SIZE } from './constants';
 export type { FreeRun, NoteEntry } from './types';
