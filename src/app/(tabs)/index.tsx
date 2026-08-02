@@ -1,28 +1,87 @@
-import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Appbar, FAB, Surface, useTheme } from 'react-native-paper';
+import { startOfDay } from 'date-fns';
+import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet } from 'react-native';
+import { Appbar, FAB, Surface } from 'react-native-paper';
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated';
 
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
+import { ActivityList } from '@/components/notes/ActivityList';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
-import { mockDateDayRanges } from '@/modules/notes';
-
-// Stand-ins for the macigno roulette, tavole carousel and day list from the
-// PRD, so the page has enough height to scroll before those are built.
-const PLACEHOLDER_BLOCKS = 4;
+import { createId } from '@/lib/id';
+import {
+  dateDayRangesSchema,
+  mockNoteEntries,
+  type NoteEntry,
+} from '@/modules/notes';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const theme = useTheme();
-  const ranges = useMemo(() => mockDateDayRanges(), []);
+  const [entries, setEntries] = useState<NoteEntry[]>(() =>
+    [...mockNoteEntries()].reverse()
+  );
+  const [isCreating, setIsCreating] = useState(false);
+  const [pendingEntryId, setPendingEntryId] = useState<string | undefined>(
+    undefined
+  );
+
+  const ranges = useMemo(
+    () => dateDayRangesSchema.parse(entries.map(entry => entry.range)),
+    [entries]
+  );
+
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler(event => {
     scrollY.value = event.contentOffset.y;
   });
+
+  const handleCreate = useCallback(() => {
+    void impactAsync(ImpactFeedbackStyle.Light);
+
+    const today = startOfDay(new Date());
+    const todaysEntry = entries.find(entry => {
+      const start = startOfDay(new Date(entry.range.start_timestamp));
+      const end = startOfDay(new Date(entry.range.end_timestamp));
+      return today >= start && today <= end;
+    });
+
+    if (todaysEntry) {
+      router.push(`/note/${todaysEntry.range.id}`);
+      return;
+    }
+
+    setIsCreating(true);
+    const id = createId();
+    const newEntry: NoteEntry = {
+      note: { id: `note-${id}`, text: '' },
+      range: {
+        id,
+        note_id: `note-${id}`,
+        start_timestamp: today.getTime(),
+        end_timestamp: today.getTime(),
+      },
+    };
+    setPendingEntryId(id);
+    setEntries(previous => [newEntry, ...previous]);
+  }, [entries, router]);
+
+  const handleTopEntrySettled = useCallback(() => {
+    if (!pendingEntryId) {
+      return;
+    }
+    router.push(`/note/${pendingEntryId}`);
+    setPendingEntryId(undefined);
+  }, [router, pendingEntryId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsCreating(false);
+    }, [])
+  );
 
   return (
     <Surface style={styles.screen} elevation={0}>
@@ -41,21 +100,25 @@ export default function HomeScreen() {
           onSelectRange={range => router.push(`/note/${range.id}`)}
         />
 
-        {Array.from({ length: PLACEHOLDER_BLOCKS }, (_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.placeholder,
-              { backgroundColor: theme.colors.surfaceVariant },
-            ]}
-          />
-        ))}
+        <ActivityList
+          entries={entries}
+          pendingEntryId={pendingEntryId}
+          onTopEntrySettled={handleTopEntrySettled}
+          onOpenEntry={entry => router.push(`/note/${entry.range.id}`)}
+          onEditEntry={entry => router.push(`/note/${entry.range.id}`)}
+          onDeleteEntry={entry =>
+            setEntries(previous =>
+              previous.filter(candidate => candidate.range.id !== entry.range.id)
+            )
+          }
+        />
       </Animated.ScrollView>
 
       <FAB
         icon="pencil"
         style={styles.fab}
-        onPress={() => router.push('/note/today')}
+        disabled={isCreating}
+        onPress={handleCreate}
       />
     </Surface>
   );
@@ -68,12 +131,6 @@ const styles = StyleSheet.create({
   body: {
     padding: SPACING.md,
     paddingBottom: FAB_CLEARANCE,
-  },
-  placeholder: {
-    width: '100%',
-    height: 120,
-    borderRadius: SPACING.sm,
-    marginTop: SPACING.md,
   },
   fab: {
     position: 'absolute',

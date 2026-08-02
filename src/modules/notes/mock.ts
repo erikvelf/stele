@@ -6,8 +6,8 @@ import {
   subMonths,
 } from 'date-fns';
 
-import { dateDayRangesSchema } from './schema';
-import type { DateDayRange, DateDayRanges } from './schema';
+import type { DateDayRange, Note } from './schema';
+import type { NoteEntry } from './types';
 
 const DEFAULT_SEED = 20260801;
 const DEFAULT_MONTHS_BACK = 5;
@@ -35,15 +35,15 @@ interface MockOptions {
   seed?: number;
 }
 
-// Walks forward day by day, so ranges come out ordered and never overlap.
-export function mockDateDayRanges({
+// Walks forward day by day, so entries come out ordered and never overlap.
+export function mockNoteEntries({
   monthsBack = DEFAULT_MONTHS_BACK,
   seed = DEFAULT_SEED,
-}: MockOptions = {}): DateDayRanges {
+}: MockOptions = {}): NoteEntry[] {
   const random = createRandom(seed);
   const today = startOfDay(new Date());
   const yesterday = addDays(today, -1);
-  const ranges: DateDayRange[] = [];
+  const entries: NoteEntry[] = [];
 
   let cursor = startOfDay(subMonths(today, monthsBack));
   let count = 0;
@@ -61,24 +61,18 @@ export function mockDateDayRanges({
       : 1;
     const end = minDate([addDays(cursor, length - 1), yesterday]);
 
-    ranges.push({
+    const note: Note = { id: `mock-note-${count}`, text: `Placeholder entry ${count}` };
+    const range: DateDayRange = {
       id: `mock-${count}`,
-      note_id: `mock-note-${count}`,
+      note_id: note.id,
       start_timestamp: cursor.getTime(),
       end_timestamp: endOfDay(end).getTime(),
-    });
+    };
+    entries.push({ note, range });
 
     count += 1;
     cursor = addDays(end, 1);
   }
 
-  // The run being written right now: starts today and continues into tomorrow.
-  ranges.push({
-    id: 'mock-current',
-    note_id: 'mock-note-current',
-    start_timestamp: today.getTime(),
-    end_timestamp: endOfDay(addDays(today, 1)).getTime(),
-  });
-
-  return dateDayRangesSchema.parse(ranges);
+  return entries;
 }
