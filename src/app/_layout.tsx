@@ -1,3 +1,4 @@
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationLightTheme,
@@ -9,6 +10,7 @@ import { PaperProvider } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 
 import { AppThemeProvider, useAppTheme } from '@/hooks/useAppTheme';
+import { db, migrations } from '@/modules/db';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -59,6 +61,16 @@ function RootLayoutNavigator() {
 }
 
 export default function RootLayout() {
+  const { success, error } = useMigrations(db, migrations);
+
+  if (error) {
+    throw error;
+  }
+
+  if (!success) {
+    return null;
+  }
+
   return (
     <AppThemeProvider>
       <RootLayoutNavigator />

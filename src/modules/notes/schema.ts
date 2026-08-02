@@ -1,37 +1,48 @@
 import { isBefore, startOfDay } from 'date-fns';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
 // The primitive: source text. Everything else a note can have — a date, a
-// folder — is a separate table linked by note_id, never a field here.
-export const noteSchema = z.object({
-  id: z.string().min(1),
-  text: z.string(),
+// folder — is a separate table linked by note_id, never a column here.
+export const noteTable = sqliteTable('note', {
+  id: text('id').primaryKey(),
+  text: text('text').notNull(),
 });
 
+export const noteSchema = createSelectSchema(noteTable);
 export type Note = z.infer<typeof noteSchema>;
 
-// A note belongs to exactly one folder. Expressed as a link rather than a
-// field on note so the primitive never grows a column for it.
-export const noteFolderSchema = z.object({
-  note_id: z.string().min(1),
-  folder_id: z.string().min(1),
+// A note belongs to exactly one folder.
+export const noteFolderTable = sqliteTable('note_folder', {
+  note_id: text('note_id')
+    .primaryKey()
+    .references(() => noteTable.id),
+  folder_id: text('folder_id').notNull(),
 });
 
+export const noteFolderSchema = createSelectSchema(noteFolderTable);
 export type NoteFolder = z.infer<typeof noteFolderSchema>;
 
 // A slot run in the journal: every note occupies a contiguous range of days,
 // and a single-day note is just a range whose start and end share a day.
-export const dateDayRangeSchema = z
-  .object({
-    id: z.string().min(1),
-    note_id: z.string().min(1),
-    start_timestamp: z.number().int(),
-    end_timestamp: z.number().int(),
-  })
-  .refine(range => range.end_timestamp >= range.start_timestamp, {
+export const dateDayRangeTable = sqliteTable('date_day_range', {
+  id: text('id').primaryKey(),
+  note_id: text('note_id')
+    .notNull()
+    .unique()
+    .references(() => noteTable.id),
+  start_timestamp: integer('start_timestamp').notNull(),
+  end_timestamp: integer('end_timestamp').notNull(),
+});
+
+export const dateDayRangeSchema = createSelectSchema(dateDayRangeTable).refine(
+  range => range.end_timestamp >= range.start_timestamp,
+  {
     message: 'end_timestamp must not precede start_timestamp',
     path: ['end_timestamp'],
-  });
+  }
+);
 
 export type DateDayRange = z.infer<typeof dateDayRangeSchema>;
 
