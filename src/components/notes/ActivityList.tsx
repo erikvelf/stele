@@ -1,21 +1,13 @@
 import { format } from 'date-fns';
 import { StyleSheet } from 'react-native';
-import Animated, {
-  Easing,
-  FadeOut,
-  LinearTransition,
-  SlideInRight,
-  runOnJS,
-} from 'react-native-reanimated';
 
+import { FadingList } from '@/components/shared';
 import { SPACING } from '@/constants/layout';
 import type { NoteEntry } from '@/modules/notes';
 
 import { MonthHeader } from './MonthHeader';
 import { NoteCard } from './NoteCard';
 
-const CARD_TRANSITION_DURATION = 380;
-const cardEasing = Easing.out(Easing.cubic);
 const MONTH_LABEL_FORMAT = 'MMMM yyyy';
 
 function monthLabel(entry: NoteEntry): string {
@@ -40,35 +32,19 @@ export function ActivityList({
   onDeleteEntry,
 }: ActivityListProps) {
   return (
-    <Animated.View style={styles.list}>
-      {entries.map((entry, index) => {
-        const previousEntry = entries.at(index - 1);
+    <FadingList
+      items={entries}
+      keyExtractor={entry => entry.range.id}
+      pendingId={pendingEntryId}
+      onTopItemSettled={onTopEntrySettled}
+      style={styles.list}
+      renderItem={(entry, index) => {
+        const previousEntry = index > 0 ? entries[index - 1] : undefined;
         const showMonthHeader =
           !previousEntry || monthLabel(entry) !== monthLabel(previousEntry);
 
         return (
-          <Animated.View
-            key={entry.range.id}
-            layout={LinearTransition.duration(CARD_TRANSITION_DURATION).easing(
-              cardEasing
-            )}
-            exiting={FadeOut.duration(CARD_TRANSITION_DURATION)}
-            entering={
-              entry.range.id === pendingEntryId
-                ? SlideInRight.duration(CARD_TRANSITION_DURATION)
-                    .easing(cardEasing)
-                    // Waits out the push-down of the rest of the list before
-                    // sliding in, so the two motions read as one then the other.
-                    .delay(CARD_TRANSITION_DURATION)
-                    .withCallback(finished => {
-                      'worklet';
-                      if (finished && onTopEntrySettled) {
-                        runOnJS(onTopEntrySettled)();
-                      }
-                    })
-                : undefined
-            }
-          >
+          <>
             {showMonthHeader ? <MonthHeader label={monthLabel(entry)} /> : null}
             <NoteCard
               noteText={entry.note.text}
@@ -77,10 +53,10 @@ export function ActivityList({
               onEditPress={() => onEditEntry(entry)}
               onDeletePress={() => onDeleteEntry(entry)}
             />
-          </Animated.View>
+          </>
         );
-      })}
-    </Animated.View>
+      }}
+    />
   );
 }
 
