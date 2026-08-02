@@ -12,8 +12,8 @@ export function MonthHeader({ label }: MonthHeaderProps) {
 
   return (
     <Text
-      variant="labelLarge"
-      style={[styles.label, { color: theme.colors.onSurfaceVariant }]}
+      variant="headlineSmall"
+      style={[styles.label, { color: theme.colors.onSurface }]}
     >
       {label}
     </Text>

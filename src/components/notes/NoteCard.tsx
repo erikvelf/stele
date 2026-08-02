@@ -30,7 +30,9 @@ export function NoteCard({
 }: NoteCardProps) {
   const theme = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const preview = noteText.length > 0 ? noteText : 'Writing…';
+  const preview = noteText.length > 0 ? noteText : 'Clean slate';
+  const [previewTitle, ...previewBodyLines] = preview.split('\n');
+  const previewBody = previewBodyLines.join('\n');
   const visibleImages = images.slice(0, MAX_VISIBLE_IMAGES);
   const hiddenImageCount = images.length - visibleImages.length;
 
@@ -39,13 +41,19 @@ export function NoteCard({
       style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
       elevation={0}
     >
-      <Pressable
-        accessibilityRole="button"
-        onPress={onMediaPress}
-        style={styles.media}
-      >
-        {visibleImages.length > 0 ? (
+      {visibleImages.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onMediaPress}
+          style={styles.media}
+        >
+          {/* TODO: Mosaic the various media like having 1 half and one rock for 1 image, 2 images side by side when 2 images, when more images then mosaic the next mosaic like 1/2, 1/4 + 1/4, or 1/2 + 1/4 + 1/8 + 1/8 */}
           <View style={styles.mosaic}>
+            {visibleImages.length === 1 ? (
+              <View style={styles.mosaicTile}>
+                <Text style={styles.placeholder}>{NO_IMAGE_PLACEHOLDER}</Text>
+              </View>
+            ) : null}
             {visibleImages.map((image, index) => (
               <View key={image} style={styles.mosaicTile}>
                 <Image source={{ uri: image }} style={styles.mosaicImage} />
@@ -67,19 +75,26 @@ export function NoteCard({
               </View>
             ))}
           </View>
-        ) : (
-          <Text style={styles.placeholder}>{NO_IMAGE_PLACEHOLDER}</Text>
-        )}
-      </Pressable>
+        </Pressable>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"
         onPress={onOpenPress}
         style={styles.textSection}
       >
-        <Text variant="bodyMedium" numberOfLines={3}>
-          {preview}
+        <Text variant="titleMedium" numberOfLines={1}>
+          {previewTitle}
         </Text>
+        {previewBody ? (
+          <Text
+            variant="bodyMedium"
+            numberOfLines={2}
+            style={styles.previewBody}
+          >
+            {previewBody}
+          </Text>
+        ) : null}
       </Pressable>
 
       <View
@@ -154,6 +169,8 @@ const styles = StyleSheet.create({
   mosaicTile: {
     width: '50%',
     aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mosaicImage: {
     width: '100%',
@@ -166,10 +183,13 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     fontSize: 28,
-    paddingVertical: SPACING.md,
+    textAlign: 'center',
   },
   textSection: {
     padding: SPACING.md,
+  },
+  previewBody: {
+    marginTop: SPACING.xs,
   },
   menuButton: {
     marginVertical: 0,
@@ -179,6 +199,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: SPACING.md,
-    borderTopWidth: 1,
+    borderTopWidth: 3,
   },
 });
