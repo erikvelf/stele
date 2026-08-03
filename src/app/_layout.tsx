@@ -59,6 +59,10 @@ function RootLayoutNavigator() {
             name="folder/new-color"
             options={{ title: 'Colore', presentation: 'modal' }}
           />
+          <Stack.Screen
+            name="folder/new-emoji"
+            options={{ title: 'Emoji', presentation: 'modal' }}
+          />
           <Stack.Screen name="appearance" options={{ title: 'Aspetto' }} />
         </Stack>
       </ThemeProvider>
