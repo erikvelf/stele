@@ -6,8 +6,11 @@ import {
   ThemeProvider,
 } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AppThemeProvider, useAppTheme } from '@/hooks/useAppTheme';
 import { NewFolderDraftProvider } from '@/hooks/useNewFolderDraft';
@@ -63,6 +66,7 @@ function RootLayoutNavigator() {
             name="folder/new-emoji"
             options={{ title: 'Emoji', presentation: 'modal' }}
           />
+          <Stack.Screen name="tag/index" options={{ title: 'Tag' }} />
           <Stack.Screen name="appearance" options={{ title: 'Aspetto' }} />
         </Stack>
       </ThemeProvider>
@@ -101,10 +105,20 @@ export default function RootLayout() {
   }
 
   return (
-    <AppThemeProvider>
-      <NewFolderDraftProvider>
-        <RootLayoutNavigator />
-      </NewFolderDraftProvider>
-    </AppThemeProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <KeyboardProvider>
+        <AppThemeProvider>
+          <NewFolderDraftProvider>
+            <RootLayoutNavigator />
+          </NewFolderDraftProvider>
+        </AppThemeProvider>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

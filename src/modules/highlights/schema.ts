@@ -1,4 +1,4 @@
-import { primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
 
@@ -13,30 +13,28 @@ export const tagTable = sqliteTable('tag', {
 export const tagSchema = createSelectSchema(tagTable);
 export type Tag = z.infer<typeof tagSchema>;
 
-// One line struck off a note.
+// One line struck off a note. Carries at most one tag — deleting that tag
+// clears the reference rather than the highlight.
 export const dayHighlightTable = sqliteTable('day_highlight', {
   id: text('id').primaryKey(),
   note_id: text('note_id').notNull(),
   text: text('text').notNull(),
+  tag_id: text('tag_id').references(() => tagTable.id, {
+    onDelete: 'set null',
+  }),
 });
 
 export const dayHighlightSchema = createSelectSchema(dayHighlightTable);
 export type DayHighlight = z.infer<typeof dayHighlightSchema>;
 
-// A highlight can carry more than one tag, and a tag can label more than
-// one highlight.
-export const dayHighlightTagTable = sqliteTable(
-  'day_highlight_tag',
-  {
-    day_highlight_id: text('day_highlight_id')
-      .notNull()
-      .references(() => dayHighlightTable.id),
-    tag_id: text('tag_id')
-      .notNull()
-      .references(() => tagTable.id),
-  },
-  table => [primaryKey({ columns: [table.day_highlight_id, table.tag_id] })]
-);
+// Where a highlight sits among its note's highlights.
+export const dayHighlightPositionTable = sqliteTable('day_highlight_position', {
+  highlight_id: text('highlight_id')
+    .primaryKey()
+    .references(() => dayHighlightTable.id, { onDelete: 'cascade' }),
+  note_id: text('note_id').notNull(),
+  position: integer('position').notNull(),
+});
 
-export const dayHighlightTagSchema = createSelectSchema(dayHighlightTagTable);
-export type DayHighlightTag = z.infer<typeof dayHighlightTagSchema>;
+export const dayHighlightPositionSchema = createSelectSchema(dayHighlightPositionTable);
+export type DayHighlightPosition = z.infer<typeof dayHighlightPositionSchema>;

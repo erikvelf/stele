@@ -49,6 +49,9 @@ export const STONE_DETAILS: Record<StoneId, Stone> = {
   verdigris: { family: 'green', seed: '#43B3AE' },
 };
 
+// Placeholder border for a selected tag pill, pending a real selection style.
+export const SELECTION_BORDER_COLOR = '#FFFFFF';
+
 // A Map, not bracket access on STONE_DETAILS, so a stone lookup by a
 // caller-supplied id isn't a dynamic property access.
 const STONE_LOOKUP: ReadonlyMap<StoneId, Stone> = new Map(
