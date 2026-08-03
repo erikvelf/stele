@@ -20,6 +20,7 @@ interface UseFoldersResult {
   folders: Folder[];
   error: AppError | null;
   isLoading: boolean;
+  refresh: () => void;
   createFolder: (input: FolderInput) => Folder;
   updateFolder: (id: string, input: FolderInput) => void;
   removeFolder: (id: string) => void;
@@ -32,13 +33,8 @@ export function useFolders(): UseFoldersResult {
   const [error, setError] = useState<AppError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const refresh = useCallback(() => {
     void listFolders().then(result => {
-      if (cancelled) {
-        return;
-      }
       if (!result.success) {
         setError(result.error);
         setIsLoading(false);
@@ -47,11 +43,11 @@ export function useFolders(): UseFoldersResult {
       setFolders(result.data.filter(folder => folder.id !== JOURNAL_FOLDER_ID));
       setIsLoading(false);
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const createFolder = useCallback((input: FolderInput): Folder => {
     const folder: Folder = { id: createId(), ...input };
@@ -89,6 +85,7 @@ export function useFolders(): UseFoldersResult {
     folders,
     error,
     isLoading,
+    refresh,
     createFolder,
     updateFolder,
     removeFolder,

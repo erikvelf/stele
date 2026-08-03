@@ -2,7 +2,7 @@ import { startOfDay, startOfYear } from 'date-fns';
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Appbar, FAB, Snackbar, Surface } from 'react-native-paper';
 import Animated, {
   FadeOut,
@@ -10,12 +10,14 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
+import { FoldersCarousel } from '@/components/folders';
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
 import { ActivityList } from '@/components/notes/ActivityList';
 import { NotesEmptyState } from '@/components/notes/NotesEmptyState';
 import type { CreationStatRow } from '@/components/shared/CreationStats';
 import { CreationStats } from '@/components/shared/CreationStats';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
+import { useFolders } from '@/hooks/useFolders';
 import { useListNotes } from '@/hooks/useListNotes';
 import { createId } from '@/lib/id';
 import { JOURNAL_FOLDER_ID } from '@/modules/folders';
@@ -32,6 +34,7 @@ import {
 import { pickCreationVerb } from '@/modules/stats';
 
 const EMPTY_STATE_TRANSITION_DURATION = 380;
+const STATS_ROW_HEIGHT = 120;
 
 function capitalize(word: string): string {
   return `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
@@ -81,6 +84,7 @@ function useCreationStats(): UseCreationStatsResult {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { folders, refresh: refreshFolders } = useFolders();
   const { entries, refresh, prependEntry, removeEntry } = useListNotes();
   const { rows: creationStatRows, refresh: refreshCreationStats } =
     useCreationStats();
@@ -170,7 +174,8 @@ export default function HomeScreen() {
     useCallback(() => {
       setIsCreating(false);
       refresh();
-    }, [refresh])
+      refreshFolders();
+    }, [refresh, refreshFolders])
   );
 
   return (
@@ -190,8 +195,20 @@ export default function HomeScreen() {
           onSelectRange={range => router.push(`/note/${range.note_id}`)}
         />
 
-        {creationStatRows.length > 0 && (
-          <CreationStats rows={creationStatRows} />
+        {(creationStatRows.length > 0 || folders.length > 0) && (
+          <View style={styles.statsRow}>
+            {creationStatRows.length > 0 && (
+              <CreationStats rows={creationStatRows} />
+            )}
+
+            {folders.length > 0 && (
+              <FoldersCarousel
+                folders={folders}
+                size={STATS_ROW_HEIGHT}
+                onSelectFolder={folder => router.push(`/folder/${folder.id}`)}
+              />
+            )}
+          </View>
         )}
 
         {entries.length === 0 ? (
@@ -233,6 +250,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    height: STATS_ROW_HEIGHT,
+    gap: SPACING.sm,
   },
   body: {
     padding: SPACING.md,
