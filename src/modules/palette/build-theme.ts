@@ -1,5 +1,5 @@
-import { argbFromHex, hexFromArgb, themeFromSourceColor } from '@material/material-color-utilities';
-import type { Scheme } from '@material/material-color-utilities';
+import { argbFromHex, CorePalette, Hct, hexFromArgb, Scheme } from '@material/material-color-utilities';
+import type { Scheme as SchemeType } from '@material/material-color-utilities';
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 
@@ -57,7 +57,7 @@ function rgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function buildColors(scheme: Scheme, backdropSeed: string): MD3Colors {
+function buildColors(scheme: SchemeType, backdropSeed: string): MD3Colors {
   const surface = hexFromArgb(scheme.surface);
   const primary = hexFromArgb(scheme.primary);
   const onSurface = hexFromArgb(scheme.onSurface);
@@ -106,6 +106,15 @@ function buildColors(scheme: Scheme, backdropSeed: string): MD3Colors {
   };
 }
 
+// A seed below this chroma reads as already-neutral (a grey or near-grey
+// stone). CorePalette.of ignores that and forces a chroma-48 primary
+// regardless of the seed, which turns a whisper of hue into a saturated
+// color cast. CorePalette.contentOf keeps the seed's own low chroma instead,
+// so basalt and slate stay close to true grey rather than tinting green or
+// blue. A seed at or above the threshold (e.g. travertine) is saturated on
+// purpose and keeps the vivid, amplified rendering.
+const NEUTRAL_CONTENT_CHROMA_THRESHOLD = 20;
+
 // (stoneId, isDark) is a small finite domain, so the expensive HCT
 // quantization behind this is computed once per combination and reused.
 const themeCache = new Map<string, MD3Theme>();
@@ -117,11 +126,13 @@ export function buildTheme(stoneId: StoneId, isDark: boolean): MD3Theme {
     return cached;
   }
 
-  const material = themeFromSourceColor(argbFromHex(seedFor(stoneId)));
-  const scheme = isDark ? material.schemes.dark : material.schemes.light;
-  const backdropSeed = hexFromArgb(
-    material.palettes.neutralVariant.tone(BACKDROP_TONE)
-  );
+  const sourceArgb = argbFromHex(seedFor(stoneId));
+  const isNearNeutral = Hct.fromInt(sourceArgb).chroma < NEUTRAL_CONTENT_CHROMA_THRESHOLD;
+  const corePalette = isNearNeutral ? CorePalette.contentOf(sourceArgb) : CorePalette.of(sourceArgb);
+  const scheme = isDark
+    ? Scheme.darkFromCorePalette(corePalette)
+    : Scheme.lightFromCorePalette(corePalette);
+  const backdropSeed = hexFromArgb(corePalette.n2.tone(BACKDROP_TONE));
   const base = isDark ? MD3DarkTheme : MD3LightTheme;
 
   const theme: MD3Theme = {
