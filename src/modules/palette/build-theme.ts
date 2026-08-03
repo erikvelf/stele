@@ -106,8 +106,17 @@ function buildColors(scheme: Scheme, backdropSeed: string): MD3Colors {
   };
 }
 
-// Pure: (stoneId, isDark) => MD3Theme. No storage access, memoisable by the caller.
+// (stoneId, isDark) is a small finite domain, so the expensive HCT
+// quantization behind this is computed once per combination and reused.
+const themeCache = new Map<string, MD3Theme>();
+
 export function buildTheme(stoneId: StoneId, isDark: boolean): MD3Theme {
+  const cacheKey = `${stoneId}-${isDark}`;
+  const cached = themeCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const material = themeFromSourceColor(argbFromHex(seedFor(stoneId)));
   const scheme = isDark ? material.schemes.dark : material.schemes.light;
   const backdropSeed = hexFromArgb(
@@ -115,8 +124,10 @@ export function buildTheme(stoneId: StoneId, isDark: boolean): MD3Theme {
   );
   const base = isDark ? MD3DarkTheme : MD3LightTheme;
 
-  return {
+  const theme: MD3Theme = {
     ...base,
     colors: buildColors(scheme, backdropSeed),
   };
+  themeCache.set(cacheKey, theme);
+  return theme;
 }
