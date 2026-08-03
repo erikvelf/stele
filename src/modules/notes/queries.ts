@@ -40,9 +40,16 @@ export async function writeNote(note: Note): Promise<Result<void>> {
   }
 }
 
+// Deletes the note's range and folder rows first; neither cascades.
 export async function deleteNote(id: string): Promise<Result<void>> {
   try {
-    await db.delete(noteTable).where(eq(noteTable.id, id));
+    await db.transaction(async tx => {
+      await tx
+        .delete(dateDayRangeTable)
+        .where(eq(dateDayRangeTable.note_id, id));
+      await tx.delete(noteFolderTable).where(eq(noteFolderTable.note_id, id));
+      await tx.delete(noteTable).where(eq(noteTable.id, id));
+    });
     return ok(undefined);
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
