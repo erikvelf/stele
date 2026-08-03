@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { IconButton, Menu, Text, useTheme } from 'react-native-paper';
 
-import { buildTheme, seedFor } from '@/modules/palette';
+import { ColorSwatch } from '@/components/ui';
+import { buildTheme } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
 import type { Folder } from '@/modules/folders';
 
@@ -41,7 +42,8 @@ export function FolderCard({
       onPress={() => onPress(folder)}
       style={[styles.card, { backgroundColor: theme.colors.elevation.level4 }]}
     >
-      <View style={[styles.avatar, { backgroundColor: seedFor(stoneId) }]}>
+      <View style={styles.avatar}>
+        <ColorSwatch stoneId={stoneId} size={AVATAR_SIZE} style={styles.avatarFill} />
         <View
           style={[
             styles.avatarShadow,
@@ -106,6 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  avatarFill: {
+    position: 'absolute',
   },
   avatarShadow: {
     position: 'absolute',

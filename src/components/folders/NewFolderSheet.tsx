@@ -9,6 +9,7 @@ import FolderBottomSheet, {
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
+import { ColorSwatch } from '@/components/ui';
 import { seedFor } from '@/modules/palette';
 import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
 import type { StoneId } from '@/modules/types';
@@ -26,6 +27,7 @@ interface NewFolderSheetProps {
 
 const COLOR_CIRCLE_SIZE = 56;
 const PENCIL_ICON_SIZE = 24;
+const EMOJI_GLYPH_SIZE = 28;
 
 export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
   const router = useRouter();
@@ -44,9 +46,9 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
 
   const canSubmit = name.trim().length > 0 && emoji.trim().length > 0;
   // `closeSheet()` here fires the same onClose as a user swipe-dismiss —
-  // this guard tells the two apart so the color-picker trip doesn't wipe
+  // this guard tells the two apart so an in-flight picker trip doesn't wipe
   // the draft (and, mid-edit, the id being edited) out from under it.
-  const isNavigatingToColorPickerRef = useRef(false);
+  const isNavigatingAwayRef = useRef(false);
 
   const handleSubmit = () => {
     if (!canSubmit) {
@@ -63,9 +65,15 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
   };
 
   const openColorPicker = () => {
-    isNavigatingToColorPickerRef.current = true;
+    isNavigatingAwayRef.current = true;
     closeSheet();
     router.push('/folder/new-color');
+  };
+
+  const openEmojiPicker = () => {
+    isNavigatingAwayRef.current = true;
+    closeSheet();
+    router.push('/folder/new-emoji');
   };
 
   return (
@@ -74,8 +82,8 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
       enableDynamicSizing
       enablePanDownToClose
       onClose={() => {
-        if (isNavigatingToColorPickerRef.current) {
-          isNavigatingToColorPickerRef.current = false;
+        if (isNavigatingAwayRef.current) {
+          isNavigatingAwayRef.current = false;
           closeSheet();
           return;
         }
@@ -90,37 +98,44 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
         </Text>
 
         <View style={styles.topRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Scegli colore"
-            onPress={openColorPicker}
-            style={[
-              styles.colorCircle,
-              { backgroundColor: seedFor(stoneId), borderColor: theme.colors.outline },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name="pencil"
-              size={PENCIL_ICON_SIZE}
-              color={contrastColor(seedFor(stoneId))}
-            />
-          </Pressable>
           <TextInput
             mode="outlined"
-            label="Emoji"
-            value={emoji}
-            onChangeText={setEmoji}
-            style={styles.emojiInput}
+            label="Nome"
+            value={name}
+            onChangeText={setName}
+            autoFocus={isSheetOpen}
+            style={styles.nameInput}
           />
-        </View>
 
-        <TextInput
-          mode="outlined"
-          label="Nome"
-          value={name}
-          onChangeText={setName}
-          autoFocus={isSheetOpen}
-        />
+          <View style={styles.circleColumn}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scegli emoji"
+              onPress={openEmojiPicker}
+              style={[styles.emojiCircle, { borderColor: theme.colors.outline }]}
+            >
+              <Text style={styles.emojiGlyph}>{emoji}</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scegli colore"
+              onPress={openColorPicker}
+              style={[styles.colorCircle, { borderColor: theme.colors.outline }]}
+            >
+              <ColorSwatch
+                stoneId={stoneId}
+                size={COLOR_CIRCLE_SIZE}
+                style={styles.colorCircleFill}
+              />
+              <MaterialCommunityIcons
+                name="pencil"
+                size={PENCIL_ICON_SIZE}
+                color={contrastColor(seedFor(stoneId))}
+              />
+            </Pressable>
+          </View>
+        </View>
 
         <Button mode="contained" onPress={handleSubmit} disabled={!canSubmit}>
           {editingId ? 'Salva' : 'Crea'}
@@ -137,8 +152,14 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: SPACING.md,
+  },
+  nameInput: {
+    flex: 1,
+  },
+  circleColumn: {
+    gap: SPACING.sm,
   },
   colorCircle: {
     width: COLOR_CIRCLE_SIZE,
@@ -148,7 +169,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emojiInput: {
-    flex: 1,
+  colorCircleFill: {
+    position: 'absolute',
+  },
+  emojiCircle: {
+    width: COLOR_CIRCLE_SIZE,
+    height: COLOR_CIRCLE_SIZE,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emojiGlyph: {
+    fontSize: EMOJI_GLYPH_SIZE,
   },
 });
