@@ -1,5 +1,5 @@
 import { isAfter, startOfDay, subDays } from 'date-fns';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, count, desc, eq, gte, lt } from 'drizzle-orm';
 
 import { COMMON_ERRORS } from '@/constants/error-codes';
 import { db } from '@/modules/db';
@@ -111,6 +111,50 @@ export async function readDateDayRanges(): Promise<Result<DateDayRanges>> {
   try {
     const rows = await db.select().from(dateDayRangeTable);
     return ok(dateDayRangesSchema.parse(rows));
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+interface JournalNoteCounts {
+  year: number;
+  total: number;
+}
+
+// How many dated notes a folder holds, this calendar year and ever. Used for
+// the home screen's creation stats, not the paginated feed.
+export async function countJournalNotes(
+  folderId: string,
+  yearStart: number
+): Promise<Result<JournalNoteCounts>> {
+  try {
+    const [totalRow] = await db
+      .select({ value: count() })
+      .from(dateDayRangeTable)
+      .innerJoin(
+        noteFolderTable,
+        eq(noteFolderTable.note_id, dateDayRangeTable.note_id)
+      )
+      .where(eq(noteFolderTable.folder_id, folderId));
+
+    const [yearRow] = await db
+      .select({ value: count() })
+      .from(dateDayRangeTable)
+      .innerJoin(
+        noteFolderTable,
+        eq(noteFolderTable.note_id, dateDayRangeTable.note_id)
+      )
+      .where(
+        and(
+          eq(noteFolderTable.folder_id, folderId),
+          gte(dateDayRangeTable.start_timestamp, yearStart)
+        )
+      );
+
+    return ok({
+      year: yearRow?.value ?? 0,
+      total: totalRow?.value ?? 0,
+    });
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
   }
