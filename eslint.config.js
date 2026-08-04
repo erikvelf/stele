@@ -216,4 +216,17 @@ module.exports = defineConfig([
       'require-atomic-updates': 'error',
     },
   },
+  {
+    // React Compiler's purity rules assume no direct mutation outside
+    // render; Reanimated's useSharedValue API is built entirely on
+    // mutating .value from gesture/event callbacks, which these rules
+    // can't distinguish from an actual bug. `'use no memo'` doesn't
+    // suppress them in this plugin version, so they're disabled here.
+    files: ['src/components/highlights/HighlightList.tsx'],
+    rules: {
+      'react-hooks/immutability': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
 ]);
