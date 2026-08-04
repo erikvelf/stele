@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { FlatList, Pressable, StyleSheet } from 'react-native';
+import { AppState, FlatList, Pressable, StyleSheet } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
 import { InfoSwatch } from '@/components/ui';
-import { buildTheme, seedFor, tonalPairFor } from '@/modules/palette';
+import { contrastColor } from '@/lib/contrastColor';
+import { buildTheme, seedFor } from '@/modules/palette';
 import type { Folder } from '@/modules/folders';
 import type { StoneId } from '@/modules/types';
 
@@ -21,7 +22,7 @@ interface FolderCarouselItemProps {
   onSelectFolder: (folder: Folder) => void;
 }
 
-const FolderCarouselItem = memo(function FolderCarouselItem({
+function FolderCarouselItemComponent({
   folder,
   size,
   isDark,
@@ -29,10 +30,7 @@ const FolderCarouselItem = memo(function FolderCarouselItem({
 }: FolderCarouselItemProps) {
   const stoneId = folder.color as StoneId;
   const stoneTheme = useMemo(() => buildTheme(stoneId, isDark), [stoneId, isDark]);
-  const { onContainer } = useMemo(
-    () => tonalPairFor(stoneId, isDark),
-    [stoneId, isDark]
-  );
+  const labelColor = useMemo(() => contrastColor(seedFor(stoneId)), [stoneId]);
 
   return (
     <Pressable
@@ -45,21 +43,25 @@ const FolderCarouselItem = memo(function FolderCarouselItem({
         shadeColor={stoneTheme.colors.shadow}
         icon={<Text style={styles.emoji}>{folder.emoji}</Text>}
         label={folder.name}
-        labelColor={onContainer}
+        labelColor={labelColor}
       />
     </Pressable>
   );
-});
+}
+
+const FolderCarouselItem = memo(FolderCarouselItemComponent);
 
 const AUTO_ADVANCE_INTERVAL_MS = 4000;
 const RESUME_AFTER_TOUCH_MS = 6000;
-// No FlatList primitive loops a data array, and any explicit "reset scroll
-// to index 0" jump flashes even when the content underneath is identical.
-// Repeating the folders enough times sidesteps the problem instead of
-// solving it: the virtual list is long enough that neither the timer nor a
-// swiping user reaches its real end in a normal session, so no reset is
-// ever needed.
-const LOOP_LAPS = 50;
+// No FlatList primitive loops a data array. Three laps (previous, current,
+// next) are enough: whenever the resting index drifts into the outer laps,
+// it gets silently re-centred into the middle lap before any further
+// scrolling happens. The re-centred index always points at the same folder
+// (same index modulo folders.length) as the position it replaces, so the
+// jump renders an identical frame and is genuinely invisible — not just
+// rare, as a bigger repeated array would only make it.
+const LOOP_LAPS = 3;
+const MIDDLE_LAP = 1;
 
 function buildLoopData(folders: Folder[]): Folder[] {
   if (folders.length === 0) {
@@ -69,6 +71,11 @@ function buildLoopData(folders: Folder[]): Folder[] {
     { length: folders.length * LOOP_LAPS },
     (_, index) => folders[index % folders.length]
   );
+}
+
+function centerInMiddleLap(index: number, foldersLength: number): number {
+  const offset = ((index % foldersLength) + foldersLength) % foldersLength;
+  return MIDDLE_LAP * foldersLength + offset;
 }
 
 export function FoldersCarousel({
@@ -90,7 +97,7 @@ export function FoldersCarousel({
     if (data.length === 0) {
       return;
     }
-    const startIndex = Math.floor(data.length / 2 / folders.length) * folders.length;
+    const startIndex = MIDDLE_LAP * folders.length;
     currentIndexRef.current = startIndex;
     listRef.current?.scrollToIndex({ index: startIndex, animated: false });
   }, [folders.length, data.length]);
@@ -100,23 +107,20 @@ export function FoldersCarousel({
       return undefined;
     }
     const timer = setInterval(() => {
-      if (isTouchedRef.current) {
+      if (isTouchedRef.current || AppState.currentState !== 'active') {
         return;
       }
-      const nextIndex = currentIndexRef.current + 1;
-      // The loop is long, not infinite — over a long enough idle session
-      // nextIndex would eventually run past `data.length`. Wrap it back to
-      // the equivalent position near the middle of the loop before that
-      // happens; since every folders.length-th item is identical, the jump
-      // (done without animation) is imperceptible.
-      if (nextIndex >= data.length - folders.length) {
-        const wrappedIndex =
-          (nextIndex % folders.length) +
-          Math.floor(data.length / 2 / folders.length) * folders.length;
-        currentIndexRef.current = wrappedIndex;
-        listRef.current?.scrollToIndex({ index: wrappedIndex, animated: false });
-        return;
+      // Re-centre before advancing, not after: a drifted resting index gets
+      // silently snapped back into the middle lap (same folder, so no
+      // visible change) so the upcoming animated step never runs off the
+      // small looped array.
+      let base = currentIndexRef.current;
+      if (base < folders.length || base >= 2 * folders.length) {
+        base = centerInMiddleLap(base, folders.length);
+        currentIndexRef.current = base;
+        listRef.current?.scrollToIndex({ index: base, animated: false });
       }
+      const nextIndex = base + 1;
       currentIndexRef.current = nextIndex;
       listRef.current?.scrollToIndex({ index: nextIndex, animated: true });
     }, AUTO_ADVANCE_INTERVAL_MS);
@@ -126,14 +130,19 @@ export function FoldersCarousel({
 
   const handleMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      currentIndexRef.current = Math.round(
-        event.nativeEvent.contentOffset.x / size
-      );
+      const settledIndex = Math.round(event.nativeEvent.contentOffset.x / size);
+      if (settledIndex < folders.length || settledIndex >= 2 * folders.length) {
+        const centeredIndex = centerInMiddleLap(settledIndex, folders.length);
+        currentIndexRef.current = centeredIndex;
+        listRef.current?.scrollToIndex({ index: centeredIndex, animated: false });
+      } else {
+        currentIndexRef.current = settledIndex;
+      }
       resumeTimeoutRef.current = setTimeout(() => {
         isTouchedRef.current = false;
       }, RESUME_AFTER_TOUCH_MS);
     },
-    [size]
+    [size, folders.length]
   );
 
   const handleTouchStart = useCallback(() => {

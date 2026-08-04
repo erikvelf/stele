@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { IconButton, Menu, Text, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 
+import { ItemActionsMenu } from '@/components/shared';
 import { ColorSwatch } from '@/components/ui';
 import { buildTheme } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
@@ -29,7 +29,6 @@ export function FolderCard({
   onDeletePress,
 }: FolderCardProps) {
   const theme = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Mock and, later, DB-read folders only ever carry an id from STONE_IDS —
   // folderSchema's `color` column is a plain string because two domains
   // (folders, palette) share the concept and neither owns the narrower type.
@@ -55,40 +54,10 @@ export function FolderCard({
       <Text variant="titleMedium" numberOfLines={2} style={styles.title}>
         {folder.name}
       </Text>
-      <Menu
-        visible={isMenuOpen}
-        onDismiss={() => setIsMenuOpen(false)}
-        anchor={
-          <IconButton
-            icon="dots-vertical"
-            accessibilityLabel="Folder actions"
-            onPress={() => setIsMenuOpen(true)}
-          />
-        }
-      >
-        <Menu.Item
-          leadingIcon="pencil"
-          title="Edit"
-          onPress={() => {
-            setIsMenuOpen(false);
-            onEditPress(folder);
-          }}
-        />
-        <Menu.Item
-          leadingIcon="delete"
-          title="Delete"
-          theme={{
-            colors: {
-              onSurface: theme.colors.error,
-              onSurfaceVariant: theme.colors.error,
-            },
-          }}
-          onPress={() => {
-            setIsMenuOpen(false);
-            onDeletePress(folder);
-          }}
-        />
-      </Menu>
+      <ItemActionsMenu
+        onEditPress={() => onEditPress(folder)}
+        onDeletePress={() => onDeletePress(folder)}
+      />
     </Pressable>
   );
 }
