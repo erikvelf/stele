@@ -1,5 +1,5 @@
 import { isAfter, startOfDay, subDays } from 'date-fns';
-import { and, count, desc, eq, gte, lt } from 'drizzle-orm';
+import { and, count, desc, eq, gte, lte, lt } from 'drizzle-orm';
 
 import { COMMON_ERRORS } from '@/constants/error-codes';
 import { db } from '@/modules/db';
@@ -10,10 +10,17 @@ import { NOTES_LIST_PAGE_SIZE } from './constants';
 import {
   dateDayRangesSchema,
   dateDayRangeTable,
+  noteCreatedTable,
   noteFolderTable,
   noteTable,
 } from './schema';
-import type { DateDayRange, DateDayRanges, Note, NoteFolder } from './schema';
+import type {
+  DateDayRange,
+  DateDayRanges,
+  Note,
+  NoteCreated,
+  NoteFolder,
+} from './schema';
 import type { FreeRun, NoteEntry } from './types';
 
 export async function readNote(id: string): Promise<Result<Note | null>> {
@@ -40,7 +47,7 @@ export async function writeNote(note: Note): Promise<Result<void>> {
   }
 }
 
-// Deletes the note's range and folder rows first; neither cascades.
+// Deletes the note's range, folder and created-at rows first; none cascade.
 export async function deleteNote(id: string): Promise<Result<void>> {
   try {
     await db.transaction(async tx => {
@@ -48,7 +55,23 @@ export async function deleteNote(id: string): Promise<Result<void>> {
         .delete(dateDayRangeTable)
         .where(eq(dateDayRangeTable.note_id, id));
       await tx.delete(noteFolderTable).where(eq(noteFolderTable.note_id, id));
+      await tx
+        .delete(noteCreatedTable)
+        .where(eq(noteCreatedTable.note_id, id));
       await tx.delete(noteTable).where(eq(noteTable.id, id));
+    });
+    return ok(undefined);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+export async function writeNoteCreated(
+  noteCreated: NoteCreated
+): Promise<Result<void>> {
+  try {
+    await db.insert(noteCreatedTable).values(noteCreated).onConflictDoNothing({
+      target: noteCreatedTable.note_id,
     });
     return ok(undefined);
   } catch (cause) {
@@ -187,6 +210,52 @@ export async function listNoteEntries(
       .orderBy(desc(dateDayRangeTable.start_timestamp))
       .limit(limit);
     return ok(rows);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+// Whether a folder already has a note covering the given day, e.g. for a
+// daily-reminder check running outside any loaded list.
+export async function readNoteEntryForDate(
+  folderId: string,
+  timestamp: number
+): Promise<Result<NoteEntry | null>> {
+  try {
+    const dayStart = startOfDay(new Date(timestamp)).getTime();
+    const [row] = await db
+      .select({ note: noteTable, range: dateDayRangeTable })
+      .from(dateDayRangeTable)
+      .innerJoin(noteTable, eq(dateDayRangeTable.note_id, noteTable.id))
+      .innerJoin(noteFolderTable, eq(noteFolderTable.note_id, noteTable.id))
+      .where(
+        and(
+          eq(noteFolderTable.folder_id, folderId),
+          lte(dateDayRangeTable.start_timestamp, dayStart),
+          gte(dateDayRangeTable.end_timestamp, dayStart)
+        )
+      );
+    return ok(row ?? null);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+// A folder's notes, newest first. Unlike listNoteEntries this never joins
+// date_day_range — a plain tavola note is not required to have a date.
+export async function listFolderNotes(folderId: string): Promise<Result<Note[]>> {
+  try {
+    const rows = await db
+      .select({ note: noteTable })
+      .from(noteFolderTable)
+      .innerJoin(noteTable, eq(noteFolderTable.note_id, noteTable.id))
+      .innerJoin(
+        noteCreatedTable,
+        eq(noteCreatedTable.note_id, noteTable.id)
+      )
+      .where(eq(noteFolderTable.folder_id, folderId))
+      .orderBy(desc(noteCreatedTable.created_at));
+    return ok(rows.map(row => row.note));
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
   }

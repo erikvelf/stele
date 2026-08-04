@@ -24,6 +24,18 @@ export const noteFolderTable = sqliteTable('note_folder', {
 export const noteFolderSchema = createSelectSchema(noteFolderTable);
 export type NoteFolder = z.infer<typeof noteFolderSchema>;
 
+// When a note was created — separate from date_day_range, which only exists
+// for notes the diario requires a date on. Every note gets one of these.
+export const noteCreatedTable = sqliteTable('note_created', {
+  note_id: text('note_id')
+    .primaryKey()
+    .references(() => noteTable.id),
+  created_at: integer('created_at').notNull(),
+});
+
+export const noteCreatedSchema = createSelectSchema(noteCreatedTable);
+export type NoteCreated = z.infer<typeof noteCreatedSchema>;
+
 // A slot run in the journal: every note occupies a contiguous range of days,
 // and a single-day note is just a range whose start and end share a day.
 export const dateDayRangeTable = sqliteTable('date_day_range', {
