@@ -16,6 +16,7 @@ import { createId } from '@/lib/id';
 import type { Tag } from '@/modules/highlights';
 
 import { RADIUS, SPACING } from '@/constants/layout';
+import { TRANSPARENT } from '@/modules/palette';
 
 import { Tag as TagPill } from './Tag';
 
@@ -249,31 +250,25 @@ interface DragState {
   originTop: number;
 }
 
-// One-line entries, each optionally tagged. A trailing empty draft row
-// commits to `highlights` once typed into; blurring a row left empty
-// deletes it.
-//
-// Row order lives in local `orderedIds` state rather than being derived
-// fresh from `highlights` every render, so a drag in progress (or a drop
-// not yet reflected by the parent) is never overwritten mid-flight. When
-// `highlights` changes for reasons other than our own reorder — add,
-// delete, edit — the new id set is merged into the existing order during
-// render (comparing against the previous `highlights` kept in state, the
-// sanctioned way to adjust state from a prop change without an extra
-// render pass), so new rows appear in the same commit as the prop change.
-export function HighlightList({
-  highlights,
-  onChangeText,
-  onAddHighlight,
-  onFocusHighlight,
-  onBlurHighlight,
-  onReorderHighlights,
-}: HighlightListProps) {
-  const theme = useTheme();
-  const [draftId, setDraftId] = useState(createId);
-  const [draftText, setDraftText] = useState('');
-  const [pendingRowId, setPendingRowId] = useState<string | undefined>(undefined);
-  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+interface HighlightItem {
+  id: string;
+  text: string;
+  tag: Tag | null;
+}
+
+// Row order, drag gesture state, and per-row Gesture instances for
+// reordering `highlights` by dragging. Row order lives in local state
+// rather than being derived fresh from `highlights` every render, so a
+// drag in progress (or a drop not yet reflected by the parent) is never
+// overwritten mid-flight. When `highlights` changes for reasons other than
+// our own reorder — add, delete, edit — the new id set is merged into the
+// existing order during render (comparing against the previous
+// `highlights` kept in state, the sanctioned way to adjust state from a
+// prop change without an extra render pass).
+function useDragReorder(
+  highlights: HighlightItem[],
+  onReorderHighlights: (orderedIds: string[]) => void
+) {
   const [orderedIds, setOrderedIds] = useState(() => highlights.map(h => h.id));
   const [previousHighlights, setPreviousHighlights] = useState(highlights);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -345,10 +340,8 @@ export function HighlightList({
     [dragTranslateY, onReorderHighlights]
   );
 
-  // One gesture per highlight, memoized by id set so an in-progress pan is
-  // never handed a fresh Gesture instance — reordering `orderedIds` mid-drag
-  // must not recreate this map. Built (and its shared-value mutations owned)
-  // here rather than per row, since the row component only reads them.
+  // Memoized so an in-progress pan keeps its Gesture instance across
+  // renders.
   const dragGestures = useMemo(() => {
     const gestures = new Map<string, PanGesture>();
     for (const highlight of highlights) {
@@ -389,6 +382,27 @@ export function HighlightList({
     handleDragUpdate,
     handleDragEnd,
   ]);
+
+  return { orderedIds, drag, dragTranslateY, dragGestures, handleRowLayout };
+}
+
+export function HighlightList({
+  highlights,
+  onChangeText,
+  onAddHighlight,
+  onFocusHighlight,
+  onBlurHighlight,
+  onReorderHighlights,
+}: HighlightListProps) {
+  const theme = useTheme();
+  const [draftId, setDraftId] = useState(createId);
+  const [draftText, setDraftText] = useState('');
+  const [pendingRowId, setPendingRowId] = useState<string | undefined>(undefined);
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+  const { orderedIds, drag, dragTranslateY, dragGestures, handleRowLayout } = useDragReorder(
+    highlights,
+    onReorderHighlights
+  );
 
   const highlightById = useMemo(
     () => new Map(highlights.map(highlight => [highlight.id, highlight])),
@@ -495,7 +509,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: TRANSPARENT,
   },
   inputContent: {
     paddingHorizontal: 0,

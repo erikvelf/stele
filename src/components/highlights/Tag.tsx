@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-import { SELECTION_BORDER_COLOR, tonalPairFor } from '@/modules/palette';
+import { SELECTION_BORDER_COLOR, TRANSPARENT, tonalPairFor } from '@/modules/palette';
 import type { Tag as TagType } from '@/modules/highlights';
 import type { StoneId } from '@/modules/types';
 
@@ -26,6 +26,7 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
   const { container, onContainer } = tonalPairFor(stoneId, true);
 
   const Wrapper = onPress ? Pressable : View;
+  const borderStyle = isSelected ? styles.pillSelected : styles.pillUnselected;
 
   return (
     <Wrapper
@@ -38,11 +39,8 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
         : {})}
       style={[
         isSmall ? styles.pillSmall : styles.pill,
-        {
-          backgroundColor: container,
-          borderWidth: onPress ? SELECTED_BORDER_WIDTH : 0,
-          borderColor: onPress && isSelected ? SELECTION_BORDER_COLOR : 'transparent',
-        },
+        { backgroundColor: container },
+        onPress ? borderStyle : null,
       ]}
     >
       <Text variant={isSmall ? 'labelSmall' : 'labelLarge'} style={{ color: onContainer }}>
@@ -64,5 +62,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs / 2,
+  },
+  pillSelected: {
+    borderWidth: SELECTED_BORDER_WIDTH,
+    borderColor: SELECTION_BORDER_COLOR,
+  },
+  pillUnselected: {
+    borderWidth: 0,
+    borderColor: TRANSPARENT,
   },
 });

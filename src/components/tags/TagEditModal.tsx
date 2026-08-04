@@ -6,6 +6,7 @@ import { Button, Modal, Portal, Text, TextInput, useTheme } from 'react-native-p
 import { ColorSwatch } from '@/components/ui';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTags } from '@/hooks/useTags';
+import { TRANSPARENT } from '@/modules/palette';
 import { DEFAULT_STONE_ID, STONE_IDS } from '@/modules/types';
 import type { StoneId } from '@/modules/types';
 
@@ -44,9 +45,9 @@ function ColorCirclePicker({
             onPress={() => onChange(id)}
             style={[
               styles.circleWrapper,
-              {
-                borderColor: selected ? theme.colors.outline : 'transparent',
-              },
+              selected
+                ? { borderColor: theme.colors.outline }
+                : styles.circleWrapperUnselected,
             ]}
           >
             <ColorSwatch stoneId={id} size={CIRCLE_SIZE} />
@@ -179,5 +180,8 @@ const styles = StyleSheet.create({
     padding: SPACING.xs / 2,
     borderRadius: RADIUS.full,
     borderWidth: SELECTION_BORDER_WIDTH,
+  },
+  circleWrapperUnselected: {
+    borderColor: TRANSPARENT,
   },
 });

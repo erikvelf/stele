@@ -1,8 +1,8 @@
 import { format } from 'date-fns';
-import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { IconButton, Menu, Surface, Text, useTheme } from 'react-native-paper';
+import { Surface, Text, useTheme } from 'react-native-paper';
 
+import { ItemActionsMenu } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import type { DateDayRange } from '@/modules/notes';
 
@@ -29,7 +29,6 @@ export function NoteCard({
   onDeletePress,
 }: NoteCardProps) {
   const theme = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const preview = noteText.length > 0 ? noteText : 'Clean slate';
   const [previewTitle, ...previewBodyLines] = preview.split('\n');
   const previewBody = previewBodyLines.join('\n');
@@ -109,42 +108,12 @@ export function NoteCard({
         >
           {format(new Date(range.start_timestamp), 'EEE, MMM d')}
         </Text>
-        <Menu
-          visible={isMenuOpen}
-          onDismiss={() => setIsMenuOpen(false)}
-          anchor={
-            <IconButton
-              icon="dots-horizontal"
-              size={16}
-              style={styles.menuButton}
-              accessibilityLabel="Note actions"
-              onPress={() => setIsMenuOpen(true)}
-            />
-          }
-        >
-          <Menu.Item
-            leadingIcon="pencil"
-            title="Edit"
-            onPress={() => {
-              setIsMenuOpen(false);
-              onEditPress();
-            }}
-          />
-          <Menu.Item
-            leadingIcon="delete"
-            title="Delete"
-            theme={{
-              colors: {
-                onSurface: theme.colors.error,
-                onSurfaceVariant: theme.colors.error,
-              },
-            }}
-            onPress={() => {
-              setIsMenuOpen(false);
-              onDeletePress();
-            }}
-          />
-        </Menu>
+        <ItemActionsMenu
+          onEditPress={onEditPress}
+          onDeletePress={onDeletePress}
+          iconSize={16}
+          iconStyle={styles.menuButton}
+        />
       </View>
     </Surface>
   );
