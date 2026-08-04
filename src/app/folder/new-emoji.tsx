@@ -1,4 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { Surface } from 'react-native-paper';
 
@@ -8,14 +9,22 @@ import { SPACING } from '@/constants/layout';
 
 export default function NewFolderEmojiScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { setEmoji, openSheet } = useNewFolderDraft();
+
+  // Fires for every way of leaving this screen (header back, swipe, hardware
+  // back), so the editing sheet reopens even when no emoji was picked.
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', () => {
+      openSheet();
+    });
+  }, [navigation, openSheet]);
 
   return (
     <Surface style={styles.screen} elevation={0}>
       <EmojiPicker
         onSelect={emoji => {
           setEmoji(emoji);
-          openSheet();
           router.back();
         }}
       />

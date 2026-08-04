@@ -26,6 +26,7 @@ interface NewFolderSheetProps {
 }
 
 const COLOR_CIRCLE_SIZE = 56;
+const NAME_INPUT_MAX_HEIGHT = 76;
 const PENCIL_ICON_SIZE = 24;
 const EMOJI_GLYPH_SIZE = 28;
 
@@ -40,7 +41,6 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
     stoneId,
     closeSheet,
     setName,
-    setEmoji,
     reset,
   } = useNewFolderDraft();
 
@@ -104,6 +104,8 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
             value={name}
             onChangeText={setName}
             autoFocus={isSheetOpen}
+            multiline
+            numberOfLines={2}
             style={styles.nameInput}
           />
 
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     flex: 1,
+    maxHeight: NAME_INPUT_MAX_HEIGHT,
   },
   circleColumn: {
     gap: SPACING.sm,

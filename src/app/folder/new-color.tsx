@@ -1,4 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Surface } from 'react-native-paper';
 
@@ -8,7 +9,16 @@ import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
 
 export default function NewFolderColorScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { stoneId, setStoneId, openSheet } = useNewFolderDraft();
+
+  // Fires for every way of leaving this screen (header back, swipe, hardware
+  // back), so the editing sheet reopens even when no color was picked.
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', () => {
+      openSheet();
+    });
+  }, [navigation, openSheet]);
 
   return (
     <Surface style={styles.screen}>
@@ -17,7 +27,6 @@ export default function NewFolderColorScreen() {
           value={stoneId}
           onChange={id => {
             setStoneId(id);
-            openSheet();
             router.back();
           }}
         />
