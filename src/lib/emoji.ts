@@ -15,17 +15,15 @@ export interface EmojiCategory {
 let cachedCategories: EmojiCategory[] | undefined;
 
 export function getEmojiCategories(): EmojiCategory[] {
-  if (!cachedCategories) {
-    cachedCategories = emojiGroups.map(group => ({
-      name: group.name,
-      slug: group.slug,
-      emojis: group.emojis.map(({ emoji, name, slug }) => ({
-        emoji,
-        name,
-        slug,
-      })),
-    }));
-  }
+  cachedCategories ??= emojiGroups.map(group => ({
+    name: group.name,
+    slug: group.slug,
+    emojis: group.emojis.map(({ emoji, name, slug }) => ({
+      emoji,
+      name,
+      slug,
+    })),
+  }));
   return cachedCategories;
 }
 

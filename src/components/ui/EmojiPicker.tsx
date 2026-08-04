@@ -52,14 +52,8 @@ function buildRows(query: string, categories: EmojiCategory[]): EmojiRow[] {
   return chunkIntoRows('search-results', null, searchEmojis(query, categories));
 }
 
-const EmojiRowItem = memo(function EmojiRowItem({
-  row,
-  onSelect,
-}: {
-  row: EmojiRow;
-  onSelect: (emoji: string) => void;
-}) {
-  return (
+const EmojiRowItem = memo(
+  ({ row, onSelect }: { row: EmojiRow; onSelect: (emoji: string) => void }) => (
     <View style={styles.section}>
       {row.title && (
         <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -80,8 +74,9 @@ const EmojiRowItem = memo(function EmojiRowItem({
         ))}
       </View>
     </View>
-  );
-});
+  )
+);
+EmojiRowItem.displayName = 'EmojiRowItem';
 
 export function EmojiPicker({ onSelect }: EmojiPickerProps) {
   const [query, setQuery] = useState('');
