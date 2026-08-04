@@ -52,6 +52,9 @@ export const STONE_DETAILS: Record<StoneId, Stone> = {
 // Placeholder border for a selected tag pill, pending a real selection style.
 export const SELECTION_BORDER_COLOR = '#FFFFFF';
 
+// The unselected counterpart to a themed or accent border colour.
+export const TRANSPARENT = 'transparent';
+
 // A Map, not bracket access on STONE_DETAILS, so a stone lookup by a
 // caller-supplied id isn't a dynamic property access.
 const STONE_LOOKUP: ReadonlyMap<StoneId, Stone> = new Map(

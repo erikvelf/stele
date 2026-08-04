@@ -3,7 +3,7 @@ import { Text, useTheme } from 'react-native-paper';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import { STONE_DETAILS, STONE_FAMILIES, seedFor } from '@/modules/palette';
+import { STONE_DETAILS, STONE_FAMILIES, TRANSPARENT, seedFor } from '@/modules/palette';
 import type { Stone, StoneFamily } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
 
@@ -76,12 +76,10 @@ export function StonePicker({ value, onChange }: StonePickerProps) {
                       onPress={() => onChange(id)}
                       style={[
                         styles.swatch,
-                        {
-                          backgroundColor: seedFor(id),
-                          borderColor: selected
-                            ? theme.colors.outline
-                            : 'transparent',
-                        },
+                        { backgroundColor: seedFor(id) },
+                        selected
+                          ? { borderColor: theme.colors.outline }
+                          : styles.swatchUnselectedBorder,
                       ]}
                     >
                       {selected && (
@@ -134,6 +132,9 @@ const styles = StyleSheet.create({
     borderWidth: SELECTION_BORDER_WIDTH,
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
+  },
+  swatchUnselectedBorder: {
+    borderColor: TRANSPARENT,
   },
   checkBadge: {
     width: CHECK_BADGE_SIZE,
