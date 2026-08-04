@@ -14,6 +14,36 @@ export default function SettingsScreen() {
         right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={() => router.push('/appearance')}
       />
+      <List.Item
+        title="Privacy & security"
+        left={props => <List.Icon {...props} icon="shield-lock-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/privacy-security')}
+      />
+      <List.Item
+        title="Backup & data"
+        left={props => <List.Icon {...props} icon="cloud-upload-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        disabled
+      />
+      <List.Item
+        title="Notifications"
+        left={props => <List.Icon {...props} icon="bell-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/notifications')}
+      />
+      <List.Item
+        title="Journal behaviour"
+        left={props => <List.Icon {...props} icon="book-cog-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/journal-behaviour')}
+      />
+      <List.Item
+        title="About"
+        left={props => <List.Icon {...props} icon="information-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        disabled
+      />
     </Surface>
   );
 }
