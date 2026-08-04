@@ -9,6 +9,7 @@ import {
   FoldersEmptyState,
   NewFolderSheet,
 } from '@/components/folders';
+import { ConfirmDeleteModal } from '@/components/shared';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolders } from '@/hooks/useFolders';
 import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
@@ -23,6 +24,8 @@ export default function FoldersScreen() {
   const [pendingFolderId, setPendingFolderId] = useState<string | undefined>(
     undefined
   );
+  const [folderPendingDelete, setFolderPendingDelete] =
+    useState<Folder | null>(null);
 
   const handleCreatePress = () => {
     reset();
@@ -61,7 +64,7 @@ export default function FoldersScreen() {
             onTopFolderSettled={handleTopFolderSettled}
             onPress={folder => router.push(`/folder/${folder.id}`)}
             onEditPress={openSheetFor}
-            onDeletePress={folder => removeFolder(folder.id)}
+            onDeletePress={setFolderPendingDelete}
           />
         )}
       </ScrollView>
@@ -69,6 +72,17 @@ export default function FoldersScreen() {
       <FAB icon="plus" style={styles.fab} onPress={handleCreatePress} />
 
       <NewFolderSheet onCreate={handleCreate} onEdit={updateFolder} />
+
+      <ConfirmDeleteModal
+        visible={folderPendingDelete !== null}
+        subject="cartella"
+        onConfirm={() => {
+          if (folderPendingDelete) {
+            removeFolder(folderPendingDelete.id);
+          }
+        }}
+        onDismiss={() => setFolderPendingDelete(null)}
+      />
     </Surface>
   );
 }

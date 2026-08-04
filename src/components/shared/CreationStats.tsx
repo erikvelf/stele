@@ -13,6 +13,7 @@ export interface CreationStatsProps {
 }
 
 const ICON_SIZE = 16;
+const TEXT_LINE_HEIGHT = 20;
 
 export function CreationStats({ rows }: CreationStatsProps) {
   const theme = useTheme();
@@ -21,7 +22,9 @@ export function CreationStats({ rows }: CreationStatsProps) {
     <Surface style={styles.surface} elevation={0}>
       {rows.map(row => (
         <View key={row.icon} style={styles.row}>
-          <Icon source={row.icon} size={ICON_SIZE} color={theme.colors.onSurfaceVariant} />
+          <View style={styles.iconSlot}>
+            <Icon source={row.icon} size={ICON_SIZE} color={theme.colors.onSurfaceVariant} />
+          </View>
           <Text variant="bodyMedium" style={styles.text}>
             {row.text}
           </Text>
@@ -43,6 +46,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
+  },
+  iconSlot: {
+    height: TEXT_LINE_HEIGHT,
+    justifyContent: 'center',
   },
   text: {
     flex: 1,

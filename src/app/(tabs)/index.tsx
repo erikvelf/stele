@@ -1,5 +1,4 @@
-import { startOfDay, startOfYear } from 'date-fns';
-import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics';
+import { startOfYear } from 'date-fns';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,25 +9,24 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-import { FoldersCarousel } from '@/components/folders';
+import { FoldersCarousel, FoldersCarouselEmptyState } from '@/components/folders';
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
 import { ActivityList } from '@/components/notes/ActivityList';
 import { NotesEmptyState } from '@/components/notes/NotesEmptyState';
+import { ConfirmDeleteModal } from '@/components/shared';
 import type { CreationStatRow } from '@/components/shared/CreationStats';
 import { CreationStats } from '@/components/shared/CreationStats';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
+import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { useFolders } from '@/hooks/useFolders';
+import { useJournalComposer } from '@/hooks/useJournalComposer';
 import { useListNotes } from '@/hooks/useListNotes';
-import { createId } from '@/lib/id';
 import { JOURNAL_FOLDER_ID } from '@/modules/folders';
 import { countHighlights } from '@/modules/highlights';
 import {
   countJournalNotes,
   dateDayRangesSchema,
   deleteNote,
-  writeDateDayRange,
-  writeNote,
-  writeNoteFolder,
   type NoteEntry,
 } from '@/modules/notes';
 import { pickCreationVerb } from '@/modules/stats';
@@ -84,15 +82,15 @@ function useCreationStats(): UseCreationStatsResult {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { reschedule: rescheduleDailyReminder } = useDailyReminder();
   const { folders, refresh: refreshFolders } = useFolders();
-  const { entries, refresh, prependEntry, removeEntry } = useListNotes();
+  const { entries, isLoading, refresh, prependEntry, removeEntry } =
+    useListNotes();
   const { rows: creationStatRows, refresh: refreshCreationStats } =
     useCreationStats();
-  const [isCreating, setIsCreating] = useState(false);
-  const [pendingEntryId, setPendingEntryId] = useState<string | undefined>(
-    undefined
-  );
   const [deleteError, setDeleteError] = useState(false);
+  const [entryPendingDelete, setEntryPendingDelete] =
+    useState<NoteEntry | null>(null);
 
   const ranges = useMemo(
     () => dateDayRangesSchema.parse(entries.map(entry => entry.range)),
@@ -104,56 +102,18 @@ export default function HomeScreen() {
     scrollY.value = event.contentOffset.y;
   });
 
-  const handleCreate = useCallback(() => {
-    void impactAsync(ImpactFeedbackStyle.Light);
-
-    const today = startOfDay(new Date());
-    const todaysEntry = entries.find(entry => {
-      const start = startOfDay(new Date(entry.range.start_timestamp));
-      const end = startOfDay(new Date(entry.range.end_timestamp));
-      return today >= start && today <= end;
-    });
-
-    if (todaysEntry) {
-      router.push(`/note/${todaysEntry.note.id}`);
-      return;
-    }
-
-    setIsCreating(true);
-    const noteId = createId();
-    const rangeId = createId();
-    const newEntry: NoteEntry = {
-      note: { id: noteId, text: '' },
-      range: {
-        id: rangeId,
-        note_id: noteId,
-        start_timestamp: today.getTime(),
-        end_timestamp: today.getTime(),
-      },
-    };
-
-    setPendingEntryId(rangeId);
-    prependEntry(newEntry);
-
-    void Promise.all([
-      writeNote(newEntry.note),
-      writeDateDayRange(newEntry.range),
-      writeNoteFolder({ note_id: noteId, folder_id: JOURNAL_FOLDER_ID }),
-    ]).then(() => refreshCreationStats());
-  }, [entries, router, prependEntry, refreshCreationStats]);
-
-  const handleTopEntrySettled = useCallback(() => {
-    if (!pendingEntryId) {
-      return;
-    }
-    const pendingEntry = entries.find(
-      entry => entry.range.id === pendingEntryId
-    );
-    if (pendingEntry) {
-      router.push(`/note/${pendingEntry.note.id}`);
-    }
-    setPendingEntryId(undefined);
-  }, [router, pendingEntryId, entries]);
+  const {
+    isCreating,
+    pendingEntryId,
+    handleCreate,
+    handleTopEntrySettled,
+    resetCreating,
+  } = useJournalComposer({
+    entries,
+    isLoadingEntries: isLoading,
+    prependEntry,
+    onCreated: refreshCreationStats,
+  });
 
   const handleDeleteEntry = useCallback(
     (entry: NoteEntry) => {
@@ -165,17 +125,18 @@ export default function HomeScreen() {
           return;
         }
         refreshCreationStats();
+        rescheduleDailyReminder();
       });
     },
-    [removeEntry, refresh, refreshCreationStats]
+    [removeEntry, refresh, refreshCreationStats, rescheduleDailyReminder]
   );
 
   useFocusEffect(
     useCallback(() => {
-      setIsCreating(false);
+      resetCreating();
       refresh();
       refreshFolders();
-    }, [refresh, refreshFolders])
+    }, [resetCreating, refresh, refreshFolders])
   );
 
   return (
@@ -195,21 +156,21 @@ export default function HomeScreen() {
           onSelectRange={range => router.push(`/note/${range.note_id}`)}
         />
 
-        {(creationStatRows.length > 0 || folders.length > 0) && (
-          <View style={styles.statsRow}>
-            {creationStatRows.length > 0 && (
-              <CreationStats rows={creationStatRows} />
-            )}
+        <View style={styles.statsRow}>
+          {creationStatRows.length > 0 && (
+            <CreationStats rows={creationStatRows} />
+          )}
 
-            {folders.length > 0 && (
-              <FoldersCarousel
-                folders={folders}
-                size={STATS_ROW_HEIGHT}
-                onSelectFolder={folder => router.push(`/folder/${folder.id}`)}
-              />
-            )}
-          </View>
-        )}
+          {folders.length > 0 ? (
+            <FoldersCarousel
+              folders={folders}
+              size={STATS_ROW_HEIGHT}
+              onSelectFolder={folder => router.push(`/folder/${folder.id}`)}
+            />
+          ) : (
+            <FoldersCarouselEmptyState size={STATS_ROW_HEIGHT} />
+          )}
+        </View>
 
         {entries.length === 0 ? (
           <Animated.View
@@ -224,10 +185,21 @@ export default function HomeScreen() {
             onTopEntrySettled={handleTopEntrySettled}
             onOpenEntry={entry => router.push(`/note/${entry.note.id}`)}
             onEditEntry={entry => router.push(`/note/${entry.note.id}`)}
-            onDeleteEntry={handleDeleteEntry}
+            onDeleteEntry={setEntryPendingDelete}
           />
         )}
       </Animated.ScrollView>
+
+      <ConfirmDeleteModal
+        visible={entryPendingDelete !== null}
+        subject="sasso"
+        onConfirm={() => {
+          if (entryPendingDelete) {
+            handleDeleteEntry(entryPendingDelete);
+          }
+        }}
+        onDismiss={() => setEntryPendingDelete(null)}
+      />
 
       <FAB
         icon="pencil"
