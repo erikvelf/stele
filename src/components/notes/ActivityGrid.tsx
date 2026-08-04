@@ -8,12 +8,13 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import type {
   LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  ViewStyle,
 } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
@@ -170,7 +171,7 @@ interface DayCellProps {
   onSelectRange?: (range: DateDayRange) => void;
 }
 
-function DayCell({
+function DayCellComponent({
   cell,
   cellWidth,
   cellHeight,
@@ -232,7 +233,9 @@ function DayCell({
   );
 }
 
-function MonthPage({
+const DayCell = memo(DayCellComponent);
+
+function MonthPageComponent({
   month,
   pageWidth,
   cellWidth,
@@ -270,34 +273,25 @@ function MonthPage({
   );
 }
 
-export interface ActivityGridProps {
-  ranges: DateDayRanges;
-  scrollY?: SharedValue<number>;
-  onSelectRange?: (range: DateDayRange) => void;
+const MonthPage = memo(MonthPageComponent);
+
+interface SquishAnimation {
+  isExpanded: boolean;
+  setIsExpanded: (isExpanded: boolean) => void;
+  progress: SharedValue<number>;
+  clipStyle: ReturnType<typeof useAnimatedStyle<ViewStyle>>;
+  scaleStyle: ReturnType<typeof useAnimatedStyle<ViewStyle>>;
 }
 
-export function ActivityGrid({
-  ranges,
-  scrollY,
-  onSelectRange,
-}: ActivityGridProps) {
-  const listRef = useRef<FlatList<Date>>(null);
-  const [width, setWidth] = useState(0);
+// Collapses the grid to a flattened strip while the home screen scrolls down,
+// and expands it back on tap. Isolated here so ActivityGrid stays focused on
+// the month FlatList itself.
+function useSquishAnimation(
+  scrollY: SharedValue<number> | undefined,
+  naturalHeight: number
+): SquishAnimation {
   const [isExpanded, setIsExpanded] = useState(false);
   const progress = useSharedValue(0);
-
-  const months = useMemo(() => monthsSpanned(ranges), [ranges]);
-  const lastIndex = months.length - 1;
-  const [page, setPage] = useState(lastIndex);
-  const current = months.at(Math.min(page, lastIndex)) ?? new Date();
-
-  // Width always fills the container edge to edge — floored so a row of seven
-  // can never overflow by a fraction of a pixel and wrap a column early.
-  // Height is capped separately so wide screens produce flat brick-like
-  // cells instead of ever-larger squares.
-  const cellWidth = Math.floor((width - GAP * (COLUMNS - 1)) / COLUMNS);
-  const cellHeight = Math.min(cellWidth, MAX_CELL_SIZE);
-  const naturalHeight = MAX_ROWS * cellHeight + GAP * (MAX_ROWS - 1);
 
   useEffect(() => {
     progress.value = withTiming(isExpanded ? 1 : 0, {
@@ -320,7 +314,7 @@ export function ActivityGrid({
   // The clip window animates height so the collapsed grid takes up less
   // vertical space; the scaled content inside always lays out at full height
   // so no row is ever dropped, only visually flattened.
-  const clipStyle = useAnimatedStyle(() => {
+  const clipStyle = useAnimatedStyle<ViewStyle>(() => {
     const scaleY = interpolate(
       progress.value,
       [0, 1],
@@ -330,7 +324,7 @@ export function ActivityGrid({
     return { height: naturalHeight * scaleY };
   });
 
-  const scaleStyle = useAnimatedStyle(() => {
+  const scaleStyle = useAnimatedStyle<ViewStyle>(() => {
     const scaleY = interpolate(
       progress.value,
       [0, 1],
@@ -339,6 +333,39 @@ export function ActivityGrid({
     );
     return { transform: [{ scaleY }] };
   });
+
+  return { isExpanded, setIsExpanded, progress, clipStyle, scaleStyle };
+}
+
+export interface ActivityGridProps {
+  ranges: DateDayRanges;
+  scrollY?: SharedValue<number>;
+  onSelectRange?: (range: DateDayRange) => void;
+}
+
+export function ActivityGrid({
+  ranges,
+  scrollY,
+  onSelectRange,
+}: ActivityGridProps) {
+  const listRef = useRef<FlatList<Date>>(null);
+  const [width, setWidth] = useState(0);
+
+  const months = useMemo(() => monthsSpanned(ranges), [ranges]);
+  const lastIndex = months.length - 1;
+  const [page, setPage] = useState(lastIndex);
+  const current = months.at(Math.min(page, lastIndex)) ?? new Date();
+
+  // Width always fills the container edge to edge — floored so a row of seven
+  // can never overflow by a fraction of a pixel and wrap a column early.
+  // Height is capped separately so wide screens produce flat brick-like
+  // cells instead of ever-larger squares.
+  const cellWidth = Math.floor((width - GAP * (COLUMNS - 1)) / COLUMNS);
+  const cellHeight = Math.min(cellWidth, MAX_CELL_SIZE);
+  const naturalHeight = MAX_ROWS * cellHeight + GAP * (MAX_ROWS - 1);
+
+  const { isExpanded, setIsExpanded, progress, clipStyle, scaleStyle } =
+    useSquishAnimation(scrollY, naturalHeight);
 
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width);
@@ -355,6 +382,30 @@ export function ActivityGrid({
     setPage(index);
     listRef.current?.scrollToIndex({ index, animated: true });
   }, []);
+
+  const onRequestExpand = useCallback(
+    () => setIsExpanded(true),
+    [setIsExpanded]
+  );
+
+  const keyExtractor = useCallback((month: Date) => month.toISOString(), []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Date }) => (
+      <MonthPage
+        month={item}
+        pageWidth={width}
+        cellWidth={cellWidth}
+        cellHeight={cellHeight}
+        ranges={ranges}
+        progress={progress}
+        isExpanded={isExpanded}
+        onRequestExpand={onRequestExpand}
+        onSelectRange={onSelectRange}
+      />
+    ),
+    [width, cellWidth, cellHeight, ranges, progress, isExpanded, onRequestExpand, onSelectRange]
+  );
 
   return (
     <View onLayout={onLayout}>
@@ -409,20 +460,11 @@ export function ActivityGrid({
                   index,
                 })}
                 onMomentumScrollEnd={onMomentumEnd}
-                keyExtractor={month => month.toISOString()}
-                renderItem={({ item }) => (
-                  <MonthPage
-                    month={item}
-                    pageWidth={width}
-                    cellWidth={cellWidth}
-                    cellHeight={cellHeight}
-                    ranges={ranges}
-                    progress={progress}
-                    isExpanded={isExpanded}
-                    onRequestExpand={() => setIsExpanded(true)}
-                    onSelectRange={onSelectRange}
-                  />
-                )}
+                keyExtractor={keyExtractor}
+                renderItem={renderItem}
+                initialNumToRender={1}
+                maxToRenderPerBatch={1}
+                windowSize={3}
               />
             </Animated.View>
           </Animated.View>
