@@ -44,3 +44,12 @@ example
 
 # tooling
 .context-engine/
+
+# Python
+__pycache__/
+
+# Python
+__pycache__/
+
+# Generated icon intermediates (rebuild: python3 assets/logo/script/generate.py)
+assets/logo/output/
