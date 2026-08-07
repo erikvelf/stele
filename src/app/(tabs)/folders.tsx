@@ -65,6 +65,7 @@ export default function FoldersScreen() {
             onPress={folder => router.push(`/folder/${folder.id}`)}
             onEditPress={openSheetFor}
             onDeletePress={setFolderPendingDelete}
+            style={styles.list}
           />
         )}
       </ScrollView>
@@ -94,6 +95,9 @@ const styles = StyleSheet.create({
   body: {
     padding: SPACING.md,
     paddingBottom: FAB_CLEARANCE,
+  },
+  list: {
+    gap: SPACING.sm,
   },
   fab: {
     position: 'absolute',
