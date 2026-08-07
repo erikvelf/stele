@@ -21,7 +21,7 @@ export default function NewFolderColorScreen() {
   }, [navigation, openSheet]);
 
   return (
-    <Surface style={styles.screen}>
+    <Surface elevation={0} style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
         <StonePicker
           value={stoneId}

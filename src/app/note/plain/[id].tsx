@@ -1,31 +1,49 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLayoutEffect } from 'react';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { StyleSheet } from 'react-native';
-import { ActivityIndicator, Surface, TextInput } from 'react-native-paper';
+import { ActivityIndicator, IconButton, Surface } from 'react-native-paper';
 
+import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
 import { SPACING } from '@/constants/layout';
 import { useNote } from '@/hooks/useNote';
+import { useRenderMode } from '@/hooks/useRenderMode';
 
 export default function PlainNoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
   const { note, isLoading, setText } = useNote(id);
+  const { isRenderMode, toggleRenderMode } = useRenderMode({
+    noteId: id,
+    isLoading,
+    hasText: (note?.text ?? '').length > 0,
+  });
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton
+          icon={isRenderMode ? 'pencil' : 'eye'}
+          onPress={toggleRenderMode}
+        />
+      ),
+    });
+  }, [navigation, isRenderMode, toggleRenderMode]);
 
   if (isLoading) {
     return (
-      <Surface style={styles.centered}>
+      <Surface elevation={0} style={styles.centered}>
         <ActivityIndicator />
       </Surface>
     );
   }
 
   return (
-    <Surface style={styles.screen}>
-      <TextInput
-        mode="flat"
-        multiline
+    <Surface elevation={0} style={styles.screen}>
+      <NoteEditorArea
         placeholder="Writing…"
         value={note?.text ?? ''}
         onChangeText={setText}
-        style={styles.input}
+        isRenderMode={isRenderMode}
       />
     </Surface>
   );
@@ -40,8 +58,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  input: {
-    flex: 1,
   },
 });
