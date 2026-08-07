@@ -1,3 +1,5 @@
+import type { StyleProp, ViewStyle } from 'react-native';
+
 import { FadingList } from '@/components/shared';
 import type { Folder } from '@/modules/folders';
 
@@ -8,8 +10,9 @@ export interface FolderListProps {
   pendingFolderId?: string;
   onTopFolderSettled?: () => void;
   onPress: (folder: Folder) => void;
-  onEditPress: (folder: Folder) => void;
-  onDeletePress: (folder: Folder) => void;
+  onEditPress?: (folder: Folder) => void;
+  onDeletePress?: (folder: Folder) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function FolderList({
@@ -19,6 +22,7 @@ export function FolderList({
   onPress,
   onEditPress,
   onDeletePress,
+  style,
 }: FolderListProps) {
   return (
     <FadingList
@@ -26,6 +30,7 @@ export function FolderList({
       keyExtractor={folder => folder.id}
       pendingId={pendingFolderId}
       onTopItemSettled={onTopFolderSettled}
+      style={style}
       renderItem={folder => (
         <FolderCard
           folder={folder}
