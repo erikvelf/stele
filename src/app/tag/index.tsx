@@ -66,7 +66,7 @@ export default function TagListScreen() {
   };
 
   return (
-    <Surface style={styles.screen}>
+    <Surface elevation={0} style={styles.screen}>
       <Searchbar
         placeholder="Cerca un tag"
         value={query}

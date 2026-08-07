@@ -19,7 +19,7 @@ export interface ActivityListProps {
   pendingEntryId?: string;
   onTopEntrySettled?: () => void;
   onOpenEntry: (entry: NoteEntry) => void;
-  onEditEntry: (entry: NoteEntry) => void;
+  onSetDayRangeEntry: (entry: NoteEntry) => void;
   onDeleteEntry: (entry: NoteEntry) => void;
 }
 
@@ -28,7 +28,7 @@ export function ActivityList({
   pendingEntryId,
   onTopEntrySettled,
   onOpenEntry,
-  onEditEntry,
+  onSetDayRangeEntry,
   onDeleteEntry,
 }: ActivityListProps) {
   return (
@@ -50,7 +50,7 @@ export function ActivityList({
               noteText={entry.note.text}
               range={entry.range}
               onOpenPress={() => onOpenEntry(entry)}
-              onEditPress={() => onEditEntry(entry)}
+              onSetDayRangePress={() => onSetDayRangeEntry(entry)}
               onDeletePress={() => onDeleteEntry(entry)}
             />
           </>
