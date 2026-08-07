@@ -1,13 +1,20 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import { Text, TouchableRipple } from 'react-native-paper';
 
-import { SELECTION_BORDER_COLOR, TRANSPARENT, tonalPairFor } from '@/modules/palette';
+import {
+  SELECTION_BORDER_COLOR,
+  TRANSPARENT,
+  buildTheme,
+  tonalPairFor,
+} from '@/modules/palette';
 import type { Tag as TagType } from '@/modules/highlights';
 import type { StoneId } from '@/modules/types';
 
-import { RADIUS, SPACING } from '@/constants/layout';
+import { SPACING } from '@/constants/layout';
 
 const SELECTED_BORDER_WIDTH = 2;
+const PILL_RADIUS = 18;
+const PILL_RADIUS_SMALL = 12;
 
 interface TagProps {
   tag: TagType;
@@ -25,50 +32,58 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
   // of the app's own light/dark theme.
   const { container, onContainer } = tonalPairFor(stoneId, true);
 
-  const Wrapper = onPress ? Pressable : View;
-  const borderStyle = isSelected ? styles.pillSelected : styles.pillUnselected;
+  const radius = isSmall ? PILL_RADIUS_SMALL : PILL_RADIUS;
+  const paddingStyle = isSmall ? styles.pillSmall : styles.pill;
+  const shapeStyle = [
+    styles.shape,
+    { backgroundColor: container, borderRadius: radius },
+    onPress && isSelected ? styles.shapeSelected : styles.shapeUnselected,
+  ];
+  const label = (
+    <Text variant={isSmall ? 'labelSmall' : 'labelLarge'} style={{ color: onContainer }}>
+      {tag.name}
+    </Text>
+  );
+
+  if (!onPress) {
+    return <View style={[shapeStyle, paddingStyle]}>{label}</View>;
+  }
 
   return (
-    <Wrapper
-      {...(onPress
-        ? {
-            accessibilityRole: 'button' as const,
-            accessibilityState: { selected: isSelected },
-            onPress,
-          }
-        : {})}
-      style={[
-        isSmall ? styles.pillSmall : styles.pill,
-        { backgroundColor: container },
-        onPress ? borderStyle : null,
-      ]}
-    >
-      <Text variant={isSmall ? 'labelSmall' : 'labelLarge'} style={{ color: onContainer }}>
-        {tag.name}
-      </Text>
-    </Wrapper>
+    <View style={shapeStyle}>
+      <TouchableRipple
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        borderless
+        theme={buildTheme(stoneId, true)}
+        onPress={onPress}
+        style={[paddingStyle, { borderRadius: radius }]}
+      >
+        {label}
+      </TouchableRipple>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pill: {
+  shape: {
     alignSelf: 'flex-start',
-    borderRadius: RADIUS.full,
+    overflow: 'hidden',
+  },
+  shapeSelected: {
+    borderWidth: SELECTED_BORDER_WIDTH,
+    borderColor: SELECTION_BORDER_COLOR,
+  },
+  shapeUnselected: {
+    borderWidth: 0,
+    borderColor: TRANSPARENT,
+  },
+  pill: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
   },
   pillSmall: {
-    alignSelf: 'flex-start',
-    borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs / 2,
-  },
-  pillSelected: {
-    borderWidth: SELECTED_BORDER_WIDTH,
-    borderColor: SELECTION_BORDER_COLOR,
-  },
-  pillUnselected: {
-    borderWidth: 0,
-    borderColor: TRANSPARENT,
   },
 });

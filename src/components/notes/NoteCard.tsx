@@ -1,10 +1,12 @@
 import { format } from 'date-fns';
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Surface, Text, useTheme } from 'react-native-paper';
+import { Card, IconButton, Menu, Text, useTheme } from 'react-native-paper';
 
-import { ItemActionsMenu } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import type { DateDayRange } from '@/modules/notes';
+
+import { MarkdownPreview } from './MarkdownPreview';
 
 export interface NoteCardProps {
   noteText: string;
@@ -12,12 +14,62 @@ export interface NoteCardProps {
   range: DateDayRange;
   onOpenPress: () => void;
   onMediaPress?: () => void;
-  onEditPress: () => void;
+  onSetDayRangePress: () => void;
   onDeletePress: () => void;
 }
 
 const NO_IMAGE_PLACEHOLDER = '🪨';
 const MAX_VISIBLE_IMAGES = 4;
+const PREVIEW_TITLE_LINES = 1;
+const PREVIEW_BODY_LINES = 2;
+const MENU_ICON_SIZE = 16;
+
+function NoteCardMenu({
+  onSetDayRangePress,
+  onDeletePress,
+}: Pick<NoteCardProps, 'onSetDayRangePress' | 'onDeletePress'>) {
+  const theme = useTheme();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  return (
+    <Menu
+      visible={isMenuOpen}
+      onDismiss={() => setIsMenuOpen(false)}
+      anchor={
+        <IconButton
+          icon="dots-vertical"
+          size={MENU_ICON_SIZE}
+          style={styles.menuButton}
+          accessibilityLabel="Note actions"
+          onPress={() => setIsMenuOpen(true)}
+        />
+      }
+    >
+      <Menu.Item
+        leadingIcon="calendar-range"
+        title="Set day range"
+        onPress={() => {
+          setIsMenuOpen(false);
+          onSetDayRangePress();
+        }}
+      />
+      <Menu.Item
+        leadingIcon="delete"
+        title="Delete"
+        theme={{
+          colors: {
+            onSurface: theme.colors.error,
+            onSurfaceVariant: theme.colors.error,
+          },
+        }}
+        onPress={() => {
+          setIsMenuOpen(false);
+          onDeletePress();
+        }}
+      />
+    </Menu>
+  );
+}
 
 export function NoteCard({
   noteText,
@@ -25,7 +77,7 @@ export function NoteCard({
   range,
   onOpenPress,
   onMediaPress,
-  onEditPress,
+  onSetDayRangePress,
   onDeletePress,
 }: NoteCardProps) {
   const theme = useTheme();
@@ -36,9 +88,10 @@ export function NoteCard({
   const hiddenImageCount = images.length - visibleImages.length;
 
   return (
-    <Surface
-      style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
-      elevation={0}
+    <Card
+      mode="contained"
+      onPress={onOpenPress}
+      style={[styles.card, { backgroundColor: theme.colors.elevation.level3 }]}
     >
       {visibleImages.length > 0 ? (
         <Pressable
@@ -77,29 +130,30 @@ export function NoteCard({
         </Pressable>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={onOpenPress}
-        style={styles.textSection}
-      >
-        <Text variant="titleMedium" numberOfLines={1}>
+      <Card.Content style={styles.textSection}>
+        <Text
+          variant="titleMedium"
+          numberOfLines={PREVIEW_TITLE_LINES}
+          style={{ color: theme.colors.onSurface }}
+        >
           {previewTitle}
         </Text>
         {previewBody ? (
-          <Text
-            variant="bodyMedium"
-            numberOfLines={2}
-            style={styles.previewBody}
-          >
-            {previewBody}
-          </Text>
+          <View style={styles.previewBody}>
+            <MarkdownPreview
+              markdown={previewBody}
+              fontSize={theme.fonts.bodyMedium.fontSize}
+              lineHeight={theme.fonts.bodyMedium.lineHeight}
+              maxLines={PREVIEW_BODY_LINES}
+            />
+          </View>
         ) : null}
-      </Pressable>
+      </Card.Content>
 
       <View
         style={[
           styles.footer,
-          { borderTopColor: theme.colors.elevation.level3 },
+          { backgroundColor: theme.colors.elevation.level2 },
         ]}
       >
         <Text
@@ -108,14 +162,12 @@ export function NoteCard({
         >
           {format(new Date(range.start_timestamp), 'EEE, MMM d')}
         </Text>
-        <ItemActionsMenu
-          onEditPress={onEditPress}
+        <NoteCardMenu
+          onSetDayRangePress={onSetDayRangePress}
           onDeletePress={onDeletePress}
-          iconSize={16}
-          iconStyle={styles.menuButton}
         />
       </View>
-    </Surface>
+    </Card>
   );
 }
 
@@ -155,7 +207,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   textSection: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   previewBody: {
     marginTop: SPACING.xs,
@@ -168,6 +221,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: SPACING.md,
-    borderTopWidth: 3,
   },
 });
