@@ -110,10 +110,12 @@ module.exports = defineConfig([
               from: ['./src/app', './src/components', './src/hooks'],
             },
             { target: './src/components', from: './src/app' },
+            // `archive` is the one module that legitimately spans domains: an
+            // export file has to hold all of them at once.
             {
               target: './src/modules/notes',
               from: './src/modules',
-              except: ['./notes', './types', './db'],
+              except: ['./notes', './types', './db', './archive'],
             },
             {
               target: './src/modules/palette',
@@ -123,7 +125,7 @@ module.exports = defineConfig([
             {
               target: './src/modules/settings',
               from: './src/modules',
-              except: ['./settings', './types', './db'],
+              except: ['./settings', './types', './db', './archive'],
             },
             {
               target: './src/modules/types',
