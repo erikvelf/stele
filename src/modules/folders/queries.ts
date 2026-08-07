@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 
 import { COMMON_ERRORS } from '@/constants/error-codes';
-import { db } from '@/modules/db';
+import { db, insertInBatches } from '@/modules/db';
+import type { Transaction } from '@/modules/db';
 import { err, ok } from '@/modules/types';
 import type { Result } from '@/modules/types';
 
@@ -68,4 +69,14 @@ export async function listFolders(): Promise<Result<Folder[]>> {
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
   }
+}
+
+// Throws instead of returning a Result: the caller supplies the transaction,
+// and a throw is what rolls it back.
+export async function replaceFolders(
+  folders: readonly Folder[],
+  tx: Transaction
+): Promise<void> {
+  await tx.delete(folderTable);
+  await insertInBatches(folders, batch => tx.insert(folderTable).values(batch));
 }

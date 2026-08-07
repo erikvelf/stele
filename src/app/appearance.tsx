@@ -10,7 +10,7 @@ export default function AppearanceScreen() {
   const { themeMode, stoneId, setThemeMode, setStoneId } = useAppTheme();
 
   return (
-    <Surface style={styles.screen}>
+    <Surface elevation={0} style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
         <ThemeModeToggle value={themeMode} onChange={setThemeMode} />
         <StonePicker value={stoneId} onChange={setStoneId} />

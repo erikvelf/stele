@@ -7,6 +7,7 @@ export interface FolderNoteListProps {
   notes: Note[];
   onPress: (note: Note) => void;
   onEditPress: (note: Note) => void;
+  onMovePress: (note: Note) => void;
   onDeletePress: (note: Note) => void;
 }
 
@@ -14,6 +15,7 @@ export function FolderNoteList({
   notes,
   onPress,
   onEditPress,
+  onMovePress,
   onDeletePress,
 }: FolderNoteListProps) {
   return (
@@ -25,6 +27,7 @@ export function FolderNoteList({
           note={note}
           onPress={onPress}
           onEditPress={onEditPress}
+          onMovePress={onMovePress}
           onDeletePress={onDeletePress}
         />
       )}

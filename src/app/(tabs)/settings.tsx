@@ -21,10 +21,11 @@ export default function SettingsScreen() {
         onPress={() => router.push('/privacy-security')}
       />
       <List.Item
-        title="Backup & data"
+        title="Archivio"
+        description="Export and import your data"
         left={props => <List.Icon {...props} icon="cloud-upload-outline" />}
         right={props => <List.Icon {...props} icon="chevron-right" />}
-        disabled
+        onPress={() => router.push('/archive')}
       />
       <List.Item
         title="Notifications"
@@ -37,6 +38,13 @@ export default function SettingsScreen() {
         left={props => <List.Icon {...props} icon="book-cog-outline" />}
         right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={() => router.push('/journal-behaviour')}
+      />
+      <List.Item
+        title="Test"
+        description="Montagna (mock)"
+        left={props => <List.Icon {...props} icon="flask-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/year-mock')}
       />
       <List.Item
         title="About"

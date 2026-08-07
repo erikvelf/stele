@@ -1,23 +1,24 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
+  IconButton,
   Surface,
   Text,
-  TextInput,
-  useTheme,
 } from 'react-native-paper';
 
 import { HighlightList, TagPickerSheet } from '@/components/highlights';
 import type { ResolvedHighlight } from '@/components/highlights';
-import { SPACING } from '@/constants/layout';
+import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
+import { RADIUS, SPACING } from '@/constants/layout';
+import { recessedSurfaceFor } from '@/modules/palette';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useHighlights } from '@/hooks/useHighlights';
 import { useNote } from '@/hooks/useNote';
+import { useRenderMode } from '@/hooks/useRenderMode';
 import { useTags } from '@/hooks/useTags';
 
-// A blurred TextInput closes the picker on the next tick, before a tap on
-// the picker itself has finished — this delay gives that tap time to land.
 const BLUR_CLOSE_DELAY_MS = 150;
 
 export default function NoteScreen() {
@@ -27,7 +28,12 @@ export default function NoteScreen() {
   const { highlights, addHighlight, updateText, assignTag, reorderHighlights } =
     useHighlights(id);
   const { tags } = useTags();
-  const theme = useTheme();
+  const { theme, stoneId } = useAppTheme();
+  const { isRenderMode, toggleRenderMode } = useRenderMode({
+    noteId: id,
+    isLoading,
+    hasText: (note?.text ?? '').length > 0,
+  });
 
   const resolvedHighlights: ResolvedHighlight[] = useMemo(
     () =>
@@ -39,6 +45,7 @@ export default function NoteScreen() {
     [highlights, tags]
   );
 
+  const navigation = useNavigation();
   const [focusedHighlightId, setFocusedHighlightId] = useState<string | null>(
     null
   );
@@ -46,6 +53,17 @@ export default function NoteScreen() {
     highlight => highlight.id === focusedHighlightId
   );
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton
+          icon={isRenderMode ? 'pencil' : 'eye'}
+          onPress={toggleRenderMode}
+        />
+      ),
+    });
+  }, [navigation, isRenderMode, toggleRenderMode]);
 
   const focusHighlight = (id: string) => {
     if (blurTimeoutRef.current) {
@@ -63,36 +81,42 @@ export default function NoteScreen() {
 
   if (isLoading) {
     return (
-      <Surface style={styles.centered}>
+      <Surface elevation={0} style={styles.centered}>
         <ActivityIndicator />
       </Surface>
     );
   }
 
   return (
-    <Surface style={styles.screen}>
-      <HighlightList
-        highlights={resolvedHighlights}
-        onChangeText={updateText}
-        onAddHighlight={addHighlight}
-        onFocusHighlight={focusHighlight}
-        onBlurHighlight={blurHighlight}
-        onReorderHighlights={reorderHighlights}
-      />
-      <TextInput
-        mode="flat"
-        multiline
+    <Surface elevation={0} style={styles.screen}>
+      <NoteEditorArea
         placeholder="Writing…"
         value={note?.text ?? ''}
         onChangeText={setText}
-        style={styles.input}
-      />
+        isRenderMode={isRenderMode}
+      >
+        <View
+          style={[
+            styles.highlights,
+            { backgroundColor: recessedSurfaceFor(stoneId, theme.dark) },
+          ]}
+        >
+          <HighlightList
+            highlights={resolvedHighlights}
+            onChangeText={updateText}
+            onAddHighlight={addHighlight}
+            onFocusHighlight={focusHighlight}
+            onBlurHighlight={blurHighlight}
+            onReorderHighlights={reorderHighlights}
+          />
+        </View>
+      </NoteEditorArea>
       {error ? (
         <Text
           variant="labelMedium"
           style={[styles.error, { color: theme.colors.error }]}
         >
-          Couldn’t save — {error.cause ?? 'try again'}
+          Couldn&apos;t save — {error.cause ?? 'try again'}
         </Text>
       ) : null}
 
@@ -123,13 +147,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.md,
   },
+  highlights: {
+    borderRadius: RADIUS.sm,
+    overflow: 'hidden',
+  },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  input: {
-    flex: 1,
   },
   error: {
     padding: SPACING.sm,

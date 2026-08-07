@@ -17,6 +17,7 @@ interface UseFolderNotesResult {
   isLoading: boolean;
   refresh: () => void;
   createNote: () => string;
+  moveNote: (id: string, targetFolderId: string) => void;
   removeNote: (id: string) => void;
 }
 
@@ -62,6 +63,17 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
     return noteId;
   }, [folderId]);
 
+  const moveNote = useCallback((id: string, targetFolderId: string) => {
+    setNotes(previous => previous.filter(note => note.id !== id));
+    void writeNoteFolder({ note_id: id, folder_id: targetFolderId }).then(
+      result => {
+        if (!result.success) {
+          setError(result.error);
+        }
+      }
+    );
+  }, []);
+
   const removeNote = useCallback((id: string) => {
     setNotes(previous => previous.filter(note => note.id !== id));
     void deleteNote(id).then(result => {
@@ -71,5 +83,5 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
     });
   }, []);
 
-  return { notes, error, isLoading, refresh, createNote, removeNote };
+  return { notes, error, isLoading, refresh, createNote, moveNote, removeNote };
 }

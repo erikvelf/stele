@@ -1,8 +1,9 @@
-import { isAfter, startOfDay, subDays } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { and, count, desc, eq, gte, lte, lt } from 'drizzle-orm';
 
 import { COMMON_ERRORS } from '@/constants/error-codes';
-import { db } from '@/modules/db';
+import { db, insertInBatches } from '@/modules/db';
+import type { Transaction } from '@/modules/db';
 import { err, ok } from '@/modules/types';
 import type { Result } from '@/modules/types';
 
@@ -21,7 +22,7 @@ import type {
   NoteCreated,
   NoteFolder,
 } from './schema';
-import type { FreeRun, NoteEntry } from './types';
+import type { NoteEntry, NoteTables } from './types';
 
 export async function readNote(id: string): Promise<Result<Note | null>> {
   try {
@@ -61,6 +62,20 @@ export async function deleteNote(id: string): Promise<Result<void>> {
       await tx.delete(noteTable).where(eq(noteTable.id, id));
     });
     return ok(undefined);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+export async function readNoteCreated(
+  noteId: string
+): Promise<Result<NoteCreated | null>> {
+  try {
+    const [row] = await db
+      .select()
+      .from(noteCreatedTable)
+      .where(eq(noteCreatedTable.note_id, noteId));
+    return ok(row ?? null);
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
   }
@@ -133,6 +148,32 @@ export async function writeDateDayRange(
 export async function readDateDayRanges(): Promise<Result<DateDayRanges>> {
   try {
     const rows = await db.select().from(dateDayRangeTable);
+    return ok(dateDayRangesSchema.parse(rows));
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
+// Every day-run belonging to one folder. One row per note rather than per
+// day, so the whole archive's calendar shape fits comfortably in memory and
+// paging can be decided without touching the highlights.
+export async function readFolderDateDayRanges(
+  folderId: string
+): Promise<Result<DateDayRanges>> {
+  try {
+    const rows = await db
+      .select({
+        id: dateDayRangeTable.id,
+        note_id: dateDayRangeTable.note_id,
+        start_timestamp: dateDayRangeTable.start_timestamp,
+        end_timestamp: dateDayRangeTable.end_timestamp,
+      })
+      .from(dateDayRangeTable)
+      .innerJoin(
+        noteFolderTable,
+        eq(noteFolderTable.note_id, dateDayRangeTable.note_id)
+      )
+      .where(eq(noteFolderTable.folder_id, folderId));
     return ok(dateDayRangesSchema.parse(rows));
   } catch (cause) {
     return err(COMMON_ERRORS.UNDEFINED, String(cause));
@@ -261,19 +302,44 @@ export async function listFolderNotes(folderId: string): Promise<Result<Note[]>>
   }
 }
 
-// Pure: how far a range starting at `day` may extend before it would cover a
-// day another note already occupies. `end: null` means nothing is in the way.
-export function findFreeRunFrom(day: Date, ranges: DateDayRanges): FreeRun {
-  const start = startOfDay(day);
+// One transaction, so a write between reads cannot tear the four tables apart.
+export async function exportNoteTables(): Promise<Result<NoteTables>> {
+  try {
+    const tables = await db.transaction(async tx => {
+      const notes = await tx.select().from(noteTable);
+      const folders = await tx.select().from(noteFolderTable);
+      const created = await tx.select().from(noteCreatedTable);
+      const ranges = await tx.select().from(dateDayRangeTable);
+      return { notes, folders, created, ranges };
+    });
+    return ok(tables);
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
 
-  const nextOccupiedStart = ranges
-    .map(range => startOfDay(new Date(range.start_timestamp)))
-    .filter(occupiedStart => isAfter(occupiedStart, start))
-    .sort((a, b) => a.getTime() - b.getTime())
-    .at(0);
+// Throws instead of returning a Result: the caller supplies the transaction,
+// and a throw is what rolls it back. Children go before the notes they
+// reference, then notes come back first.
+export async function replaceNoteTables(
+  tables: NoteTables,
+  tx: Transaction
+): Promise<void> {
+  await tx.delete(dateDayRangeTable);
+  await tx.delete(noteFolderTable);
+  await tx.delete(noteCreatedTable);
+  await tx.delete(noteTable);
 
-  return {
-    start,
-    end: nextOccupiedStart ? subDays(nextOccupiedStart, 1) : null,
-  };
+  await insertInBatches(tables.notes, batch =>
+    tx.insert(noteTable).values(batch)
+  );
+  await insertInBatches(tables.created, batch =>
+    tx.insert(noteCreatedTable).values(batch)
+  );
+  await insertInBatches(tables.folders, batch =>
+    tx.insert(noteFolderTable).values(batch)
+  );
+  await insertInBatches(tables.ranges, batch =>
+    tx.insert(dateDayRangeTable).values(batch)
+  );
 }

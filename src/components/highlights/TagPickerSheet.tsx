@@ -1,12 +1,15 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { IconButton, Surface, Text } from 'react-native-paper';
 
+import { EdgeScroller } from '@/components/shared';
 import type { Tag } from '@/modules/highlights';
 
 import { SPACING } from '@/constants/layout';
 
 import { Tag as TagPill } from './Tag';
+
+const ADD_ICON_SIZE = 20;
 
 interface TagPickerSheetProps {
   isOpen: boolean;
@@ -37,11 +40,10 @@ export function TagPickerSheet({
           Tags
         </Text>
         <View style={styles.row}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="always"
+          <EdgeScroller
+            style={styles.scroller}
             contentContainerStyle={styles.pills}
+            keepKeyboardOnTap
           >
             {tags.map(tag => (
               <TagPill
@@ -53,9 +55,11 @@ export function TagPickerSheet({
                 }
               />
             ))}
-          </ScrollView>
+          </EdgeScroller>
           <IconButton
             icon="plus"
+            size={ADD_ICON_SIZE}
+            style={styles.add}
             accessibilityLabel="Gestisci tag"
             onPress={onManageTagsPress}
           />
@@ -86,6 +90,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  scroller: {
+    flex: 1,
+  },
+  add: {
+    margin: 0,
+    marginLeft: SPACING.xs,
   },
   pills: {
     flexDirection: 'row',

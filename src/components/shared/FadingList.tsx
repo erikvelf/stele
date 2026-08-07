@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   Easing,
@@ -9,8 +8,6 @@ import Animated, {
   SlideInRight,
   runOnJS,
 } from 'react-native-reanimated';
-
-import { SPACING } from '@/constants/layout';
 
 const TRANSITION_DURATION = 380;
 const transitionEasing = Easing.out(Easing.cubic);
@@ -38,7 +35,7 @@ export function FadingList<T>({
 }: FadingListProps<T>) {
   return (
     <Animated.View
-      style={[styles.list, style]}
+      style={style}
       entering={FadeIn.duration(TRANSITION_DURATION)}
     >
       {items.map((item, index) => {
@@ -74,9 +71,3 @@ export function FadingList<T>({
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  list: {
-    gap: SPACING.sm,
-  },
-});

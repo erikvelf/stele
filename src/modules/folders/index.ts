@@ -5,6 +5,7 @@ export {
   deleteFolder,
   listFolders,
   readFolder,
+  replaceFolders,
   seedJournalFolder,
   writeFolder,
 } from './queries';

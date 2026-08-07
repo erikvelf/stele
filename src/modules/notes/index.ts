@@ -13,19 +13,29 @@ export type {
 } from './schema';
 export { mockNoteEntries } from './mock';
 export {
+  findFreeRunFrom,
+  indexRangesByDay,
+  isRunFree,
+  isWithinBounds,
+  toDayBounds,
+} from './ranges';
+export {
   countJournalNotes,
   deleteNote,
-  findFreeRunFrom,
+  exportNoteTables,
   listFolderNotes,
   listNoteEntries,
   readDateDayRange,
   readDateDayRanges,
+  readFolderDateDayRanges,
   readNote,
+  readNoteCreated,
   readNoteEntryForDate,
+  replaceNoteTables,
   writeDateDayRange,
   writeNote,
   writeNoteCreated,
   writeNoteFolder,
 } from './queries';
 export { NOTES_LIST_PAGE_SIZE } from './constants';
-export type { FreeRun, NoteEntry } from './types';
+export type { DayBounds, FreeRun, NoteEntry, NoteTables } from './types';

@@ -50,3 +50,26 @@ export const entryTemplateSchema = z.object({
 export type EntryTemplate = z.infer<typeof entryTemplateSchema>;
 
 export const ENTRY_TEMPLATE_DEFAULTS = entryTemplateSchema.parse({});
+
+// How the log was last being read. Tag filters are deliberately absent: a
+// filter is a question you are asking now, and one that survived a restart
+// would quietly misrepresent the archive.
+export const logViewSchema = z.object({
+  resolution: z.enum(['day', 'week', 'month']).default('day'),
+  direction: z.enum(['newest', 'oldest']).default('newest'),
+});
+export type LogView = z.infer<typeof logViewSchema>;
+
+export const LOG_VIEW_DEFAULTS = logViewSchema.parse({});
+
+// Every preference in one shape, for the settings export file. A block the
+// file omits falls back to its defaults rather than failing the parse.
+export const allSettingsSchema = z.object({
+  appearance: appearanceSchema.default(APPEARANCE_DEFAULTS),
+  appLock: appLockSchema.default(APP_LOCK_DEFAULTS),
+  privacy: privacySchema.default(PRIVACY_DEFAULTS),
+  dailyReminder: dailyReminderSchema.default(DAILY_REMINDER_DEFAULTS),
+  entryTemplate: entryTemplateSchema.default(ENTRY_TEMPLATE_DEFAULTS),
+  logView: logViewSchema.default(LOG_VIEW_DEFAULTS),
+});
+export type AllSettings = z.infer<typeof allSettingsSchema>;

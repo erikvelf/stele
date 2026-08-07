@@ -9,7 +9,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Divider, IconButton, Text, TextInput, useTheme } from 'react-native-paper';
+import { IconButton, TextInput, useTheme } from 'react-native-paper';
 
 import { FadingList } from '@/components/shared';
 import { createId } from '@/lib/id';
@@ -22,7 +22,8 @@ import { Tag as TagPill } from './Tag';
 
 const BULLET_ICON_SIZE = 20;
 const DEFAULT_ROW_SLOT_HEIGHT = 44;
-const ROW_GAP = SPACING.sm;
+const ROW_GAP = 0;
+const ROW_MIN_HEIGHT = 44;
 const DRAG_MIN_DISTANCE = 10;
 const DRAG_SNAP_DURATION_MS = 220;
 
@@ -135,9 +136,9 @@ function HighlightRowContent({
     <View
       style={[
         styles.row,
-        { backgroundColor: theme.colors.surface },
+        { borderColor: theme.colors.outlineVariant },
         isFocused && { backgroundColor: theme.colors.surfaceVariant },
-        isDragged && [styles.rowDragged, { backgroundColor: theme.colors.elevation.level3 }],
+        isDragged && [styles.rowDragged, { backgroundColor: theme.colors.surfaceVariant }],
       ]}
     >
       <TextInput
@@ -149,6 +150,7 @@ function HighlightRowContent({
         onChangeText={onChangeText}
         onFocus={onFocus}
         onBlur={onBlur}
+        placeholderTextColor={theme.colors.onSurfaceDisabled}
         style={styles.input}
         contentStyle={styles.inputContent}
         underlineStyle={styles.inputUnderline}
@@ -163,7 +165,6 @@ function HighlightRowContent({
 
 interface HighlightRowViewProps {
   row: HighlightRow;
-  index: number;
   isFocused: boolean;
   isDragged: boolean;
   dragGesture: PanGesture | undefined;
@@ -181,7 +182,6 @@ interface HighlightRowViewProps {
 // memoized by id) since it mutates shared values the parent owns.
 function HighlightRowView({
   row,
-  index,
   isFocused,
   isDragged,
   dragGesture,
@@ -192,7 +192,6 @@ function HighlightRowView({
 }: HighlightRowViewProps) {
   return (
     <View onLayout={onLayout} style={isDragged && styles.rowHidden}>
-      {index > 0 ? <Divider /> : null}
       <HighlightRowContent
         row={row}
         isFocused={isFocused}
@@ -203,10 +202,10 @@ function HighlightRowView({
         dragHandle={
           dragGesture ? (
             <GestureDetector gesture={dragGesture}>
-              <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} />
+              <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} style={styles.handle} />
             </GestureDetector>
           ) : (
-            <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} />
+            <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} style={styles.handle} />
           )
         }
       />
@@ -236,10 +235,12 @@ function DragOverlay({ row, top, translateY }: DragOverlayProps) {
         row={row}
         isFocused={false}
         isDragged
-        onChangeText={() => {}}
-        onFocus={() => {}}
-        onBlur={() => {}}
-        dragHandle={<IconButton icon="menu" size={BULLET_ICON_SIZE} disabled />}
+        onChangeText={() => { }}
+        onFocus={() => { }}
+        onBlur={() => { }}
+        dragHandle={
+          <IconButton icon="menu" size={BULLET_ICON_SIZE} disabled style={styles.handle} />
+        }
       />
     </Animated.View>
   );
@@ -394,7 +395,6 @@ export function HighlightList({
   onBlurHighlight,
   onReorderHighlights,
 }: HighlightListProps) {
-  const theme = useTheme();
   const [draftId, setDraftId] = useState(createId);
   const [draftText, setDraftText] = useState('');
   const [pendingRowId, setPendingRowId] = useState<string | undefined>(undefined);
@@ -444,10 +444,9 @@ export function HighlightList({
     }
   };
 
-  const renderRow = (row: HighlightRow, index: number) => (
+  const renderRow = (row: HighlightRow) => (
     <HighlightRowView
       row={row}
-      index={index}
       isFocused={row.id === focusedRowId}
       isDragged={row.id === drag?.id}
       dragGesture={dragGestures.get(row.id)}
@@ -464,6 +463,7 @@ export function HighlightList({
   return (
     <View style={styles.container}>
       <FadingList
+        style={styles.list}
         items={rows}
         keyExtractor={row => row.id}
         pendingId={pendingRowId}
@@ -473,29 +473,34 @@ export function HighlightList({
       {drag && draggedRow ? (
         <DragOverlay row={draggedRow} top={drag.originTop} translateY={dragTranslateY} />
       ) : null}
-      <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-        5 è il numero che di solito basta, non un limite
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: SPACING.xs,
+    gap: 0,
+  },
+  list: {
+    gap: 0,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    minHeight: ROW_MIN_HEIGHT,
+    paddingHorizontal: SPACING.xs,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: -StyleSheet.hairlineWidth,
+    backgroundColor: TRANSPARENT,
   },
   rowHidden: {
     opacity: 0,
   },
   rowDragged: {
+    borderRadius: RADIUS.md,
     elevation: 4,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -510,9 +515,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     backgroundColor: TRANSPARENT,
+    paddingHorizontal: 0,
   },
   inputContent: {
-    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   inputUnderline: {
     display: 'none',
@@ -520,5 +526,8 @@ const styles = StyleSheet.create({
   trailingSlot: {
     alignItems: 'flex-end',
     gap: SPACING.xs,
+  },
+  handle: {
+    margin: 0,
   },
 });

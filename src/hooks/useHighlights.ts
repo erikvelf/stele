@@ -11,7 +11,7 @@ import {
 import type { DayHighlight } from '@/modules/highlights';
 import type { AppError } from '@/modules/types';
 
-const AUTOSAVE_DEBOUNCE_MS = 500;
+import { useAutosave } from './useAutosave';
 
 interface UseHighlightsResult {
   highlights: DayHighlight[];
@@ -30,7 +30,21 @@ export function useHighlights(noteId: string): UseHighlightsResult {
   const [error, setError] = useState<AppError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadedNoteId, setLoadedNoteId] = useState<string | null>(null);
-  const debounceRefs = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+  // What updateText builds its payload from: it is handed an id and a text,
+  // and the rest of the highlight has to come from somewhere the write can
+  // still read once the screen is gone.
+  const highlightsRef = useRef<DayHighlight[]>([]);
+
+  const { schedule, cancel, peek } = useAutosave<string, DayHighlight>(
+    (id, highlight) => {
+      void writeHighlight(highlight).then(result => {
+        if (!result.success) {
+          setError(result.error);
+        }
+      });
+    }
+  );
 
   if (loadedNoteId !== noteId) {
     setLoadedNoteId(noteId);
@@ -38,6 +52,10 @@ export function useHighlights(noteId: string): UseHighlightsResult {
     setHighlights([]);
     setError(null);
   }
+
+  useEffect(() => {
+    highlightsRef.current = highlights;
+  }, [highlights]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,11 +72,10 @@ export function useHighlights(noteId: string): UseHighlightsResult {
       setIsLoading(false);
     });
 
-    const debounces = debounceRefs.current;
+    // Pending writes are left alone: each carries its own highlight, so one
+    // scheduled against the note you just left still lands correctly.
     return () => {
       cancelled = true;
-      debounces.forEach(clearTimeout);
-      debounces.clear();
     };
   }, [noteId]);
 
@@ -91,59 +108,57 @@ export function useHighlights(noteId: string): UseHighlightsResult {
     [noteId]
   );
 
-  const updateText = useCallback((id: string, text: string) => {
-    setHighlights(previous =>
-      previous.map(highlight =>
-        highlight.id === id ? { ...highlight, text } : highlight
-      )
-    );
+  const updateText = useCallback(
+    (id: string, text: string) => {
+      setHighlights(previous =>
+        previous.map(highlight =>
+          highlight.id === id ? { ...highlight, text } : highlight
+        )
+      );
 
-    const pending = debounceRefs.current.get(id);
-    if (pending) {
-      clearTimeout(pending);
-    }
+      if (text.trim().length === 0) {
+        cancel(id);
+        setHighlights(previous => previous.filter(highlight => highlight.id !== id));
+        void deleteHighlight(id).then(result => {
+          if (!result.success) {
+            setError(result.error);
+          }
+        });
+        return;
+      }
 
-    if (text.trim().length === 0) {
-      debounceRefs.current.delete(id);
-      setHighlights(previous => previous.filter(highlight => highlight.id !== id));
-      void deleteHighlight(id).then(result => {
+      const existing = highlightsRef.current.find(highlight => highlight.id === id);
+      const highlight: DayHighlight = existing
+        ? { ...existing, text }
+        : { id, note_id: noteId, text, tag_id: null };
+      schedule(id, highlight);
+    },
+    [noteId, cancel, schedule]
+  );
+
+  const assignTag = useCallback(
+    (id: string, tagId: string | null) => {
+      setHighlights(previous =>
+        previous.map(highlight =>
+          highlight.id === id ? { ...highlight, tag_id: tagId } : highlight
+        )
+      );
+
+      // A text write scheduled a moment ago still holds the old tag, and
+      // would put it back when it lands.
+      const pending = peek(id);
+      if (pending) {
+        schedule(id, { ...pending, tag_id: tagId });
+      }
+
+      void assignTagQuery(id, tagId).then(result => {
         if (!result.success) {
           setError(result.error);
         }
       });
-      return;
-    }
-
-    debounceRefs.current.set(
-      id,
-      setTimeout(() => {
-        setHighlights(current => {
-          const highlight = current.find(entry => entry.id === id);
-          if (highlight) {
-            void writeHighlight(highlight).then(result => {
-              if (!result.success) {
-                setError(result.error);
-              }
-            });
-          }
-          return current;
-        });
-      }, AUTOSAVE_DEBOUNCE_MS)
-    );
-  }, []);
-
-  const assignTag = useCallback((id: string, tagId: string | null) => {
-    setHighlights(previous =>
-      previous.map(highlight =>
-        highlight.id === id ? { ...highlight, tag_id: tagId } : highlight
-      )
-    );
-    void assignTagQuery(id, tagId).then(result => {
-      if (!result.success) {
-        setError(result.error);
-      }
-    });
-  }, []);
+    },
+    [peek, schedule]
+  );
 
   const reorderHighlights = useCallback((orderedIds: string[]) => {
     setHighlights(previous => {

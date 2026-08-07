@@ -1,16 +1,26 @@
 import { createMMKV } from 'react-native-mmkv';
 
-import type { AppLock, Appearance, DailyReminder, EntryTemplate, Privacy } from './schema';
+import type {
+  AllSettings,
+  AppLock,
+  Appearance,
+  DailyReminder,
+  EntryTemplate,
+  LogView,
+  Privacy,
+} from './schema';
 import {
   APP_LOCK_DEFAULTS,
   APPEARANCE_DEFAULTS,
   DAILY_REMINDER_DEFAULTS,
   ENTRY_TEMPLATE_DEFAULTS,
+  LOG_VIEW_DEFAULTS,
   PRIVACY_DEFAULTS,
   appLockSchema,
   appearanceSchema,
   dailyReminderSchema,
   entryTemplateSchema,
+  logViewSchema,
   privacySchema,
 } from './schema';
 
@@ -19,6 +29,7 @@ const APP_LOCK_STORAGE_KEY = 'settings.appLock';
 const PRIVACY_STORAGE_KEY = 'settings.privacy';
 const DAILY_REMINDER_STORAGE_KEY = 'settings.dailyReminder';
 const ENTRY_TEMPLATE_STORAGE_KEY = 'settings.entryTemplate';
+const LOG_VIEW_STORAGE_KEY = 'settings.logView';
 
 const storage = createMMKV({ id: 'settings' });
 
@@ -93,4 +104,38 @@ export function readEntryTemplate(): EntryTemplate {
 
 export function writeEntryTemplate(entryTemplate: EntryTemplate): void {
   storage.set(ENTRY_TEMPLATE_STORAGE_KEY, JSON.stringify(entryTemplate));
+}
+
+export function readLogView(): LogView {
+  const raw = storage.getString(LOG_VIEW_STORAGE_KEY);
+  if (raw === undefined) {
+    return LOG_VIEW_DEFAULTS;
+  }
+
+  const parsed = logViewSchema.safeParse(JSON.parse(raw));
+  return parsed.success ? parsed.data : LOG_VIEW_DEFAULTS;
+}
+
+export function writeLogView(logView: LogView): void {
+  storage.set(LOG_VIEW_STORAGE_KEY, JSON.stringify(logView));
+}
+
+export function readAllSettings(): AllSettings {
+  return {
+    appearance: readAppearance(),
+    appLock: readAppLock(),
+    privacy: readPrivacy(),
+    dailyReminder: readDailyReminder(),
+    entryTemplate: readEntryTemplate(),
+    logView: readLogView(),
+  };
+}
+
+export function writeAllSettings(settings: AllSettings): void {
+  writeAppearance(settings.appearance);
+  writeAppLock(settings.appLock);
+  writePrivacy(settings.privacy);
+  writeDailyReminder(settings.dailyReminder);
+  writeEntryTemplate(settings.entryTemplate);
+  writeLogView(settings.logView);
 }
