@@ -5,9 +5,13 @@ export {
   countHighlights,
   deleteHighlight,
   deleteTag,
+  exportHighlightTables,
   listHighlights,
+  listHighlightsForNotes,
   listTags,
   reorderHighlights,
+  replaceHighlightTables,
   writeHighlight,
   writeTag,
 } from './queries';
+export type { HighlightTables } from './types';
