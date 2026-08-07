@@ -1,23 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import {
-  Button,
-  List,
-  Surface,
-  Switch,
-  Text,
-  useTheme,
-} from 'react-native-paper';
+import { List, Surface, Switch, Text, useTheme } from 'react-native-paper';
 
 import { DailyReminderTimePicker } from '@/components/settings/DailyReminderTimePicker';
 import { SPACING } from '@/constants/layout';
 import { useDailyReminder } from '@/hooks/useDailyReminder';
-import {
-  requestNotificationPermission,
-  scheduleOneShotNotification,
-} from '@/lib/notifications';
-
-const TEST_NOTIFICATION_DELAY_MS = 3000;
 
 export default function NotificationsScreen() {
   const theme = useTheme();
@@ -32,19 +19,6 @@ export default function NotificationsScreen() {
 
   const changeTime = (hour: number, minute: number) => {
     void setReminder(true, hour, minute);
-  };
-
-  const sendTestNotification = () => {
-    void requestNotificationPermission().then(granted => {
-      if (!granted) {
-        setPermissionDenied(true);
-        return;
-      }
-      void scheduleOneShotNotification(
-        { title: 'Stele', body: 'Test notification' },
-        new Date(Date.now() + TEST_NOTIFICATION_DELAY_MS)
-      );
-    });
   };
 
   return (
@@ -73,13 +47,6 @@ export default function NotificationsScreen() {
           onChange={changeTime}
         />
       )}
-      <Button
-        style={styles.testButton}
-        mode="outlined"
-        onPress={sendTestNotification}
-      >
-        Send test notification
-      </Button>
     </Surface>
   );
 }
@@ -91,9 +58,5 @@ const styles = StyleSheet.create({
   permissionHint: {
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
-  },
-  testButton: {
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.lg,
   },
 });
