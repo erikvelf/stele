@@ -12,6 +12,7 @@ import Animated, {
 import { FoldersCarousel, FoldersCarouselEmptyState } from '@/components/folders';
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
 import { ActivityList } from '@/components/notes/ActivityList';
+import { DayRangeModal } from '@/components/notes/DayRangeModal';
 import { NotesEmptyState } from '@/components/notes/NotesEmptyState';
 import { ConfirmDeleteModal } from '@/components/shared';
 import type { CreationStatRow } from '@/components/shared/CreationStats';
@@ -27,6 +28,8 @@ import {
   countJournalNotes,
   dateDayRangesSchema,
   deleteNote,
+  writeDateDayRange,
+  type DateDayRange,
   type NoteEntry,
 } from '@/modules/notes';
 import { pickCreationVerb } from '@/modules/stats';
@@ -88,8 +91,10 @@ export default function HomeScreen() {
     useListNotes();
   const { rows: creationStatRows, refresh: refreshCreationStats } =
     useCreationStats();
-  const [deleteError, setDeleteError] = useState(false);
+  const [entryError, setEntryError] = useState<string | null>(null);
   const [entryPendingDelete, setEntryPendingDelete] =
+    useState<NoteEntry | null>(null);
+  const [entryPendingDayRange, setEntryPendingDayRange] =
     useState<NoteEntry | null>(null);
 
   const ranges = useMemo(
@@ -120,7 +125,7 @@ export default function HomeScreen() {
       removeEntry(entry.range.id);
       void deleteNote(entry.note.id).then(result => {
         if (!result.success) {
-          setDeleteError(true);
+          setEntryError("Couldn't delete the note. Please try again.");
           refresh();
           return;
         }
@@ -129,6 +134,20 @@ export default function HomeScreen() {
       });
     },
     [removeEntry, refresh, refreshCreationStats, rescheduleDailyReminder]
+  );
+
+  const handleConfirmDayRange = useCallback(
+    (range: DateDayRange) => {
+      setEntryPendingDayRange(null);
+      void writeDateDayRange(range).then(result => {
+        if (!result.success) {
+          setEntryError("Couldn't set the day range. Please try again.");
+          return;
+        }
+        refresh();
+      });
+    },
+    [refresh]
   );
 
   useFocusEffect(
@@ -184,7 +203,7 @@ export default function HomeScreen() {
             pendingEntryId={pendingEntryId}
             onTopEntrySettled={handleTopEntrySettled}
             onOpenEntry={entry => router.push(`/note/${entry.note.id}`)}
-            onEditEntry={entry => router.push(`/note/${entry.note.id}`)}
+            onSetDayRangeEntry={setEntryPendingDayRange}
             onDeleteEntry={setEntryPendingDelete}
           />
         )}
@@ -201,6 +220,13 @@ export default function HomeScreen() {
         onDismiss={() => setEntryPendingDelete(null)}
       />
 
+      <DayRangeModal
+        entry={entryPendingDayRange}
+        ranges={ranges}
+        onDismiss={() => setEntryPendingDayRange(null)}
+        onConfirm={handleConfirmDayRange}
+      />
+
       <FAB
         icon="pencil"
         style={styles.fab}
@@ -209,11 +235,11 @@ export default function HomeScreen() {
       />
 
       <Snackbar
-        visible={deleteError}
-        onDismiss={() => setDeleteError(false)}
+        visible={entryError !== null}
+        onDismiss={() => setEntryError(null)}
         duration={4000}
       >
-        Couldn&apos;t delete the note. Please try again.
+        {entryError}
       </Snackbar>
     </Surface>
   );
