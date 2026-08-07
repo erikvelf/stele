@@ -8,6 +8,7 @@ facet tones and lays the result on an InfoSwatch-style tile.
     python3 assets/logo/script/generate.py
 """
 
+import math
 import os
 import re
 import sys
@@ -74,9 +75,6 @@ ICON_STONE = 'serpentine'
 # 72dp of 108dp survives its mask, so contained art sits inside that fraction.
 SAFE_ZONE_RATIO = 72 / 108
 
-# A contained stele leaves this much of the canvas as margin around it.
-MARK_HEIGHT_RATIO = 0.86
-
 SVG_OPEN = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {canvas} {canvas}" \
 preserveAspectRatio="xMidYMid meet" width="100%" height="100%" role="img" aria-label="Stele">'''
 
@@ -139,24 +137,59 @@ def render(parts, tile, blob_radius_ratio=BLOB_RADIUS_RATIO):
         **GRANODIORITE)
 
 
+def layers(parts, tones, silhouette_only=False):
+    """The stele's paths in the source artwork's own coordinate space."""
+    outline, front, side, facet, inscription = parts
+    if silhouette_only:
+        return f'<path fill="{tones["ink"]}" d="{subpaths(outline)[0]}"/>'
+    return (f'<path fill="{tones["front"]}" d="{front}"/>'
+            f'<path fill="{tones["facet"]}" d="{facet}"/>'
+            f'<path fill="{tones["side"]}" d="{side}"/>'
+            f'<path fill="{tones["ink"]}" fill-rule="evenodd" d="{outline}"/>'
+            f'<path fill="{tones["ink"]}" d="{inscription}"/>')
+
+
 def contained(parts, tones, height_ratio, silhouette_only=False):
     """The stele alone on transparency, scaled to fit `height_ratio` of the
-    canvas. Used for the Android foreground, the monochrome layer and the
-    splash mark, none of which may bleed off the square."""
-    outline, front, side, facet, inscription = parts
+    square canvas. Used for the Android monochrome layer, which may not bleed
+    outside the launcher's safe zone."""
     scale = CANVAS * height_ratio / STELE_HEIGHT
     x = round((CANVAS - STELE_WIDTH * scale) / 2, 2)
     y = round((CANVAS - STELE_HEIGHT * scale) / 2, 2)
-    if silhouette_only:
-        body = f'<path fill="{tones["ink"]}" d="{subpaths(outline)[0]}"/>'
-    else:
-        body = (f'<path fill="{tones["front"]}" d="{front}"/>'
-                f'<path fill="{tones["facet"]}" d="{facet}"/>'
-                f'<path fill="{tones["side"]}" d="{side}"/>'
-                f'<path fill="{tones["ink"]}" fill-rule="evenodd" d="{outline}"/>'
-                f'<path fill="{tones["ink"]}" d="{inscription}"/>')
     return (f'{SVG_OPEN.format(canvas=int(CANVAS))}'
-            f'<g transform="translate({x} {y}) scale({round(scale, 5)})">{body}</g></svg>\n')
+            f'<g transform="translate({x} {y}) scale({round(scale, 5)})">'
+            f'{layers(parts, tones, silhouette_only)}</g></svg>\n')
+
+
+# Share of the layer width the stele spans in the Android foreground. The
+# round launcher mask is a circle of the safe zone's diameter, so a wider
+# stele puts its chamfered top corners outside that circle.
+CROPPED_WIDTH_RATIO = 0.508
+
+
+def cropped(parts, tones):
+    """The stele alone on transparency, cropped like the store icon: it spans
+    most of the layer and runs off the bottom edge instead of sitting inside
+    it. The top corners are placed on the safe zone's circle, so the chamfer
+    survives every launcher mask."""
+    scale = CANVAS * CROPPED_WIDTH_RATIO / STELE_WIDTH
+    half_width = STELE_WIDTH * scale / 2
+    safe_radius = CANVAS * SAFE_ZONE_RATIO / 2
+    x = CANVAS / 2 - half_width
+    y = CANVAS / 2 - math.sqrt(safe_radius ** 2 - half_width ** 2)
+    return (f'{SVG_OPEN.format(canvas=int(CANVAS))}'
+            f'<g transform="translate({round(x, 2)} {round(y, 2)}) '
+            f'scale({round(scale, 5)})">{layers(parts, tones)}</g></svg>\n')
+
+
+def native(parts, tones):
+    """The stele alone on the source artboard, which is already tight to the
+    mark. The splash uses this so that app.json's `imageWidth` measures the
+    stele itself rather than a square that is mostly transparency."""
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" '
+            f'viewBox="0 0 {int(STELE_WIDTH)} {int(STELE_HEIGHT)}" '
+            f'preserveAspectRatio="xMidYMid meet" width="100%" height="100%" '
+            f'role="img" aria-label="Stele">{layers(parts, tones)}</svg>\n')
 
 
 # Four inscription bars in the source artwork's coordinate space, ragged at
@@ -225,11 +258,10 @@ def main():
     app = os.path.join(OUTPUT, 'app')
     write(app, 'icon.svg', render(parts, seed))
     write(app, 'android-icon-background.svg', ground(seed))
-    write(app, 'android-icon-foreground.svg',
-          contained(parts, GRANODIORITE, SAFE_ZONE_RATIO))
+    write(app, 'android-icon-foreground.svg', cropped(parts, GRANODIORITE))
     write(app, 'android-icon-monochrome.svg',
           contained(parts, monochrome, SAFE_ZONE_RATIO, silhouette_only=True))
-    write(app, 'splash-icon.svg', contained(parts, GRANODIORITE, MARK_HEIGHT_RATIO))
+    write(app, 'splash-icon.svg', native(parts, GRANODIORITE))
     write(app, 'icon-small.svg', reduced(parts, seed))
     write(app, 'favicon.svg', reduced(parts, seed))
 
