@@ -126,7 +126,7 @@ function RootLayoutNavigator() {
   if (isLocked) {
     return (
       <PaperProvider theme={theme} settings={paperSettings}>
-        <Surface style={styles.lockScreen}>
+        <Surface elevation={0} style={styles.lockScreen}>
           <Avatar.Icon
             size={112}
             icon="lock"
@@ -152,7 +152,7 @@ function RootLayoutNavigator() {
   return (
     <PaperProvider theme={theme} settings={paperSettings}>
       <ThemeProvider value={navigationTheme}>
-        <Stack>
+        <Stack screenOptions={{ headerShadowVisible: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="note/[id]" options={{ title: 'Sasso' }} />
           <Stack.Screen name="note/plain/[id]" options={{ title: 'Nota' }} />
@@ -175,6 +175,7 @@ function RootLayoutNavigator() {
             name="notifications"
             options={{ title: 'Notifications' }}
           />
+          <Stack.Screen name="archive" options={{ title: 'Archivio' }} />
           <Stack.Screen
             name="journal-behaviour"
             options={{ title: 'Journal behaviour' }}
