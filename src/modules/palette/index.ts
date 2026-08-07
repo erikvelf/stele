@@ -7,5 +7,6 @@ export {
   TRANSPARENT,
 } from './constants';
 export type { Stone, StoneFamily } from './constants';
+export { recessedSurfaceFor } from './recessed';
 export { tonalPairFor } from './tonal';
 export type { TonalPair } from './tonal';

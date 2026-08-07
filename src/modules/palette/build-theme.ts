@@ -1,11 +1,11 @@
-import { argbFromHex, CorePalette, Hct, hexFromArgb, Scheme } from '@material/material-color-utilities';
+import { hexFromArgb, Scheme } from '@material/material-color-utilities';
 import type { Scheme as SchemeType } from '@material/material-color-utilities';
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 
 import type { StoneId } from '@/modules/types';
 
-import { seedFor } from './constants';
+import { corePaletteFor } from './core';
 
 type MD3Colors = MD3Theme['colors'];
 
@@ -106,17 +106,6 @@ function buildColors(scheme: SchemeType, backdropSeed: string): MD3Colors {
   };
 }
 
-// A seed below this chroma reads as already-neutral (a grey or near-grey
-// stone). CorePalette.of ignores that and forces a chroma-48 primary
-// regardless of the seed, which turns a whisper of hue into a saturated
-// color cast. CorePalette.contentOf keeps the seed's own low chroma instead,
-// so basalt and slate stay close to true grey rather than tinting green or
-// blue. A seed at or above the threshold (e.g. travertine) is saturated on
-// purpose and keeps the vivid, amplified rendering.
-const NEUTRAL_CONTENT_CHROMA_THRESHOLD = 20;
-
-// (stoneId, isDark) is a small finite domain, so the expensive HCT
-// quantization behind this is computed once per combination and reused.
 const themeCache = new Map<string, MD3Theme>();
 
 export function buildTheme(stoneId: StoneId, isDark: boolean): MD3Theme {
@@ -126,9 +115,7 @@ export function buildTheme(stoneId: StoneId, isDark: boolean): MD3Theme {
     return cached;
   }
 
-  const sourceArgb = argbFromHex(seedFor(stoneId));
-  const isNearNeutral = Hct.fromInt(sourceArgb).chroma < NEUTRAL_CONTENT_CHROMA_THRESHOLD;
-  const corePalette = isNearNeutral ? CorePalette.contentOf(sourceArgb) : CorePalette.of(sourceArgb);
+  const corePalette = corePaletteFor(stoneId);
   const scheme = isDark
     ? Scheme.darkFromCorePalette(corePalette)
     : Scheme.lightFromCorePalette(corePalette);
