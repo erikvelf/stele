@@ -20,6 +20,7 @@ export interface ArchiveSummary {
   folders: number;
   tags: number;
   notes: number;
+  journalNotes: number;
   highlights: number;
   reflections: number;
 }
@@ -109,7 +110,8 @@ function summarize(archive: Archive): ArchiveSummary {
     folders: archive.folders.length,
     tags: archive.tags.length,
     notes: archive.notes.length,
-    highlights: archive.notes.reduce(
+    journalNotes: archive.journalNotes.length,
+    highlights: archive.journalNotes.reduce(
       (total, note) => total + note.highlights.length,
       0
     ),

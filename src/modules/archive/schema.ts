@@ -40,13 +40,21 @@ export const archiveDateRangeSchema = z
     path: ['end'],
   });
 
+// A folder note. It carries no date and no highlights — those belong to the
+// diario, which the file keeps in its own array.
 export const archiveNoteSchema = z.object({
   id: identifierSchema,
   text: z.string(),
   folderId: identifierSchema,
   createdAt: z.number().int(),
-  // Absent means the note carries no date.
-  dateRange: archiveDateRangeSchema.optional(),
+});
+
+// A diario entry. It names no folder: the day it covers is what places it.
+export const archiveJournalNoteSchema = z.object({
+  id: identifierSchema,
+  text: z.string(),
+  createdAt: z.number().int(),
+  dateRange: archiveDateRangeSchema,
   highlights: z.array(archiveHighlightSchema).default([]),
 });
 
@@ -64,6 +72,7 @@ export const archiveSchema = z.object({
   folders: z.array(archiveFolderSchema),
   tags: z.array(archiveTagSchema),
   notes: z.array(archiveNoteSchema),
+  journalNotes: z.array(archiveJournalNoteSchema),
   reflections: z.array(archiveReflectionSchema).default([]),
 });
 
@@ -77,6 +86,7 @@ export type ArchiveFolder = z.infer<typeof archiveFolderSchema>;
 export type ArchiveTag = z.infer<typeof archiveTagSchema>;
 export type ArchiveHighlight = z.infer<typeof archiveHighlightSchema>;
 export type ArchiveNote = z.infer<typeof archiveNoteSchema>;
+export type ArchiveJournalNote = z.infer<typeof archiveJournalNoteSchema>;
 export type ArchiveReflection = z.infer<typeof archiveReflectionSchema>;
 export type Archive = z.infer<typeof archiveSchema>;
 export type SettingsArchive = z.infer<typeof settingsArchiveSchema>;

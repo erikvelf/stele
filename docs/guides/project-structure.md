@@ -117,6 +117,8 @@ lib/ · constants/        no app knowledge
 
 **1. A domain module never imports another domain module.** Only `modules/db` and `modules/types` are shared. Work that needs two domains is orchestration, and orchestration lives in a hook.
 
+The single exception is a foreign key. A `schema.ts` may import another domain's `schema.ts`, and nothing else of it, because a Drizzle `.references()` takes the referenced table object and `PRAGMA foreign_keys = ON` makes the constraint real. A `schema.ts` holds shape and no logic, so the import moves no behaviour across the boundary and closes no cycle.
+
 **2. A component imports its domain's types, never its functions.** Components receive data through props and hooks. A component that calls a module directly has taken on fetching, error handling and lifecycle that belong a layer up.
 
 **3. Composition across domains happens in `app/`.** A screen may use several domains. A component may not: `components/shared/` has no domain knowledge, and `components/[domain]/` has exactly one.

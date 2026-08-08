@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "425cb998-a765-4eb9-b986-e9c78ac8fcdc",
-  "prevId": "d81c917c-c36c-421e-b6da-674f8789bfe7",
+  "id": "e5614663-47f5-4c74-8284-ca5e1b4baea1",
+  "prevId": "91e32465-3b78-44d3-8c65-25d8b0ae6a97",
   "tables": {
     "folder": {
       "name": "folder",
@@ -42,6 +42,47 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "day_highlight_position": {
+      "name": "day_highlight_position",
+      "columns": {
+        "highlight_id": {
+          "name": "highlight_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "journal_note_id": {
+          "name": "journal_note_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "day_highlight_position_highlight_id_day_highlight_id_fk": {
+          "name": "day_highlight_position_highlight_id_day_highlight_id_fk",
+          "tableFrom": "day_highlight_position",
+          "tableTo": "day_highlight",
+          "columnsFrom": ["highlight_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "day_highlight": {
       "name": "day_highlight",
       "columns": {
@@ -52,8 +93,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "note_id": {
-          "name": "note_id",
+        "journal_note_id": {
+          "name": "journal_note_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -76,16 +117,21 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "day_highlight_journal_note_id_journal_note_id_fk": {
+          "name": "day_highlight_journal_note_id_journal_note_id_fk",
+          "tableFrom": "day_highlight",
+          "tableTo": "journal_note",
+          "columnsFrom": ["journal_note_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "day_highlight_tag_id_tag_id_fk": {
           "name": "day_highlight_tag_id_tag_id_fk",
           "tableFrom": "day_highlight",
           "tableTo": "tag",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -122,9 +168,7 @@
       "indexes": {
         "tag_name_unique": {
           "name": "tag_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         }
       },
@@ -133,8 +177,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "date_day_range": {
-      "name": "date_day_range",
+    "journal_note": {
+      "name": "journal_note",
       "columns": {
         "id": {
           "name": "id",
@@ -143,9 +187,16 @@
           "notNull": true,
           "autoincrement": false
         },
-        "note_id": {
-          "name": "note_id",
+        "text": {
+          "name": "text",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -165,68 +216,8 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "date_day_range_note_id_unique": {
-          "name": "date_day_range_note_id_unique",
-          "columns": [
-            "note_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "date_day_range_note_id_note_id_fk": {
-          "name": "date_day_range_note_id_note_id_fk",
-          "tableFrom": "date_day_range",
-          "tableTo": "note",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "note_folder": {
-      "name": "note_folder",
-      "columns": {
-        "note_id": {
-          "name": "note_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "folder_id": {
-          "name": "folder_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
       "indexes": {},
-      "foreignKeys": {
-        "note_folder_note_id_note_id_fk": {
-          "name": "note_folder_note_id_note_id_fk",
-          "tableFrom": "note_folder",
-          "tableTo": "note",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -247,9 +238,77 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "folder_id": {
+          "name": "folder_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {},
+      "foreignKeys": {
+        "note_folder_id_folder_id_fk": {
+          "name": "note_folder_id_folder_id_fk",
+          "tableFrom": "note",
+          "tableTo": "folder",
+          "columnsFrom": ["folder_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "reflection": {
+      "name": "reflection",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "reflection_kind_period_start": {
+          "name": "reflection_kind_period_start",
+          "columns": ["kind", "period_start"],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

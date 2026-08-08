@@ -113,10 +113,19 @@ module.exports = defineConfig([
             { target: './src/components', from: './src/app' },
             // `archive` is the one module that legitimately spans domains: an
             // export file has to hold all of them at once.
+            // A foreign key needs the referenced table object, and a
+            // `schema.ts` is inert shape with no logic, so it is the one file
+            // of another domain a schema may reach for.
             {
               target: './src/modules/notes',
               from: './src/modules',
-              except: ['./notes', './types', './db', './archive'],
+              except: [
+                './notes',
+                './types',
+                './db',
+                './archive',
+                './folders/schema.ts',
+              ],
             },
             {
               target: './src/modules/palette',

@@ -6,18 +6,22 @@ import type { Transaction } from '@/modules/db';
 import { err, ok } from '@/modules/types';
 import type { Result } from '@/modules/types';
 
-import { dayHighlightPositionTable, dayHighlightTable, tagTable } from './schema';
+import {
+  dayHighlightPositionTable,
+  dayHighlightTable,
+  tagTable,
+} from './schema';
 import type { DayHighlight, Tag } from './schema';
 import type { HighlightTables } from './types';
 
 export async function listHighlights(
-  noteId: string
+  journalNoteId: string
 ): Promise<Result<DayHighlight[]>> {
   try {
     const rows = await db
       .select({
         id: dayHighlightTable.id,
-        note_id: dayHighlightTable.note_id,
+        journal_note_id: dayHighlightTable.journal_note_id,
         text: dayHighlightTable.text,
         tag_id: dayHighlightTable.tag_id,
       })
@@ -26,7 +30,7 @@ export async function listHighlights(
         dayHighlightPositionTable,
         eq(dayHighlightPositionTable.highlight_id, dayHighlightTable.id)
       )
-      .where(eq(dayHighlightTable.note_id, noteId))
+      .where(eq(dayHighlightTable.journal_note_id, journalNoteId))
       .orderBy(asc(dayHighlightPositionTable.position));
     return ok(rows);
   } catch (cause) {
@@ -34,18 +38,19 @@ export async function listHighlights(
   }
 }
 
-// Every highlight belonging to any of the given notes, ordered within each
-// note. An empty tag filter means no filter; several tags widen the result
-// rather than narrowing it, since a highlight carries at most one.
-export async function listHighlightsForNotes(
-  noteIds: readonly string[],
+// An empty tag filter means no filter; several tags widen the result rather
+// than narrowing it, since a highlight carries at most one.
+export async function listHighlightsForJournalNotes(
+  journalNoteIds: readonly string[],
   tagIds: readonly string[] = []
 ): Promise<Result<DayHighlight[]>> {
-  if (noteIds.length === 0) {
+  if (journalNoteIds.length === 0) {
     return ok([]);
   }
 
-  const byNote = inArray(dayHighlightTable.note_id, [...noteIds]);
+  const byNote = inArray(dayHighlightTable.journal_note_id, [
+    ...journalNoteIds,
+  ]);
   const filter =
     tagIds.length === 0
       ? byNote
@@ -55,7 +60,7 @@ export async function listHighlightsForNotes(
     const rows = await db
       .select({
         id: dayHighlightTable.id,
-        note_id: dayHighlightTable.note_id,
+        journal_note_id: dayHighlightTable.journal_note_id,
         text: dayHighlightTable.text,
         tag_id: dayHighlightTable.tag_id,
       })
@@ -72,8 +77,31 @@ export async function listHighlightsForNotes(
   }
 }
 
-// Every highlight ever struck, across all notes. Used for the home screen's
-// creation stats.
+// How many highlights each of the given notes carries. A note with none is
+// absent from the map rather than present with a zero.
+export async function countHighlightsByJournalNote(
+  journalNoteIds: readonly string[]
+): Promise<Result<Map<string, number>>> {
+  if (journalNoteIds.length === 0) {
+    return ok(new Map());
+  }
+
+  try {
+    const rows = await db
+      .select({
+        journalNoteId: dayHighlightTable.journal_note_id,
+        value: count(),
+      })
+      .from(dayHighlightTable)
+      .where(inArray(dayHighlightTable.journal_note_id, [...journalNoteIds]))
+      .groupBy(dayHighlightTable.journal_note_id);
+
+    return ok(new Map(rows.map(row => [row.journalNoteId, row.value])));
+  } catch (cause) {
+    return err(COMMON_ERRORS.UNDEFINED, String(cause));
+  }
+}
+
 export async function countHighlights(): Promise<Result<number>> {
   try {
     const [row] = await db.select({ value: count() }).from(dayHighlightTable);
@@ -107,7 +135,12 @@ export async function writeHighlight(
       const [row] = await tx
         .select({ maxPosition: max(dayHighlightPositionTable.position) })
         .from(dayHighlightPositionTable)
-        .where(eq(dayHighlightPositionTable.note_id, highlight.note_id));
+        .where(
+          eq(
+            dayHighlightPositionTable.journal_note_id,
+            highlight.journal_note_id
+          )
+        );
       const nextPosition =
         row?.maxPosition === null || row?.maxPosition === undefined
           ? 0
@@ -115,7 +148,7 @@ export async function writeHighlight(
 
       await tx.insert(dayHighlightPositionTable).values({
         highlight_id: highlight.id,
-        note_id: highlight.note_id,
+        journal_note_id: highlight.journal_note_id,
         position: nextPosition,
       });
     });
@@ -219,9 +252,7 @@ export async function exportHighlightTables(): Promise<
   }
 }
 
-// Throws instead of returning a Result: the caller supplies the transaction,
-// and a throw is what rolls it back. Tags go in first because a highlight
-// references one.
+// Tags go in first because a highlight references one.
 export async function replaceHighlightTables(
   tables: HighlightTables,
   tx: Transaction

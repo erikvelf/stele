@@ -1,11 +1,10 @@
 import { addDays, isAfter, startOfDay, subDays } from 'date-fns';
 
-import type { DateDayRange } from './schema';
+import type { DayRange } from './schema';
 import type { DayBounds, FreeRun } from './types';
 
-// The whole days a range covers. Timestamps are stored to the millisecond, so
-// every comparison against a calendar day goes through here first.
-export function toDayBounds(range: DateDayRange): DayBounds {
+// The whole days a range covers, with its millisecond timestamps truncated.
+export function toDayBounds(range: DayRange): DayBounds {
   return {
     start: startOfDay(new Date(range.start_timestamp)),
     end: startOfDay(new Date(range.end_timestamp)),
@@ -17,13 +16,11 @@ export function isWithinBounds(day: Date, bounds: DayBounds): boolean {
   return target >= bounds.start.getTime() && target <= bounds.end.getTime();
 }
 
-// Every occupied day keyed by its start-of-day timestamp, so a calendar can
-// ask who owns a day once per day instead of scanning every range for every
-// cell it draws.
+// Every occupied day keyed by its start-of-day timestamp.
 export function indexRangesByDay(
-  ranges: readonly DateDayRange[]
-): Map<number, DateDayRange> {
-  const byDay = new Map<number, DateDayRange>();
+  ranges: readonly DayRange[]
+): Map<number, DayRange> {
+  const byDay = new Map<number, DayRange>();
 
   ranges.forEach(range => {
     const { start, end } = toDayBounds(range);
@@ -37,9 +34,12 @@ export function indexRangesByDay(
   return byDay;
 }
 
-// How far a range starting at `day` may extend before it would cover a day
-// another note already occupies. `end: null` means nothing is in the way.
-export function findFreeRunFrom(day: Date, ranges: readonly DateDayRange[]): FreeRun {
+// How far a range starting at `day` may extend before it reaches a day another
+// entry occupies. `end: null` means no range follows.
+export function findFreeRunFrom(
+  day: Date,
+  ranges: readonly DayRange[]
+): FreeRun {
   const start = startOfDay(day);
 
   const nextOccupiedStart = ranges
@@ -54,10 +54,13 @@ export function findFreeRunFrom(day: Date, ranges: readonly DateDayRange[]): Fre
   };
 }
 
-// Whether every day between `a` and `b` (inclusive, either order) is free of
-// the given ranges — used to trace a day-range extension one tap at a time
-// without ever crossing into a day another note already occupies.
-export function isRunFree(a: Date, b: Date, ranges: readonly DateDayRange[]): boolean {
+// Whether every day between `a` and `b` — inclusive, in either order — is free
+// of the given ranges.
+export function isRunFree(
+  a: Date,
+  b: Date,
+  ranges: readonly DayRange[]
+): boolean {
   const start = startOfDay(a.getTime() <= b.getTime() ? a : b);
   const end = startOfDay(a.getTime() <= b.getTime() ? b : a);
 

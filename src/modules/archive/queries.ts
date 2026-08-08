@@ -5,7 +5,8 @@ import {
   exportHighlightTables,
   replaceHighlightTables,
 } from '@/modules/highlights';
-import { exportNoteTables, replaceNoteTables } from '@/modules/notes';
+import { exportJournalNotes, replaceJournalNotes } from '@/modules/journal';
+import { exportNotes, replaceNotes } from '@/modules/notes';
 import { listAllReflections, replaceReflections } from '@/modules/reflections';
 import { err, ok } from '@/modules/types';
 import type { Result } from '@/modules/types';
@@ -18,9 +19,14 @@ export async function readArchiveTables(): Promise<Result<ArchiveTables>> {
     return folders;
   }
 
-  const notes = await exportNoteTables();
+  const notes = await exportNotes();
   if (!notes.success) {
     return notes;
+  }
+
+  const journalNotes = await exportJournalNotes();
+  if (!journalNotes.success) {
+    return journalNotes;
   }
 
   const highlights = await exportHighlightTables();
@@ -36,6 +42,7 @@ export async function readArchiveTables(): Promise<Result<ArchiveTables>> {
   return ok({
     folders: folders.data,
     notes: notes.data,
+    journalNotes: journalNotes.data,
     highlights: highlights.data,
     reflections: reflections.data,
   });
@@ -48,7 +55,8 @@ export async function writeArchiveTables(
   try {
     await db.transaction(async tx => {
       await replaceFolders(tables.folders, tx);
-      await replaceNoteTables(tables.notes, tx);
+      await replaceNotes(tables.notes, tx);
+      await replaceJournalNotes(tables.journalNotes, tx);
       await replaceHighlightTables(tables.highlights, tx);
       await replaceReflections(tables.reflections, tx);
     });

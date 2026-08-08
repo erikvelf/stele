@@ -1,10 +1,9 @@
-import { dateDayRangesSchema } from '@/modules/notes';
+import { dayRangesSchema } from '@/modules/journal';
 import { err, ok } from '@/modules/types';
 import type { Result } from '@/modules/types';
 
 import { ARCHIVE_ERRORS } from './constants';
-import type { Archive, ArchiveNote } from './schema';
-import { fromArchive } from './serialize';
+import type { Archive, ArchiveJournalNote } from './schema';
 
 export function formatIssues(error: { issues: readonly ZodIssue[] }): string {
   return error.issues
@@ -35,9 +34,10 @@ function findDuplicateId(archive: Archive): string | null {
     ['folder', archive.folders.map(folder => folder.id)],
     ['tag', archive.tags.map(tag => tag.id)],
     ['note', archive.notes.map(note => note.id)],
+    ['diario entry', archive.journalNotes.map(note => note.id)],
     [
       'highlight',
-      archive.notes.flatMap(note =>
+      archive.journalNotes.flatMap(note =>
         note.highlights.map(highlight => highlight.id)
       ),
     ],
@@ -55,7 +55,7 @@ function findDuplicateId(archive: Archive): string | null {
 }
 
 function findDanglingTag(
-  note: ArchiveNote,
+  note: ArchiveJournalNote,
   tagIds: ReadonlySet<string>
 ): string | null {
   for (const highlight of note.highlights) {
@@ -76,7 +76,9 @@ function findDanglingReference(archive: Archive): string | null {
     if (!folderIds.has(note.folderId)) {
       return `note "${note.id}" points at missing folder "${note.folderId}"`;
     }
+  }
 
+  for (const note of archive.journalNotes) {
     const danglingTag = findDanglingTag(note, tagIds);
     if (danglingTag !== null) {
       return danglingTag;
@@ -98,8 +100,12 @@ export function validateArchive(archive: Archive): Result<void> {
     return err(ARCHIVE_ERRORS.DANGLING_REFERENCE, dangling);
   }
 
-  const { ranges } = fromArchive(archive).notes;
-  const exclusive = dateDayRangesSchema.safeParse(ranges);
+  const ranges = archive.journalNotes.map(note => ({
+    id: note.id,
+    start_timestamp: note.dateRange.start,
+    end_timestamp: note.dateRange.end,
+  }));
+  const exclusive = dayRangesSchema.safeParse(ranges);
   if (!exclusive.success) {
     return err(ARCHIVE_ERRORS.OVERLAPPING_DAYS, formatIssues(exclusive.error));
   }
