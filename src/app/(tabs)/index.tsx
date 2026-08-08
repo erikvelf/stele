@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsRow: {
-    marginTop: SPACING.sm,
+    marginTop: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'stretch',
     justifyContent: 'center',

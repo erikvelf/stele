@@ -14,10 +14,11 @@ import { Text } from 'react-native-paper';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
+import { SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const MONTH_GRID_COLUMNS = 7;
-export const MONTH_GRID_GAP = 4;
+export const MONTH_GRID_GAP = 7;
 export const MONTH_GRID_WEEK_STARTS_ON = 1;
 // A month needs at most this many rows depending on the weekday it starts on.
 export const MONTH_GRID_MAX_ROWS = 6;
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
   weekdays: {
     flexDirection: 'row',
     gap: MONTH_GRID_GAP,
-    marginBottom: MONTH_GRID_GAP,
+    marginBottom: SPACING.sm,
     alignSelf: 'center',
   },
   weekday: {

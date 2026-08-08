@@ -6,7 +6,10 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { capitalize } from '@/lib/capitalize';
 import { haptics } from '@/modules/haptics';
+
+const MONTH_LABEL_FORMAT = 'MMMM yyyy';
 
 // Every month from `start` to `end` inclusive, normalised to the first of the
 // month. An `end` before `start` yields nothing.
@@ -44,7 +47,7 @@ export function MonthPagerHeader({
     <View style={styles.header}>
       <IconButton icon="chevron-left" disabled={!canGoBack} onPress={onBack} />
       <Text variant="titleMedium">
-        {format(month, 'MMMM yyyy', { locale })}
+        {capitalize(format(month, MONTH_LABEL_FORMAT, { locale }))}
       </Text>
       <IconButton
         icon="chevron-right"
