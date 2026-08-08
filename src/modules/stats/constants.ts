@@ -1,4 +1,5 @@
-// Sedimentary, igneous and metamorphic verbs in one pool. Also future i18n keys.
+// Sedimentary, igneous and metamorphic verbs in one pool. Each entry is a key
+// under `creationVerbs` in the translation catalogs.
 export const CREATION_VERBS = [
   'deposited',
   'compacted',
