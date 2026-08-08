@@ -128,6 +128,11 @@ module.exports = defineConfig([
               ],
             },
             {
+              target: './src/modules/app-icon',
+              from: './src/modules',
+              except: ['./app-icon', './types'],
+            },
+            {
               target: './src/modules/palette',
               from: './src/modules',
               except: ['./palette', './types', './db'],

@@ -51,5 +51,9 @@ __pycache__/
 # Python
 __pycache__/
 
-# Generated icon intermediates (rebuild: python3 assets/logo/script/generate.py)
+# Generated icon intermediates (rebuild: pnpm assets)
 assets/logo/output/
+
+# Rendered icons (rebuild: pnpm assets)
+assets/icons/
+assets/images/

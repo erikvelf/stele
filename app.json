@@ -32,7 +32,11 @@
         {
           "backgroundColor": "#6B8E23",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 288
+          "imageWidth": 288,
+          "android": {
+            "image": "./assets/images/splash-icon-android.png",
+            "imageWidth": 288
+          }
         }
       ],
       [
@@ -40,6 +44,130 @@
         {
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#6B8E23"
+        }
+      ],
+      [
+        "@howincodes/expo-dynamic-app-icon",
+        {
+          "basalt": {
+            "ios": "./assets/icons/icon-basalt.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#3B3C36"
+            }
+          },
+          "slate": {
+            "ios": "./assets/icons/icon-slate.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#576675"
+            }
+          },
+          "travertine": {
+            "ios": "./assets/icons/icon-travertine.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#BFA06A"
+            }
+          },
+          "turquoise": {
+            "ios": "./assets/icons/icon-turquoise.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#3AA8B8"
+            }
+          },
+          "lapisLazuli": {
+            "ios": "./assets/icons/icon-lapis-lazuli.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#26619C"
+            }
+          },
+          "sodalite": {
+            "ios": "./assets/icons/icon-sodalite.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#3B3F94"
+            }
+          },
+          "amethyst": {
+            "ios": "./assets/icons/icon-amethyst.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#9966CC"
+            }
+          },
+          "porphyry": {
+            "ios": "./assets/icons/icon-porphyry.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#7C3245"
+            }
+          },
+          "rhodochrosite": {
+            "ios": "./assets/icons/icon-rhodochrosite.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#C7466B"
+            }
+          },
+          "garnet": {
+            "ios": "./assets/icons/icon-garnet.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#A02B3A"
+            }
+          },
+          "cinnabar": {
+            "ios": "./assets/icons/icon-cinnabar.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#E34234"
+            }
+          },
+          "carnelian": {
+            "ios": "./assets/icons/icon-carnelian.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#C1440E"
+            }
+          },
+          "amber": {
+            "ios": "./assets/icons/icon-amber.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#E0A020"
+            }
+          },
+          "ochre": {
+            "ios": "./assets/icons/icon-ochre.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#CC7722"
+            }
+          },
+          "sulfur": {
+            "ios": "./assets/icons/icon-sulfur.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#D9C400"
+            }
+          },
+          "malachite": {
+            "ios": "./assets/icons/icon-malachite.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#10A36A"
+            }
+          },
+          "verdigris": {
+            "ios": "./assets/icons/icon-verdigris.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-foreground.png",
+              "backgroundColor": "#43B3AE"
+            }
+          }
         }
       ]
     ],
