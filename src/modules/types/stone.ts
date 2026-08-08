@@ -26,3 +26,5 @@ export const STONE_IDS = [
 export type StoneId = (typeof STONE_IDS)[number];
 
 export const DEFAULT_STONE_ID: StoneId = 'slate';
+
+export const DEFAULT_ICON_STONE_ID: StoneId = 'serpentine';
