@@ -48,9 +48,6 @@ example
 # Python
 __pycache__/
 
-# Python
-__pycache__/
-
 # Generated icon intermediates (rebuild: pnpm assets)
 assets/logo/output/
 
