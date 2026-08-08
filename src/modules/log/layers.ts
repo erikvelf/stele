@@ -210,6 +210,11 @@ function buildMonthLayers(
     };
     const within = entries.filter(entry => coversDay(period, entry.start));
 
+    // A month with no scaglie is not shown.
+    if (within.length === 0) {
+      return [];
+    }
+
     return [
       headerRow(period, 'medium'),
       reflectionRow(period, today),
