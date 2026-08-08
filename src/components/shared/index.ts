@@ -6,6 +6,8 @@ export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 export { FadingList } from './FadingList';
 export { Header } from './Header';
+export { HeaderIconButton } from './HeaderIconButton';
+export type { HeaderIconButtonProps } from './HeaderIconButton';
 export type { FadingListProps } from './FadingList';
 export {
   MonthGrid,

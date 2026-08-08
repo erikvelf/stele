@@ -3,7 +3,6 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
-  IconButton,
   Surface,
   Text,
 } from 'react-native-paper';
@@ -11,6 +10,7 @@ import {
 import { HighlightList, TagPickerSheet } from '@/components/highlights';
 import type { ResolvedHighlight } from '@/components/highlights';
 import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
+import { HeaderIconButton } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useHighlights } from '@/hooks/useHighlights';
@@ -59,7 +59,7 @@ export default function NoteScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <IconButton
+        <HeaderIconButton
           icon={isRenderMode ? 'pencil' : 'eye'}
           onPress={toggleRenderMode}
         />

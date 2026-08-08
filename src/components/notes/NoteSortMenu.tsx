@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { IconButton, Menu } from 'react-native-paper';
+import { Menu } from 'react-native-paper';
 
+import { HeaderIconButton } from '@/components/shared';
 import { useTranslation } from '@/hooks/useTranslation';
 
 // Newest first is how the folder query returns notes; oldest first reads them
@@ -31,7 +32,7 @@ export function NoteSortMenu({ sort, onSortChange }: NoteSortMenuProps) {
       visible={isMenuOpen}
       onDismiss={() => setIsMenuOpen(false)}
       anchor={
-        <IconButton
+        <HeaderIconButton
           icon="filter-variant"
           accessibilityLabel={t('noteSort.accessibilityLabel')}
           onPress={() => setIsMenuOpen(true)}

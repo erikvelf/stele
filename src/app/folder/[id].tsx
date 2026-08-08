@@ -9,7 +9,6 @@ import { StyleSheet } from 'react-native';
 import {
   ActivityIndicator,
   FAB,
-  IconButton,
   Searchbar,
   Surface,
   Text,
@@ -19,6 +18,7 @@ import { FolderPickerModal } from '@/components/folders';
 import { FolderNoteList } from '@/components/notes/FolderNoteList';
 import { FolderNotesEmptyState } from '@/components/notes/FolderNotesEmptyState';
 import { type NoteSort, NoteSortMenu } from '@/components/notes/NoteSortMenu';
+import { HeaderIconButton } from '@/components/shared';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolderNotes } from '@/hooks/useFolderNotes';
 import { useFolders } from '@/hooks/useFolders';
@@ -114,7 +114,7 @@ export default function FolderScreen() {
           headerRight: () =>
             notes.length > 1 ? (
               <Surface elevation={0} style={styles.headerActions}>
-                <IconButton
+                <HeaderIconButton
                   icon={isSearching ? 'close' : 'magnify'}
                   accessibilityLabel={t('folder.searchNotes')}
                   onPress={toggleSearch}

@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { ActivityIndicator, IconButton, Surface } from 'react-native-paper';
+import { ActivityIndicator, Surface } from 'react-native-paper';
 
 import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
+import { HeaderIconButton } from '@/components/shared';
 import { SPACING } from '@/constants/layout';
 import { useNote } from '@/hooks/useNote';
 import { useRenderMode } from '@/hooks/useRenderMode';
@@ -23,7 +24,7 @@ export default function PlainNoteScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <IconButton
+        <HeaderIconButton
           icon={isRenderMode ? 'pencil' : 'eye'}
           onPress={toggleRenderMode}
         />
