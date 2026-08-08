@@ -26,6 +26,7 @@ import type { MonthGridCell } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useMonthPager } from '@/hooks/useMonthPager';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 import {
   indexRangesByDay,
   isRunFree,
@@ -232,8 +233,10 @@ function useDayRangeSelection(
       }
       const next = nextBounds(day, anchor, pending, otherRanges);
       if (!next) {
+        haptics.fail();
         return;
       }
+      haptics.select();
       setPending(next);
     },
     [anchor, pending, otherRanges]

@@ -10,6 +10,7 @@ import {
   getEmojiCategories,
   searchEmojis,
 } from '@/lib/emoji';
+import { haptics } from '@/modules/haptics';
 
 export interface EmojiPickerProps {
   onSelect: (emoji: string) => void;
@@ -56,6 +57,7 @@ function buildRows(query: string, categories: EmojiCategory[]): EmojiRow[] {
 const EmojiRowItem = memo(
   ({ row, onSelect }: { row: EmojiRow; onSelect: (emoji: string) => void }) => {
     const pick = (emoji: string) => {
+      haptics.select();
       onSelect(emoji);
     };
 

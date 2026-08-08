@@ -6,6 +6,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 
 // Every month from `start` to `end` inclusive, normalised to the first of the
 // month. An `end` before `start` yields nothing.
@@ -88,6 +89,7 @@ export function MonthPagerList({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const next = Math.round(event.nativeEvent.contentOffset.x / width);
       if (next !== settledIndex.current) {
+        haptics.select();
       }
       settledIndex.current = next;
       onIndexChange(next);

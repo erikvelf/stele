@@ -138,6 +138,11 @@ module.exports = defineConfig([
               except: ['./settings', './types', './db', './archive'],
             },
             {
+              target: './src/modules/haptics',
+              from: './src/modules',
+              except: ['./haptics', './settings'],
+            },
+            {
               target: './src/modules/types',
               from: './src/modules',
               except: ['./types'],

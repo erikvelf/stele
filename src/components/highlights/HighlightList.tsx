@@ -15,6 +15,7 @@ import { FadingList } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
 import { createId } from '@/lib/id';
+import { haptics } from '@/modules/haptics';
 import type { Tag } from '@/modules/highlights';
 import { TRANSPARENT } from '@/modules/palette';
 
@@ -336,6 +337,7 @@ function useDragReorder(
   const handleDragStart = useCallback(
     (id: string) => {
       Keyboard.dismiss();
+      haptics.pickUp();
       const startOrder = orderedIdsRef.current;
       dragStartOrderRef.current = startOrder;
       const startIndex = startOrder.indexOf(id);
@@ -362,6 +364,7 @@ function useDragReorder(
       return;
     }
     lastTargetIndexRef.current = targetIndex;
+    haptics.select();
     const nextOrder = dragStartOrderRef.current.filter(rowId => rowId !== id);
     nextOrder.splice(targetIndex, 0, id);
     setOrderedIds(nextOrder);
@@ -370,6 +373,7 @@ function useDragReorder(
 
   const handleDragEnd = useCallback(
     (id: string, settleY: number) => {
+      haptics.drop();
       dragTranslateY.value = withTiming(
         settleY,
         { duration: DRAG_SNAP_DURATION_MS },

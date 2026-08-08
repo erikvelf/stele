@@ -13,6 +13,7 @@ import { DailyReminderTimePicker } from '@/components/settings/DailyReminderTime
 import { SPACING } from '@/constants/layout';
 import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 
 export default function NotificationsScreen() {
   const theme = useTheme();
@@ -25,8 +26,10 @@ export default function NotificationsScreen() {
       const denied = enabled && !granted;
       setPermissionDenied(denied);
       if (denied) {
+        haptics.fail();
         return;
       }
+      haptics.commit();
     });
   };
 

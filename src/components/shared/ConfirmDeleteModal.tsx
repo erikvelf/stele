@@ -3,6 +3,7 @@ import { Button, Modal, Portal, Text, useTheme } from 'react-native-paper';
 
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 
 export interface ConfirmDeleteModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ export function ConfirmDeleteModal({
   const { t } = useTranslation();
 
   const handleConfirm = () => {
+    haptics.destroy();
     onConfirm();
     onDismiss();
   };

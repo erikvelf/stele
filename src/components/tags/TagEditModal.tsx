@@ -20,6 +20,7 @@ import { ColorSwatch } from '@/components/ui';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTags } from '@/hooks/useTags';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 import { TRANSPARENT } from '@/modules/palette';
 import { DEFAULT_STONE_ID, STONE_IDS } from '@/modules/types';
 import type { StoneId } from '@/modules/types';
@@ -46,6 +47,7 @@ function ColorCirclePicker({
   const theme = useTheme();
 
   const pick = (id: StoneId) => {
+    haptics.select();
     onChange(id);
   };
 
@@ -118,6 +120,7 @@ export function TagEditModal({ visible, tagId, onDismiss }: TagEditModalProps) {
     } else {
       createTag(input);
     }
+    haptics.commit();
     onDismiss();
   };
 
@@ -125,6 +128,7 @@ export function TagEditModal({ visible, tagId, onDismiss }: TagEditModalProps) {
     if (!tagId) {
       return;
     }
+    haptics.destroy();
     removeTag(tagId);
     onDismiss();
   };

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { COMMON_ERRORS } from '@/constants/error-codes';
 import {
   exportArchive,
   exportSettings,
@@ -7,13 +8,11 @@ import {
   importSettings,
 } from '@/modules/archive';
 import type { ArchiveOutcome } from '@/modules/archive';
+import { haptics } from '@/modules/haptics';
 import type { AppError, Result } from '@/modules/types';
 
 export type ArchiveAction =
-  | 'exportData'
-  | 'exportSettings'
-  | 'importData'
-  | 'importSettings';
+  'exportData' | 'exportSettings' | 'importData' | 'importSettings';
 
 export interface ArchiveReport extends ArchiveOutcome {
   action: ArchiveAction;
@@ -45,14 +44,23 @@ export function useArchive() {
     setError(null);
     setReport(null);
 
-    const result = await operationFor(action, Date.now());
-    if (result.success) {
-      setReport({ action, ...result.data });
-    } else {
-      setError(result.error);
+    try {
+      const result = await operationFor(action, Date.now());
+      if (result.success) {
+        setReport({ action, ...result.data });
+        if (!result.data.cancelled) {
+          haptics.succeed();
+        }
+      } else {
+        setError(result.error);
+        haptics.fail();
+      }
+    } catch (cause) {
+      setError({ code: COMMON_ERRORS.UNDEFINED, cause: String(cause) });
+      haptics.fail();
+    } finally {
+      setRunning(null);
     }
-
-    setRunning(null);
   }, []);
 
   const dismiss = useCallback(() => {

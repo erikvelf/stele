@@ -8,6 +8,7 @@ import { RADIUS, SPACING } from '@/constants/layout';
 import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
 import { useTranslation } from '@/hooks/useTranslation';
 import { contrastColor } from '@/lib/contrastColor';
+import { haptics } from '@/modules/haptics';
 import { seedFor } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
 
@@ -60,6 +61,7 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
     } else {
       onCreate(input);
     }
+    haptics.commit();
     reset();
     closeSheet();
   };

@@ -1,10 +1,10 @@
 import { startOfDay } from 'date-fns';
-import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { createId } from '@/lib/id';
+import { haptics } from '@/modules/haptics';
 import { type JournalNote, writeJournalNote } from '@/modules/journal';
 import { readEntryTemplate } from '@/modules/settings';
 
@@ -40,7 +40,7 @@ export function useJournalComposer({
   );
 
   const handleCreate = useCallback(() => {
-    void impactAsync(ImpactFeedbackStyle.Light);
+    haptics.commit();
 
     const today = startOfDay(new Date());
     const todaysNote = notes.find(note => {

@@ -1,16 +1,16 @@
 import { StyleSheet, View } from 'react-native';
 import { Text, TouchableRipple } from 'react-native-paper';
 
-import {
-  SELECTION_BORDER_COLOR,
-  TRANSPARENT,
-  buildTheme,
-  tonalPairFor,
-} from '@/modules/palette';
-import type { Tag as TagType } from '@/modules/highlights';
-import type { StoneId } from '@/modules/types';
-
 import { SPACING } from '@/constants/layout';
+import { haptics } from '@/modules/haptics';
+import type { Tag as TagType } from '@/modules/highlights';
+import {
+  buildTheme,
+  SELECTION_BORDER_COLOR,
+  tonalPairFor,
+  TRANSPARENT,
+} from '@/modules/palette';
+import type { StoneId } from '@/modules/types';
 
 const SELECTED_BORDER_WIDTH = 2;
 const PILL_RADIUS = 18;
@@ -25,7 +25,12 @@ interface TagProps {
 
 // Renders as a plain pill, or — when onPress is given — as a selectable one
 // with a border reserved for the selected state.
-export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagProps) {
+export function Tag({
+  tag,
+  isSmall = false,
+  isSelected = false,
+  onPress,
+}: TagProps) {
   // Every tag is written with a color from STONE_IDS — see the same cast in FolderCard.
   const stoneId = tag.color as StoneId;
   // Always the dark tonal pair — a glowing tint on a dark chip, regardless
@@ -40,7 +45,10 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
     onPress && isSelected ? styles.shapeSelected : styles.shapeUnselected,
   ];
   const label = (
-    <Text variant={isSmall ? 'labelSmall' : 'labelLarge'} style={{ color: onContainer }}>
+    <Text
+      variant={isSmall ? 'labelSmall' : 'labelLarge'}
+      style={{ color: onContainer }}
+    >
       {tag.name}
     </Text>
   );
@@ -49,6 +57,11 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
     return <View style={[shapeStyle, paddingStyle]}>{label}</View>;
   }
 
+  const toggle = () => {
+    haptics.select();
+    onPress();
+  };
+
   return (
     <View style={shapeStyle}>
       <TouchableRipple
@@ -56,7 +69,7 @@ export function Tag({ tag, isSmall = false, isSelected = false, onPress }: TagPr
         accessibilityState={{ selected: isSelected }}
         borderless
         theme={buildTheme(stoneId, true)}
-        onPress={onPress}
+        onPress={toggle}
         style={[paddingStyle, { borderRadius: radius }]}
       >
         {label}

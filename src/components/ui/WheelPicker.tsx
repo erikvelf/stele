@@ -1,4 +1,3 @@
-import { selectionAsync } from 'expo-haptics';
 import { useCallback, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -13,6 +12,8 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+
+import { haptics } from '@/modules/haptics';
 
 const VISIBLE_ITEMS = 3;
 const CENTER_INDEX_OFFSET = Math.floor(VISIBLE_ITEMS / 2);
@@ -58,7 +59,7 @@ export function WheelPicker({
     () => Math.round(scrollY.value / itemHeight),
     (current, previous) => {
       if (previous !== null && current !== previous) {
-        runOnJS(selectionAsync)();
+        runOnJS(haptics.select)();
       }
     }
   );
@@ -175,7 +176,11 @@ function WheelPickerItem({
 
   return (
     <Animated.View
-      style={[styles.item, { height: itemHeight, width: itemWidth }, animatedStyle]}
+      style={[
+        styles.item,
+        { height: itemHeight, width: itemWidth },
+        animatedStyle,
+      ]}
     >
       <Text variant="displayMedium" style={{ color }}>
         {label}

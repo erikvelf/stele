@@ -4,6 +4,7 @@ import { List, SegmentedButtons, Surface, Switch } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 import {
   applyPrivacyProtection,
   readAppLock,
@@ -33,12 +34,14 @@ export default function PrivacySecurityScreen() {
     setPrivacy(next);
     writePrivacy(next);
     applyPrivacyProtection(hideInRecents);
+    haptics.commit();
   };
 
   const toggleAppLock = (enabled: boolean) => {
     const next = { ...appLock, enabled };
     setAppLock(next);
     writeAppLock(next);
+    haptics.commit();
   };
 
   const setRelockInterval = (relockIntervalMs: RelockIntervalMs) => {

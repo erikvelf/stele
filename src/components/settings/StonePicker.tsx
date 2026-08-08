@@ -3,6 +3,7 @@ import { Text, useTheme } from 'react-native-paper';
 
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
+import { haptics } from '@/modules/haptics';
 import type { Translate } from '@/modules/i18n';
 import {
   seedFor,
@@ -62,6 +63,7 @@ export function StonePicker({ value, onChange }: StonePickerProps) {
   const { t } = useTranslation();
 
   const pick = (id: StoneId) => {
+    haptics.select();
     onChange(id);
   };
 
