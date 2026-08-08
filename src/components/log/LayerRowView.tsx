@@ -2,9 +2,9 @@ import { ScagliaRow, TagDigest } from '@/components/highlights';
 import type { TagDigestEntry } from '@/components/highlights';
 import { PeriodRollingNotice, ReflectionField } from '@/components/reflections';
 import { Header } from '@/components/shared';
-import type { Period } from '@/lib/format-period';
 import type { Tag } from '@/modules/highlights';
 import type { LayerRow, TagCount } from '@/modules/log';
+import type { Period } from '@/modules/types';
 
 interface LayerRowViewProps {
   row: LayerRow;
@@ -23,7 +23,10 @@ function toDigestEntries(
   counts: readonly TagCount[],
   tags: Map<string, Tag>
 ): TagDigestEntry[] {
-  return counts.map(entry => ({ tag: resolve(tags, entry.tagId), count: entry.count }));
+  return counts.map(entry => ({
+    tag: resolve(tags, entry.tagId),
+    count: entry.count,
+  }));
 }
 
 // One flattened layer row, drawn. The switch is the only place the display
@@ -41,14 +44,21 @@ export function LayerRowView({
     // resolution its scaglie are listed at.
     const onPress =
       row.period.kind === 'month' ? () => onOpenPeriod(row.period) : undefined;
-    return <Header period={row.period} variant={row.variant} onPress={onPress} />;
+    return (
+      <Header period={row.period} variant={row.variant} onPress={onPress} />
+    );
   }
 
   if (row.kind === 'reflection') {
     if (!row.isPeriodOver) {
       return <PeriodRollingNotice kind={row.period.kind} />;
     }
-    return <ReflectionField value={reflectionText} onChangeText={onChangeReflection} />;
+    return (
+      <ReflectionField
+        value={reflectionText}
+        onChangeText={onChangeReflection}
+      />
+    );
   }
 
   if (row.kind === 'digest') {
