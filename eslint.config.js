@@ -11,6 +11,7 @@ module.exports = defineConfig([
       '*.config.js',
       'scripts/**/*',
       '.expo/*',
+      'prototypes/**/*',
     ],
   },
   {
