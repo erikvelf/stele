@@ -64,7 +64,8 @@ export function Tag({
   };
 
   return (
-    <View style={shapeStyle}>
+    // Clipped so the borderless ripple stays inside the rounded shape.
+    <View style={[shapeStyle, styles.clipped]}>
       <TouchableRipple
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
@@ -82,6 +83,8 @@ export function Tag({
 const styles = StyleSheet.create({
   shape: {
     alignSelf: 'flex-start',
+  },
+  clipped: {
     overflow: 'hidden',
   },
   // The name sets the pill's width; nothing above it may take width away.
