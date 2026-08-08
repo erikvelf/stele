@@ -1,0 +1,328 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "folder": "folder",
+    "move": "Move",
+    "name": "Name",
+    "no": "No",
+    "save": "Save",
+    "search": "Search",
+    "stone": "stone",
+    "yes": "Yes"
+  },
+  "lock": {
+    "title": "Stele is locked",
+    "subtitle": "Unlock to continue",
+    "action": "Unlock"
+  },
+  "tabs": {
+    "home": "Home",
+    "log": "Layers",
+    "shelf": "Shelf",
+    "settings": "Settings"
+  },
+  "routes": {
+    "stone": "Stone",
+    "note": "Note",
+    "folder": "Tablet",
+    "folderColor": "Colour",
+    "folderEmoji": "Emoji",
+    "tag": "Tag",
+    "appearance": "Appearance",
+    "privacySecurity": "Privacy & security",
+    "notifications": "Notifications",
+    "archive": "Archive",
+    "journalBehaviour": "Journal behaviour",
+    "about": "About"
+  },
+  "home": {
+    "stats": {
+      "stonesThisYear": "%{verb} %{count} stones this year",
+      "stonesTotal": "%{verb} %{count} stones total",
+      "highlightsTotal": "%{verb} %{count} highlights total"
+    },
+    "errors": {
+      "deleteNote": "Couldn't delete the note. Please try again.",
+      "setDayRange": "Couldn't set the day range. Please try again."
+    }
+  },
+  "creationVerbs": {
+    "deposited": "Deposited",
+    "compacted": "Compacted",
+    "settled": "Settled",
+    "layered": "Layered",
+    "cemented": "Cemented",
+    "crystallized": "Crystallized",
+    "forged": "Forged",
+    "cooled": "Cooled",
+    "erupted": "Erupted",
+    "folded": "Folded",
+    "pressed": "Pressed",
+    "hardened": "Hardened"
+  },
+  "log": {
+    "title": "Layers",
+    "resolution": {
+      "day": "Day",
+      "week": "Basket",
+      "month": "Marker"
+    },
+    "direction": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "empty": {
+      "title": "No highlights",
+      "subtitle": "The highlights you chip off your stones collect here, in layers."
+    }
+  },
+  "period": {
+    "week": "week %{span}"
+  },
+  "notes": {
+    "empty": {
+      "title": "Start building your Gran Sasso",
+      "subtitle": "Tap the pencil to place your first stone."
+    },
+    "emptyTitle": "Empty note",
+    "cleanSlate": "Clean slate"
+  },
+  "note": {
+    "placeholder": "Writing…",
+    "saveFailed": "Couldn't save — %{cause}",
+    "tryAgain": "try again"
+  },
+  "noteActions": {
+    "label": "Note actions",
+    "setDayRange": "Set day range"
+  },
+  "noteCard": {
+    "highlights": {
+      "one": "%{count} highlight",
+      "other": "%{count} highlights"
+    }
+  },
+  "noteSort": {
+    "accessibilityLabel": "Sort notes",
+    "newest": "Newest",
+    "oldest": "Oldest"
+  },
+  "dayRange": {
+    "title": "Set day range",
+    "instructions": "Edit the note of %{day} by tapping the squares."
+  },
+  "folders": {
+    "title": "Shelf",
+    "empty": {
+      "title": "Start building your 12 Tablets",
+      "subtitle": "Tap plus to create your first tablet."
+    },
+    "carouselEmpty": "Your tablets\nwill appear here"
+  },
+  "folderNotes": {
+    "empty": {
+      "title": "This tablet is empty",
+      "subtitle": "Tap the pencil to add its first note."
+    }
+  },
+  "folder": {
+    "noNotesFound": "No notes found",
+    "searchNotes": "Search notes",
+    "searchPlaceholder": "Search a note",
+    "moveTo": "Move to",
+    "noOtherFolders": "No other tablet"
+  },
+  "folderActions": {
+    "label": "Folder actions"
+  },
+  "folderEditor": {
+    "create": "New tablet",
+    "edit": "Edit tablet",
+    "chooseEmoji": "Choose emoji",
+    "chooseColor": "Choose colour"
+  },
+  "highlights": {
+    "placeholder": "A small win…",
+    "untagged": "untagged"
+  },
+  "tags": {
+    "empty": {
+      "title": "No tags yet",
+      "subtitle": "Tap plus to create your first tag."
+    },
+    "noneFound": {
+      "title": "No tag found",
+      "subtitle": "Try searching for something else."
+    },
+    "searchPlaceholder": "Search a tag",
+    "manage": "Manage tags"
+  },
+  "tagEditor": {
+    "create": "New tag",
+    "edit": "Edit tag"
+  },
+  "reflection": {
+    "placeholder": "A line about this period, if you feel like it",
+    "rolling": {
+      "week": "The week is still rolling. Wait until it stops to reflect on it.",
+      "month": "The month is still rolling. Wait until it stops to reflect on it."
+    }
+  },
+  "confirmDelete": {
+    "title": "Delete %{subject}",
+    "body": "This permanently deletes the %{subject}."
+  },
+  "scroller": {
+    "left": "Scroll left",
+    "right": "Scroll right"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "privacySecurity": "Privacy & security",
+    "archive": "Archive",
+    "archiveDescription": "Export and import your data",
+    "notifications": "Notifications",
+    "journalBehaviour": "Journal behaviour",
+    "about": "About"
+  },
+  "appearance": {
+    "themeMode": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": {
+      "title": "Language",
+      "system": "System",
+      "en": "English",
+      "it": "Italiano"
+    },
+    "stone": {
+      "title": "Colour"
+    },
+    "appIcon": {
+      "title": "Icon",
+      "caption": "On Android the new icon appears when the app goes to the background.",
+      "error": "The icon could not be changed."
+    },
+    "haptics": {
+      "title": "Haptics",
+      "description": "A short tap when you choose, move or delete something."
+    }
+  },
+  "stoneFamilies": {
+    "neutral": "Neutral",
+    "blue": "Blue",
+    "violet": "Violet",
+    "red": "Red",
+    "yellow": "Yellow",
+    "green": "Green"
+  },
+  "stones": {
+    "basalt": "Basalt",
+    "slate": "Slate",
+    "travertine": "Travertine",
+    "turquoise": "Turquoise",
+    "lapis-lazuli": "Lapis lazuli",
+    "sodalite": "Sodalite",
+    "amethyst": "Amethyst",
+    "porphyry": "Porphyry",
+    "rhodochrosite": "Rhodochrosite",
+    "garnet": "Garnet",
+    "cinnabar": "Cinnabar",
+    "carnelian": "Carnelian",
+    "amber": "Amber",
+    "ochre": "Ochre",
+    "sulfur": "Sulfur",
+    "serpentine": "Serpentine",
+    "malachite": "Malachite",
+    "verdigris": "Verdigris"
+  },
+  "privacySecurity": {
+    "appLock": {
+      "title": "App lock",
+      "description": "Require biometric or device auth to open the app"
+    },
+    "relockMinutes": "%{count} min",
+    "hideInRecents": {
+      "title": "Hide in recents",
+      "description": "Cover the app with a blank screen while switching apps"
+    }
+  },
+  "notifications": {
+    "dailyReminder": {
+      "title": "Daily reminder",
+      "description": "A single reminder at a time you choose"
+    },
+    "permissionDenied": "Notifications are off for Stele in system settings. Enable them there to turn this on.",
+    "scheduleFailed": "The reminder could not be scheduled.",
+    "body": {
+      "journaled": "Anything else from today?",
+      "notJournaled": "Got a minute for today?"
+    }
+  },
+  "journalBehaviour": {
+    "entryTemplate": {
+      "title": "Entry template",
+      "description": "Pre-fills new stones with this text. Leave blank to start empty.",
+      "placeholder": "How was your day?"
+    }
+  },
+  "archive": {
+    "export": "Export",
+    "import": "Import",
+    "replace": "Replace",
+    "confirmTitle": "Are you sure?",
+    "notImportedTitle": "That file was not imported",
+    "footnote": "An import checks the whole file before it writes anything. If the file is rejected, Stele is left exactly as it was.",
+    "exportData": {
+      "title": "Export data",
+      "description": "Notes, highlights, tags, tablets and reflections, as one JSON file"
+    },
+    "exportSettings": {
+      "title": "Export settings",
+      "description": "Every preference, as a separate JSON file"
+    },
+    "importData": {
+      "title": "Import data",
+      "description": "Replaces everything currently in Stele"
+    },
+    "importSettings": {
+      "title": "Import settings",
+      "description": "Replaces every preference"
+    },
+    "warnings": {
+      "importData": "This erases every note, highlight, tag, tablet and reflection in Stele and replaces them with the contents of the file. It cannot be undone.",
+      "importSettings": "This replaces every preference in Stele with the contents of the file. It cannot be undone."
+    },
+    "report": {
+      "counted": "%{journalNotes} stones, %{notes} notes, %{highlights} highlights, %{tags} tags, %{folders} tablets, %{reflections} reflections",
+      "exported": "Exported %{counted}.",
+      "imported": "Imported %{counted}. Restart Stele to see them.",
+      "settingsExported": "Settings exported.",
+      "settingsImported": "Settings imported. Restart Stele to see them applied."
+    },
+    "errors": {
+      "unknown": "Something went wrong.",
+      "ARCHIVE_MALFORMED_JSON": "That file is not valid JSON.",
+      "ARCHIVE_VERSION_MISMATCH": "That file was written by a different version of Stele.",
+      "ARCHIVE_INVALID_SHAPE": "That file is missing or misspells a field.",
+      "ARCHIVE_DANGLING_REFERENCE": "That file points at a folder or tag it does not contain.",
+      "ARCHIVE_DUPLICATE_ID": "That file uses the same id twice.",
+      "ARCHIVE_OVERLAPPING_DAYS": "Two dated notes in that file cover the same day.",
+      "ARCHIVE_INCONSISTENT_DATABASE": "The database contradicts itself, so nothing was exported.",
+      "ARCHIVE_FILE_FAILED": "The file could not be read or written."
+    }
+  },
+  "about": {
+    "assurance": "Your journal stays on this device. No account, no cloud, no telemetry.",
+    "version": "Version %{version}",
+    "versionWithBuild": "Version %{version} (%{build})",
+    "versionUnknown": "Version unknown"
+  }
+}

@@ -1,0 +1,328 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "create": "Crea",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "folder": "la tavola",
+    "move": "Sposta",
+    "name": "Nome",
+    "no": "No",
+    "save": "Salva",
+    "search": "Cerca",
+    "stone": "il sasso",
+    "yes": "Sì"
+  },
+  "lock": {
+    "title": "Stele è bloccata",
+    "subtitle": "Sblocca per continuare",
+    "action": "Sblocca"
+  },
+  "tabs": {
+    "home": "Home",
+    "log": "Strati",
+    "shelf": "Scaffale",
+    "settings": "Impostazioni"
+  },
+  "routes": {
+    "stone": "Sasso",
+    "note": "Nota",
+    "folder": "Tavola",
+    "folderColor": "Colore",
+    "folderEmoji": "Emoji",
+    "tag": "Tag",
+    "appearance": "Aspetto",
+    "privacySecurity": "Privacy e sicurezza",
+    "notifications": "Notifiche",
+    "archive": "Archivio",
+    "journalBehaviour": "Comportamento del diario",
+    "about": "Informazioni"
+  },
+  "home": {
+    "stats": {
+      "stonesThisYear": "Hai %{verb} %{count} sassi quest'anno",
+      "stonesTotal": "Hai %{verb} %{count} sassi in totale",
+      "highlightsTotal": "Hai %{verb} %{count} scaglie in totale"
+    },
+    "errors": {
+      "deleteNote": "Impossibile eliminare la nota. Riprova.",
+      "setDayRange": "Impossibile impostare l'intervallo di giorni. Riprova."
+    }
+  },
+  "creationVerbs": {
+    "deposited": "depositato",
+    "compacted": "compattato",
+    "settled": "sedimentato",
+    "layered": "stratificato",
+    "cemented": "cementato",
+    "crystallized": "cristallizzato",
+    "forged": "forgiato",
+    "cooled": "raffreddato",
+    "erupted": "eruttato",
+    "folded": "piegato",
+    "pressed": "pressato",
+    "hardened": "indurito"
+  },
+  "log": {
+    "title": "Strati",
+    "resolution": {
+      "day": "Giorno",
+      "week": "Gerla",
+      "month": "Cippo"
+    },
+    "direction": {
+      "newest": "Prima i più recenti",
+      "oldest": "Prima i più vecchi"
+    },
+    "empty": {
+      "title": "Nessuna scaglia",
+      "subtitle": "Le scaglie che stacchi dai tuoi sassi si raccolgono qui, in strati."
+    }
+  },
+  "period": {
+    "week": "settimana %{span}"
+  },
+  "notes": {
+    "empty": {
+      "title": "Inizia a costruire il tuo Gran Sasso",
+      "subtitle": "Tocca la matita per posare il primo sasso."
+    },
+    "emptyTitle": "Nota vuota",
+    "cleanSlate": "Tabula rasa"
+  },
+  "note": {
+    "placeholder": "Scrivi…",
+    "saveFailed": "Impossibile salvare — %{cause}",
+    "tryAgain": "riprova"
+  },
+  "noteActions": {
+    "label": "Azioni della nota",
+    "setDayRange": "Imposta l'intervallo di giorni"
+  },
+  "noteCard": {
+    "highlights": {
+      "one": "%{count} scaglia",
+      "other": "%{count} scaglie"
+    }
+  },
+  "noteSort": {
+    "accessibilityLabel": "Ordina le note",
+    "newest": "Più recenti",
+    "oldest": "Più vecchie"
+  },
+  "dayRange": {
+    "title": "Imposta l'intervallo di giorni",
+    "instructions": "Modifica la nota di %{day} toccando i quadrati."
+  },
+  "folders": {
+    "title": "Scaffale",
+    "empty": {
+      "title": "Inizia a incidere le tue 12 Tavole",
+      "subtitle": "Tocca il più per creare la prima tavola."
+    },
+    "carouselEmpty": "Le tue tavole\nappariranno qui"
+  },
+  "folderNotes": {
+    "empty": {
+      "title": "Questa tavola è vuota",
+      "subtitle": "Tocca la matita per aggiungere la prima nota."
+    }
+  },
+  "folder": {
+    "noNotesFound": "Nessuna nota trovata",
+    "searchNotes": "Cerca tra le note",
+    "searchPlaceholder": "Cerca una nota",
+    "moveTo": "Sposta in",
+    "noOtherFolders": "Nessun'altra tavola"
+  },
+  "folderActions": {
+    "label": "Azioni della tavola"
+  },
+  "folderEditor": {
+    "create": "Nuova tavola",
+    "edit": "Modifica la tavola",
+    "chooseEmoji": "Scegli un emoji",
+    "chooseColor": "Scegli un colore"
+  },
+  "highlights": {
+    "placeholder": "Una piccola vittoria…",
+    "untagged": "senza tag"
+  },
+  "tags": {
+    "empty": {
+      "title": "Ancora nessun tag",
+      "subtitle": "Tocca il più per creare il primo tag."
+    },
+    "noneFound": {
+      "title": "Nessun tag trovato",
+      "subtitle": "Prova a cercare qualcos'altro."
+    },
+    "searchPlaceholder": "Cerca un tag",
+    "manage": "Gestisci i tag"
+  },
+  "tagEditor": {
+    "create": "Nuovo tag",
+    "edit": "Modifica il tag"
+  },
+  "reflection": {
+    "placeholder": "Una riga su questo periodo, se ti va",
+    "rolling": {
+      "week": "La settimana sta ancora rotolando. Aspetta che si fermi per rifletterci.",
+      "month": "Il mese sta ancora rotolando. Aspetta che si fermi per rifletterci."
+    }
+  },
+  "confirmDelete": {
+    "title": "Elimina %{subject}",
+    "body": "Questo elimina definitivamente %{subject}."
+  },
+  "scroller": {
+    "left": "Scorri a sinistra",
+    "right": "Scorri a destra"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "appearance": "Aspetto",
+    "privacySecurity": "Privacy e sicurezza",
+    "archive": "Archivio",
+    "archiveDescription": "Esporta e importa i tuoi dati",
+    "notifications": "Notifiche",
+    "journalBehaviour": "Comportamento del diario",
+    "about": "Informazioni"
+  },
+  "appearance": {
+    "themeMode": {
+      "system": "Sistema",
+      "light": "Chiaro",
+      "dark": "Scuro"
+    },
+    "language": {
+      "title": "Lingua",
+      "system": "Sistema",
+      "en": "English",
+      "it": "Italiano"
+    },
+    "stone": {
+      "title": "Colore"
+    },
+    "appIcon": {
+      "title": "Icona",
+      "caption": "Su Android la nuova icona appare quando l'app passa in secondo piano.",
+      "error": "Impossibile cambiare l'icona."
+    },
+    "haptics": {
+      "title": "Vibrazione",
+      "description": "Un breve tocco quando scegli, sposti o elimini qualcosa."
+    }
+  },
+  "stoneFamilies": {
+    "neutral": "Neutro",
+    "blue": "Blu",
+    "violet": "Viola",
+    "red": "Rosso",
+    "yellow": "Giallo",
+    "green": "Verde"
+  },
+  "stones": {
+    "basalt": "Basalto",
+    "slate": "Ardesia",
+    "travertine": "Travertino",
+    "turquoise": "Turchese",
+    "lapis-lazuli": "Lapislazzuli",
+    "sodalite": "Sodalite",
+    "amethyst": "Ametista",
+    "porphyry": "Porfido",
+    "rhodochrosite": "Rodocrosite",
+    "garnet": "Granato",
+    "cinnabar": "Cinabro",
+    "carnelian": "Corniola",
+    "amber": "Ambra",
+    "ochre": "Ocra",
+    "sulfur": "Zolfo",
+    "serpentine": "Serpentino",
+    "malachite": "Malachite",
+    "verdigris": "Verderame"
+  },
+  "privacySecurity": {
+    "appLock": {
+      "title": "Blocco dell'app",
+      "description": "Richiedi l'autenticazione biometrica o del dispositivo per aprire l'app"
+    },
+    "relockMinutes": "%{count} min",
+    "hideInRecents": {
+      "title": "Nascondi nei recenti",
+      "description": "Copri l'app con una schermata vuota mentre passi da un'app all'altra"
+    }
+  },
+  "notifications": {
+    "dailyReminder": {
+      "title": "Promemoria giornaliero",
+      "description": "Un solo promemoria, all'ora che scegli tu"
+    },
+    "permissionDenied": "Le notifiche di Stele sono disattivate nelle impostazioni di sistema. Attivale lì per abilitare questa opzione.",
+    "scheduleFailed": "Impossibile programmare il promemoria.",
+    "body": {
+      "journaled": "C'è altro da oggi?",
+      "notJournaled": "Hai un minuto per oggi?"
+    }
+  },
+  "journalBehaviour": {
+    "entryTemplate": {
+      "title": "Modello del sasso",
+      "description": "Precompila i nuovi sassi con questo testo. Lascia vuoto per partire da una tavola pulita.",
+      "placeholder": "Com'è andata la giornata?"
+    }
+  },
+  "archive": {
+    "export": "Esporta",
+    "import": "Importa",
+    "replace": "Sostituisci",
+    "confirmTitle": "Sei sicuro?",
+    "notImportedTitle": "Quel file non è stato importato",
+    "footnote": "Un'importazione controlla tutto il file prima di scrivere qualsiasi cosa. Se il file è rifiutato, Stele resta esattamente com'era.",
+    "exportData": {
+      "title": "Esporta i dati",
+      "description": "Note, scaglie, tag, tavole e riflessioni, in un solo file JSON"
+    },
+    "exportSettings": {
+      "title": "Esporta le impostazioni",
+      "description": "Tutte le preferenze, in un file JSON separato"
+    },
+    "importData": {
+      "title": "Importa i dati",
+      "description": "Sostituisce tutto quello che c'è adesso in Stele"
+    },
+    "importSettings": {
+      "title": "Importa le impostazioni",
+      "description": "Sostituisce tutte le preferenze"
+    },
+    "warnings": {
+      "importData": "Questo cancella tutte le note, le scaglie, i tag, le tavole e le riflessioni in Stele e le sostituisce con il contenuto del file. Non si può annullare.",
+      "importSettings": "Questo sostituisce tutte le preferenze in Stele con il contenuto del file. Non si può annullare."
+    },
+    "report": {
+      "counted": "%{journalNotes} sassi, %{notes} note, %{highlights} scaglie, %{tags} tag, %{folders} tavole, %{reflections} riflessioni",
+      "exported": "Esportati: %{counted}.",
+      "imported": "Importati: %{counted}. Riavvia Stele per vederli.",
+      "settingsExported": "Impostazioni esportate.",
+      "settingsImported": "Impostazioni importate. Riavvia Stele per vederle applicate."
+    },
+    "errors": {
+      "unknown": "Qualcosa è andato storto.",
+      "ARCHIVE_MALFORMED_JSON": "Quel file non è JSON valido.",
+      "ARCHIVE_VERSION_MISMATCH": "Quel file è stato scritto da una versione diversa di Stele.",
+      "ARCHIVE_INVALID_SHAPE": "In quel file manca un campo, oppure un campo ha il nome sbagliato.",
+      "ARCHIVE_DANGLING_REFERENCE": "Quel file punta a una tavola o a un tag che non contiene.",
+      "ARCHIVE_DUPLICATE_ID": "Quel file usa lo stesso id due volte.",
+      "ARCHIVE_OVERLAPPING_DAYS": "Due note con data in quel file coprono lo stesso giorno.",
+      "ARCHIVE_INCONSISTENT_DATABASE": "Il database si contraddice, quindi non è stato esportato niente.",
+      "ARCHIVE_FILE_FAILED": "Impossibile leggere o scrivere il file."
+    }
+  },
+  "about": {
+    "assurance": "Il tuo diario resta su questo dispositivo. Nessun account, nessun cloud, nessuna telemetria.",
+    "version": "Versione %{version}",
+    "versionWithBuild": "Versione %{version} (%{build})",
+    "versionUnknown": "Versione sconosciuta"
+  }
+}
