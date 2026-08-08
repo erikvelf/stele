@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
 import { List, Switch } from 'react-native-paper';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -18,7 +17,6 @@ export function HapticsToggle() {
 
   return (
     <List.Item
-      style={styles.item}
       title={t('appearance.haptics.title')}
       description={t('appearance.haptics.description')}
       left={props => <List.Icon {...props} icon="vibrate" />}
@@ -28,9 +26,3 @@ export function HapticsToggle() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  item: {
-    paddingHorizontal: 0,
-  },
-});

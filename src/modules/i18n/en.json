@@ -33,6 +33,9 @@
     "folderEmoji": "Emoji",
     "tag": "Tag",
     "appearance": "Appearance",
+    "language": "Language",
+    "color": "Colour",
+    "appIcon": "App icon",
     "privacySecurity": "Privacy & security",
     "notifications": "Notifications",
     "archive": "Archive",
@@ -198,6 +201,7 @@
     },
     "language": {
       "title": "Language",
+      "search": "Search language",
       "system": "System",
       "en": "English",
       "it": "Italiano"

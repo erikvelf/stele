@@ -230,6 +230,15 @@ function RootLayoutNavigator() {
             options={{ title: t('routes.appearance') }}
           />
           <Stack.Screen
+            name="language"
+            options={{ title: t('routes.language') }}
+          />
+          <Stack.Screen name="color" options={{ title: t('routes.color') }} />
+          <Stack.Screen
+            name="app-icon"
+            options={{ title: t('routes.appIcon') }}
+          />
+          <Stack.Screen
             name="privacy-security"
             options={{ title: t('routes.privacySecurity') }}
           />

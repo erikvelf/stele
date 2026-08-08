@@ -1,70 +1,62 @@
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { Surface } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import { List, Surface } from 'react-native-paper';
 
-import { AppIconPicker } from '@/components/settings/AppIconPicker';
 import { HapticsToggle } from '@/components/settings/HapticsToggle';
-import { LanguagePicker } from '@/components/settings/LanguagePicker';
-import { StonePicker } from '@/components/settings/StonePicker';
+import { stoneLabel } from '@/components/settings/stone-labels';
 import { ThemeModeToggle } from '@/components/settings/ThemeModeToggle';
 import { SPACING } from '@/constants/layout';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { applyAppIcon } from '@/modules/app-icon';
-import { haptics } from '@/modules/haptics';
-import { readAppIcon, writeAppIcon } from '@/modules/settings';
-import type { AppError, StoneId } from '@/modules/types';
+import { useTranslation } from '@/hooks/useTranslation';
+import { readAppIcon } from '@/modules/settings';
+import type { StoneId } from '@/modules/types';
 
-function useAppIcon() {
-  const [stoneId, setSelected] = useState<StoneId>(() => readAppIcon().stoneId);
-  const [isApplying, setIsApplying] = useState(false);
-  const [error, setError] = useState<AppError | null>(null);
+function useAppIconStone(): StoneId {
+  const [stoneId, setStoneId] = useState<StoneId>(() => readAppIcon().stoneId);
 
-  const setStoneId = useCallback(
-    (next: StoneId) => {
-      if (next === stoneId) {
-        return;
-      }
-
-      const previous = stoneId;
-      setError(null);
-      setIsApplying(true);
-      setSelected(next);
-      writeAppIcon({ stoneId: next });
-
-      void applyAppIcon(next).then(result => {
-        setIsApplying(false);
-        if (!result.success) {
-          setError(result.error);
-          setSelected(previous);
-          writeAppIcon({ stoneId: previous });
-          haptics.fail();
-        }
-      });
-    },
-    [stoneId]
+  useFocusEffect(
+    useCallback(() => {
+      setStoneId(readAppIcon().stoneId);
+    }, [])
   );
 
-  return { stoneId, isApplying, error, setStoneId };
+  return stoneId;
 }
 
 export default function AppearanceScreen() {
-  const { themeMode, stoneId, setThemeMode, setStoneId } = useAppTheme();
-  const appIcon = useAppIcon();
+  const { t, language } = useTranslation();
+  const { themeMode, stoneId, setThemeMode } = useAppTheme();
+  const appIconStone = useAppIconStone();
 
   return (
     <Surface elevation={0} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.body}>
+      <View style={styles.toggle}>
         <ThemeModeToggle value={themeMode} onChange={setThemeMode} />
-        <LanguagePicker />
-        <StonePicker value={stoneId} onChange={setStoneId} />
-        <AppIconPicker
-          value={appIcon.stoneId}
-          onChange={appIcon.setStoneId}
-          isApplying={appIcon.isApplying}
-          error={appIcon.error}
-        />
-        <HapticsToggle />
-      </ScrollView>
+      </View>
+
+      <HapticsToggle />
+      <List.Item
+        title={t('appearance.language.title')}
+        description={t(`appearance.language.${language}`)}
+        left={props => <List.Icon {...props} icon="translate" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/language')}
+      />
+      <List.Item
+        title={t('appearance.stone.title')}
+        description={stoneLabel(stoneId, t)}
+        left={props => <List.Icon {...props} icon="palette-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/color')}
+      />
+      <List.Item
+        title={t('appearance.appIcon.title')}
+        description={stoneLabel(appIconStone, t)}
+        left={props => <List.Icon {...props} icon="application-outline" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/app-icon')}
+      />
     </Surface>
   );
 }
@@ -73,8 +65,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  body: {
+  toggle: {
     padding: SPACING.md,
-    gap: SPACING.lg,
   },
 });
