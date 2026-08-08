@@ -20,6 +20,7 @@ export function useNote(noteId: string): UseNoteResult {
   const [loadedNoteId, setLoadedNoteId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteRef = useRef<Note | null>(null);
+  const pendingWriteRef = useRef<Note | null>(null);
 
   // setState during render: React applies it before paint, with no extra pass.
   if (loadedNoteId !== noteId) {
@@ -50,6 +51,15 @@ export function useNote(noteId: string): UseNoteResult {
       cancelled = true;
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+
+      // The screen is leaving before the debounce fired: write the last edit
+      // now, or it is lost.
+      const pending = pendingWriteRef.current;
+      pendingWriteRef.current = null;
+      if (pending) {
+        void writeNote(pending);
       }
     };
   }, [noteId]);
@@ -62,12 +72,15 @@ export function useNote(noteId: string): UseNoteResult {
 
     const updated = { ...loaded, text };
     noteRef.current = updated;
+    pendingWriteRef.current = updated;
     setNote(updated);
 
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      pendingWriteRef.current = null;
       void writeNote(updated).then(result => {
         if (!result.success) {
           setError(result.error);
