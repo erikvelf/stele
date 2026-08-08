@@ -62,6 +62,22 @@ const paperSettings = {
 
 const LOCK_ICON_SIZE = 112;
 
+// A proper noun, so it stays out of the catalogs.
+const APP_NAME = 'Stele';
+
+// Only the Settings tab pushes these, so their back button names it.
+const SETTINGS_ROUTES = [
+  { name: 'appearance', titleKey: 'routes.appearance' },
+  { name: 'language', titleKey: 'routes.language' },
+  { name: 'color', titleKey: 'routes.color' },
+  { name: 'app-icon', titleKey: 'routes.appIcon' },
+  { name: 'privacy-security', titleKey: 'routes.privacySecurity' },
+  { name: 'notifications', titleKey: 'routes.notifications' },
+  { name: 'archive', titleKey: 'routes.archive' },
+  { name: 'journal-behaviour', titleKey: 'routes.journalBehaviour' },
+  { name: 'about', titleKey: 'routes.about' },
+] as const;
+
 interface AppLock {
   isLocked: boolean;
   attemptUnlock: () => void;
@@ -71,13 +87,24 @@ interface AppLock {
 function useAppLock(): AppLock {
   const [isLocked, setIsLocked] = useState(() => readAppLock().enabled);
   const backgroundedAt = useRef<number | null>(null);
+  const isPrompting = useRef(false);
 
   const attemptUnlock = useCallback(() => {
-    void authenticateAsync().then(result => {
-      if (result.success) {
-        setIsLocked(false);
-      }
-    });
+    if (isPrompting.current) {
+      return;
+    }
+
+    isPrompting.current = true;
+    void authenticateAsync()
+      .then(result => {
+        if (result.success) {
+          setIsLocked(false);
+        }
+      })
+      .finally(() => {
+        isPrompting.current = false;
+        backgroundedAt.current = null;
+      });
   }, []);
 
   useEffect(() => {
@@ -87,26 +114,36 @@ function useAppLock(): AppLock {
   }, [isLocked, attemptUnlock]);
 
   // The lock returns once the app has spent longer than the interval away.
+  // `inactive` is not away: it is a banner, the app switcher, or the
+  // biometric prompt itself, which would otherwise relock the app the
+  // instant it unlocked it.
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
       (status: AppStateStatus) => {
-        const { enabled, relockIntervalMs } = readAppLock();
-        if (!enabled) {
+        if (isPrompting.current) {
           return;
         }
 
-        if (status === 'background' || status === 'inactive') {
+        const { enabled, relockIntervalMs } = readAppLock();
+        if (!enabled) {
+          backgroundedAt.current = null;
+          return;
+        }
+
+        if (status === 'background') {
           backgroundedAt.current = Date.now();
           return;
         }
 
-        if (status === 'active' && backgroundedAt.current !== null) {
-          const elapsed = Date.now() - backgroundedAt.current;
-          if (elapsed >= Number(relockIntervalMs)) {
-            setIsLocked(true);
-          }
-          backgroundedAt.current = null;
+        if (status !== 'active' || backgroundedAt.current === null) {
+          return;
+        }
+
+        const elapsed = Date.now() - backgroundedAt.current;
+        backgroundedAt.current = null;
+        if (elapsed >= Number(relockIntervalMs)) {
+          setIsLocked(true);
         }
       }
     );
@@ -203,7 +240,10 @@ function RootLayoutNavigator() {
     <PaperProvider theme={theme} settings={paperSettings}>
       <ThemeProvider value={navigationTheme}>
         <Stack screenOptions={{ headerShadowVisible: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="(tabs)"
+            options={{ headerShown: false, title: APP_NAME }}
+          />
           <Stack.Screen
             name="note/[id]"
             options={{ title: t('routes.stone') }}
@@ -225,36 +265,17 @@ function RootLayoutNavigator() {
             options={{ title: t('routes.folderEmoji'), presentation: 'modal' }}
           />
           <Stack.Screen name="tag/index" options={{ title: t('routes.tag') }} />
-          <Stack.Screen
-            name="appearance"
-            options={{ title: t('routes.appearance') }}
-          />
-          <Stack.Screen
-            name="language"
-            options={{ title: t('routes.language') }}
-          />
-          <Stack.Screen name="color" options={{ title: t('routes.color') }} />
-          <Stack.Screen
-            name="app-icon"
-            options={{ title: t('routes.appIcon') }}
-          />
-          <Stack.Screen
-            name="privacy-security"
-            options={{ title: t('routes.privacySecurity') }}
-          />
-          <Stack.Screen
-            name="notifications"
-            options={{ title: t('routes.notifications') }}
-          />
-          <Stack.Screen
-            name="archive"
-            options={{ title: t('routes.archive') }}
-          />
-          <Stack.Screen
-            name="journal-behaviour"
-            options={{ title: t('routes.journalBehaviour') }}
-          />
-          <Stack.Screen name="about" options={{ title: t('routes.about') }} />
+
+          {SETTINGS_ROUTES.map(({ name, titleKey }) => (
+            <Stack.Screen
+              key={name}
+              name={name}
+              options={{
+                title: t(titleKey),
+                headerBackTitle: t('tabs.settings'),
+              }}
+            />
+          ))}
         </Stack>
       </ThemeProvider>
     </PaperProvider>
