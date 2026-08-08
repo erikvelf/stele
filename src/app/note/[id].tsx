@@ -1,5 +1,5 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -12,22 +12,24 @@ import { HighlightList, TagPickerSheet } from '@/components/highlights';
 import type { ResolvedHighlight } from '@/components/highlights';
 import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
 import { RADIUS, SPACING } from '@/constants/layout';
-import { recessedSurfaceFor } from '@/modules/palette';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useHighlights } from '@/hooks/useHighlights';
-import { useNote } from '@/hooks/useNote';
+import { useJournalNote } from '@/hooks/useJournalNote';
 import { useRenderMode } from '@/hooks/useRenderMode';
 import { useTags } from '@/hooks/useTags';
+import { useTranslation } from '@/hooks/useTranslation';
+import { recessedSurfaceFor } from '@/modules/palette';
 
 const BLUR_CLOSE_DELAY_MS = 150;
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { note, error, isLoading, setText } = useNote(id);
+  const { note, error, isLoading, setText } = useJournalNote(id);
   const { highlights, addHighlight, updateText, assignTag, reorderHighlights } =
     useHighlights(id);
   const { tags } = useTags();
+  const { t } = useTranslation();
   const { theme, stoneId } = useAppTheme();
   const { isRenderMode, toggleRenderMode } = useRenderMode({
     noteId: id,
@@ -90,7 +92,7 @@ export default function NoteScreen() {
   return (
     <Surface elevation={0} style={styles.screen}>
       <NoteEditorArea
-        placeholder="Writing…"
+        placeholder={t('note.placeholder')}
         value={note?.text ?? ''}
         onChangeText={setText}
         isRenderMode={isRenderMode}
@@ -116,7 +118,7 @@ export default function NoteScreen() {
           variant="labelMedium"
           style={[styles.error, { color: theme.colors.error }]}
         >
-          Couldn&apos;t save — {error.cause ?? 'try again'}
+          {t('note.saveFailed', { cause: error.cause ?? t('note.tryAgain') })}
         </Text>
       ) : null}
 

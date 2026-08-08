@@ -1,57 +1,70 @@
 import { format } from 'date-fns';
+import type { Locale as DateFnsLocale } from 'date-fns';
 import { StyleSheet } from 'react-native';
 
 import { FadingList } from '@/components/shared';
 import { SPACING } from '@/constants/layout';
-import type { NoteEntry } from '@/modules/notes';
+import { useTranslation } from '@/hooks/useTranslation';
+import { capitalize } from '@/lib/capitalize';
+import type { JournalNote } from '@/modules/journal';
 
 import { MonthHeader } from './MonthHeader';
 import { NoteCard } from './NoteCard';
 
 const MONTH_LABEL_FORMAT = 'MMMM yyyy';
 
-function monthLabel(entry: NoteEntry): string {
-  return format(new Date(entry.range.start_timestamp), MONTH_LABEL_FORMAT);
+function monthLabel(note: JournalNote, locale: DateFnsLocale): string {
+  return capitalize(
+    format(new Date(note.start_timestamp), MONTH_LABEL_FORMAT, { locale })
+  );
 }
 
 export interface ActivityListProps {
-  entries: NoteEntry[];
-  pendingEntryId?: string;
-  onTopEntrySettled?: () => void;
-  onOpenEntry: (entry: NoteEntry) => void;
-  onSetDayRangeEntry: (entry: NoteEntry) => void;
-  onDeleteEntry: (entry: NoteEntry) => void;
+  notes: JournalNote[];
+  highlightCounts: ReadonlyMap<string, number>;
+  pendingNoteId?: string;
+  onTopNoteSettled?: () => void;
+  onOpenNote: (note: JournalNote) => void;
+  onSetDayRangeNote: (note: JournalNote) => void;
+  onDeleteNote: (note: JournalNote) => void;
 }
 
 export function ActivityList({
-  entries,
-  pendingEntryId,
-  onTopEntrySettled,
-  onOpenEntry,
-  onSetDayRangeEntry,
-  onDeleteEntry,
+  notes,
+  highlightCounts,
+  pendingNoteId,
+  onTopNoteSettled,
+  onOpenNote,
+  onSetDayRangeNote,
+  onDeleteNote,
 }: ActivityListProps) {
+  const { locale } = useTranslation();
+
   return (
     <FadingList
-      items={entries}
-      keyExtractor={entry => entry.range.id}
-      pendingId={pendingEntryId}
-      onTopItemSettled={onTopEntrySettled}
+      items={notes}
+      keyExtractor={note => note.id}
+      pendingId={pendingNoteId}
+      onTopItemSettled={onTopNoteSettled}
       style={styles.list}
-      renderItem={(entry, index) => {
-        const previousEntry = index > 0 ? entries[index - 1] : undefined;
+      renderItem={(note, index) => {
+        const previousNote = index > 0 ? notes[index - 1] : undefined;
         const showMonthHeader =
-          !previousEntry || monthLabel(entry) !== monthLabel(previousEntry);
+          !previousNote ||
+          monthLabel(note, locale) !== monthLabel(previousNote, locale);
 
         return (
           <>
-            {showMonthHeader ? <MonthHeader label={monthLabel(entry)} /> : null}
+            {showMonthHeader ? (
+              <MonthHeader label={monthLabel(note, locale)} />
+            ) : null}
             <NoteCard
-              noteText={entry.note.text}
-              range={entry.range}
-              onOpenPress={() => onOpenEntry(entry)}
-              onSetDayRangePress={() => onSetDayRangeEntry(entry)}
-              onDeletePress={() => onDeleteEntry(entry)}
+              noteText={note.text}
+              range={note}
+              highlightCount={highlightCounts.get(note.id) ?? 0}
+              onOpenPress={() => onOpenNote(note)}
+              onSetDayRangePress={() => onSetDayRangeNote(note)}
+              onDeletePress={() => onDeleteNote(note)}
             />
           </>
         );

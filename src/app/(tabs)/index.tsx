@@ -9,7 +9,10 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-import { FoldersCarousel, FoldersCarouselEmptyState } from '@/components/folders';
+import {
+  FoldersCarousel,
+  FoldersCarouselEmptyState,
+} from '@/components/folders';
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
 import { ActivityList } from '@/components/notes/ActivityList';
 import { DayRangeModal } from '@/components/notes/DayRangeModal';
@@ -20,25 +23,27 @@ import { CreationStats } from '@/components/shared/CreationStats';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { useFolders } from '@/hooks/useFolders';
+import { useHighlightCounts } from '@/hooks/useHighlightCounts';
 import { useJournalComposer } from '@/hooks/useJournalComposer';
-import { useListNotes } from '@/hooks/useListNotes';
-import { JOURNAL_FOLDER_ID } from '@/modules/folders';
+import { useJournalFeed } from '@/hooks/useJournalFeed';
+import { useTranslation } from '@/hooks/useTranslation';
 import { countHighlights } from '@/modules/highlights';
+import type { Translate } from '@/modules/i18n';
 import {
   countJournalNotes,
-  dateDayRangesSchema,
-  deleteNote,
-  writeDateDayRange,
-  type DateDayRange,
-  type NoteEntry,
-} from '@/modules/notes';
+  dayRangesSchema,
+  deleteJournalNote,
+  type JournalNote,
+  writeJournalNote,
+} from '@/modules/journal';
 import { pickCreationVerb } from '@/modules/stats';
 
 const EMPTY_STATE_TRANSITION_DURATION = 380;
 const STATS_ROW_HEIGHT = 120;
+const ERROR_SNACKBAR_DURATION = 4000;
 
-function capitalize(word: string): string {
-  return `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
+function creationVerb(t: Translate, today: Date, salt: number): string {
+  return t(`creationVerbs.${pickCreationVerb(today, salt)}`);
 }
 
 interface UseCreationStatsResult {
@@ -48,13 +53,14 @@ interface UseCreationStatsResult {
 
 // Single consumer (this screen), so it stays local rather than in hooks/.
 function useCreationStats(): UseCreationStatsResult {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<CreationStatRow[]>([]);
 
   const refresh = useCallback(() => {
     const today = new Date();
 
     void Promise.all([
-      countJournalNotes(JOURNAL_FOLDER_ID, startOfYear(today).getTime()),
+      countJournalNotes(startOfYear(today).getTime()),
       countHighlights(),
     ]).then(([notesResult, highlightsResult]) => {
       if (!notesResult.success || !highlightsResult.success) {
@@ -64,42 +70,148 @@ function useCreationStats(): UseCreationStatsResult {
       setRows([
         {
           icon: 'calendar-month',
-          text: `${capitalize(pickCreationVerb(today, 0))} ${notesResult.data.year} sassi this year`,
+          text: t('home.stats.stonesThisYear', {
+            verb: creationVerb(t, today, 0),
+            count: notesResult.data.year,
+          }),
         },
         {
           icon: 'terrain',
-          text: `${capitalize(pickCreationVerb(today, 1))} ${notesResult.data.total} sassi total`,
+          text: t('home.stats.stonesTotal', {
+            verb: creationVerb(t, today, 1),
+            count: notesResult.data.total,
+          }),
         },
         {
           icon: 'pickaxe',
-          text: `${capitalize(pickCreationVerb(today, 2))} ${highlightsResult.data} scaglie total`,
+          text: t('home.stats.highlightsTotal', {
+            verb: creationVerb(t, today, 2),
+            count: highlightsResult.data,
+          }),
         },
       ]);
     });
-  }, []);
+  }, [t]);
 
   useFocusEffect(refresh);
 
   return { rows, refresh };
 }
 
+interface JournalNoteActionsOptions {
+  removeNote: (id: string) => void;
+  refresh: () => void;
+  refreshCreationStats: () => void;
+  rescheduleDailyReminder: () => void;
+}
+
+interface JournalNoteActions {
+  error: string | null;
+  dismissError: () => void;
+  pendingDelete: JournalNote | null;
+  pendingDayRange: JournalNote | null;
+  requestDelete: (note: JournalNote) => void;
+  requestDayRange: (note: JournalNote) => void;
+  cancelDelete: () => void;
+  cancelDayRange: () => void;
+  confirmDelete: () => void;
+  confirmDayRange: (note: JournalNote) => void;
+}
+
+// Single consumer (this screen), so it stays local rather than in hooks/.
+function useJournalNoteActions({
+  removeNote,
+  refresh,
+  refreshCreationStats,
+  rescheduleDailyReminder,
+}: JournalNoteActionsOptions): JournalNoteActions {
+  const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<JournalNote | null>(null);
+  const [pendingDayRange, setPendingDayRange] = useState<JournalNote | null>(
+    null
+  );
+
+  // The row leaves the list first; a failed delete puts it back through the
+  // refresh.
+  const confirmDelete = useCallback(() => {
+    if (!pendingDelete) {
+      return;
+    }
+    removeNote(pendingDelete.id);
+    void deleteJournalNote(pendingDelete.id).then(result => {
+      if (!result.success) {
+        setError(t('home.errors.deleteNote'));
+        refresh();
+        return;
+      }
+      refreshCreationStats();
+      rescheduleDailyReminder();
+    });
+  }, [
+    pendingDelete,
+    removeNote,
+    refresh,
+    refreshCreationStats,
+    rescheduleDailyReminder,
+    t,
+  ]);
+
+  const confirmDayRange = useCallback(
+    (note: JournalNote) => {
+      setPendingDayRange(null);
+      void writeJournalNote(note).then(result => {
+        if (!result.success) {
+          setError(t('home.errors.setDayRange'));
+          return;
+        }
+        refresh();
+      });
+    },
+    [refresh, t]
+  );
+
+  return {
+    error,
+    dismissError: useCallback(() => setError(null), []),
+    pendingDelete,
+    pendingDayRange,
+    requestDelete: setPendingDelete,
+    requestDayRange: setPendingDayRange,
+    cancelDelete: useCallback(() => setPendingDelete(null), []),
+    cancelDayRange: useCallback(() => setPendingDayRange(null), []),
+    confirmDelete,
+    confirmDayRange,
+  };
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { reschedule: rescheduleDailyReminder } = useDailyReminder();
   const { folders, refresh: refreshFolders } = useFolders();
-  const { entries, isLoading, refresh, prependEntry, removeEntry } =
-    useListNotes();
+  const { notes, isLoading, refresh, prependNote, removeNote } =
+    useJournalFeed();
+  const highlightCounts = useHighlightCounts(notes);
   const { rows: creationStatRows, refresh: refreshCreationStats } =
     useCreationStats();
-  const [entryError, setEntryError] = useState<string | null>(null);
-  const [entryPendingDelete, setEntryPendingDelete] =
-    useState<NoteEntry | null>(null);
-  const [entryPendingDayRange, setEntryPendingDayRange] =
-    useState<NoteEntry | null>(null);
+  const noteActions = useJournalNoteActions({
+    removeNote,
+    refresh,
+    refreshCreationStats,
+    rescheduleDailyReminder,
+  });
 
   const ranges = useMemo(
-    () => dateDayRangesSchema.parse(entries.map(entry => entry.range)),
-    [entries]
+    () =>
+      dayRangesSchema.parse(
+        notes.map(note => ({
+          id: note.id,
+          start_timestamp: note.start_timestamp,
+          end_timestamp: note.end_timestamp,
+        }))
+      ),
+    [notes]
   );
 
   const scrollY = useSharedValue(0);
@@ -109,46 +221,16 @@ export default function HomeScreen() {
 
   const {
     isCreating,
-    pendingEntryId,
+    pendingNoteId,
     handleCreate,
-    handleTopEntrySettled,
+    handleTopNoteSettled,
     resetCreating,
   } = useJournalComposer({
-    entries,
-    isLoadingEntries: isLoading,
-    prependEntry,
+    notes,
+    isLoadingNotes: isLoading,
+    prependNote,
     onCreated: refreshCreationStats,
   });
-
-  const handleDeleteEntry = useCallback(
-    (entry: NoteEntry) => {
-      removeEntry(entry.range.id);
-      void deleteNote(entry.note.id).then(result => {
-        if (!result.success) {
-          setEntryError("Couldn't delete the note. Please try again.");
-          refresh();
-          return;
-        }
-        refreshCreationStats();
-        rescheduleDailyReminder();
-      });
-    },
-    [removeEntry, refresh, refreshCreationStats, rescheduleDailyReminder]
-  );
-
-  const handleConfirmDayRange = useCallback(
-    (range: DateDayRange) => {
-      setEntryPendingDayRange(null);
-      void writeDateDayRange(range).then(result => {
-        if (!result.success) {
-          setEntryError("Couldn't set the day range. Please try again.");
-          return;
-        }
-        refresh();
-      });
-    },
-    [refresh]
-  );
 
   useFocusEffect(
     useCallback(() => {
@@ -172,7 +254,7 @@ export default function HomeScreen() {
         <ActivityGrid
           ranges={ranges}
           scrollY={scrollY}
-          onSelectRange={range => router.push(`/note/${range.note_id}`)}
+          onSelectRange={range => router.push(`/note/${range.id}`)}
         />
 
         <View style={styles.statsRow}>
@@ -191,7 +273,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {entries.length === 0 ? (
+        {notes.length === 0 ? (
           <Animated.View
             exiting={FadeOut.duration(EMPTY_STATE_TRANSITION_DURATION)}
           >
@@ -199,32 +281,29 @@ export default function HomeScreen() {
           </Animated.View>
         ) : (
           <ActivityList
-            entries={entries}
-            pendingEntryId={pendingEntryId}
-            onTopEntrySettled={handleTopEntrySettled}
-            onOpenEntry={entry => router.push(`/note/${entry.note.id}`)}
-            onSetDayRangeEntry={setEntryPendingDayRange}
-            onDeleteEntry={setEntryPendingDelete}
+            notes={notes}
+            highlightCounts={highlightCounts}
+            pendingNoteId={pendingNoteId}
+            onTopNoteSettled={handleTopNoteSettled}
+            onOpenNote={note => router.push(`/note/${note.id}`)}
+            onSetDayRangeNote={noteActions.requestDayRange}
+            onDeleteNote={noteActions.requestDelete}
           />
         )}
       </Animated.ScrollView>
 
       <ConfirmDeleteModal
-        visible={entryPendingDelete !== null}
-        subject="sasso"
-        onConfirm={() => {
-          if (entryPendingDelete) {
-            handleDeleteEntry(entryPendingDelete);
-          }
-        }}
-        onDismiss={() => setEntryPendingDelete(null)}
+        visible={noteActions.pendingDelete !== null}
+        subject={t('common.stone')}
+        onConfirm={noteActions.confirmDelete}
+        onDismiss={noteActions.cancelDelete}
       />
 
       <DayRangeModal
-        entry={entryPendingDayRange}
+        note={noteActions.pendingDayRange}
         ranges={ranges}
-        onDismiss={() => setEntryPendingDayRange(null)}
-        onConfirm={handleConfirmDayRange}
+        onDismiss={noteActions.cancelDayRange}
+        onConfirm={noteActions.confirmDayRange}
       />
 
       <FAB
@@ -235,11 +314,11 @@ export default function HomeScreen() {
       />
 
       <Snackbar
-        visible={entryError !== null}
-        onDismiss={() => setEntryError(null)}
-        duration={4000}
+        visible={noteActions.error !== null}
+        onDismiss={noteActions.dismissError}
+        duration={ERROR_SNACKBAR_DURATION}
       >
-        {entryError}
+        {noteActions.error}
       </Snackbar>
     </Surface>
   );
@@ -250,6 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsRow: {
+    marginTop: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'stretch',
     justifyContent: 'center',

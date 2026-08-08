@@ -1,34 +1,66 @@
-import { format } from 'date-fns';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Card, IconButton, Menu, Text, useTheme } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import {
+  Card,
+  Icon,
+  IconButton,
+  Menu,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 
 import { RADIUS, SPACING } from '@/constants/layout';
-import type { DateDayRange } from '@/modules/notes';
+import { useTranslation } from '@/hooks/useTranslation';
+import { formatDayRange } from '@/modules/i18n';
+import { toDayBounds } from '@/modules/journal';
+import type { DayRange } from '@/modules/journal';
 
 import { MarkdownPreview } from './MarkdownPreview';
 
 export interface NoteCardProps {
   noteText: string;
-  images?: string[];
-  range: DateDayRange;
+  range: DayRange;
+  highlightCount: number;
   onOpenPress: () => void;
-  onMediaPress?: () => void;
   onSetDayRangePress: () => void;
   onDeletePress: () => void;
 }
 
-const NO_IMAGE_PLACEHOLDER = '🪨';
-const MAX_VISIBLE_IMAGES = 4;
 const PREVIEW_TITLE_LINES = 1;
 const PREVIEW_BODY_LINES = 2;
 const MENU_ICON_SIZE = 16;
+const HIGHLIGHT_ICON_SIZE = 12;
+
+function HighlightCount({ count }: { count: number }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  return (
+    <View
+      style={styles.highlightCount}
+      accessibilityLabel={t('noteCard.highlights', { count })}
+    >
+      <Icon
+        source="pickaxe"
+        size={HIGHLIGHT_ICON_SIZE}
+        color={theme.colors.onSurfaceVariant}
+      />
+      <Text
+        variant="labelSmall"
+        style={{ color: theme.colors.onSurfaceVariant }}
+      >
+        {count}
+      </Text>
+    </View>
+  );
+}
 
 function NoteCardMenu({
   onSetDayRangePress,
   onDeletePress,
 }: Pick<NoteCardProps, 'onSetDayRangePress' | 'onDeletePress'>) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -37,17 +69,17 @@ function NoteCardMenu({
       onDismiss={() => setIsMenuOpen(false)}
       anchor={
         <IconButton
-          icon="dots-vertical"
+          icon="dots-horizontal"
           size={MENU_ICON_SIZE}
           style={styles.menuButton}
-          accessibilityLabel="Note actions"
+          accessibilityLabel={t('noteActions.label')}
           onPress={() => setIsMenuOpen(true)}
         />
       }
     >
       <Menu.Item
         leadingIcon="calendar-range"
-        title="Set day range"
+        title={t('noteActions.setDayRange')}
         onPress={() => {
           setIsMenuOpen(false);
           onSetDayRangePress();
@@ -55,7 +87,7 @@ function NoteCardMenu({
       />
       <Menu.Item
         leadingIcon="delete"
-        title="Delete"
+        title={t('common.delete')}
         theme={{
           colors: {
             onSurface: theme.colors.error,
@@ -73,19 +105,18 @@ function NoteCardMenu({
 
 export function NoteCard({
   noteText,
-  images = [],
   range,
+  highlightCount,
   onOpenPress,
-  onMediaPress,
   onSetDayRangePress,
   onDeletePress,
 }: NoteCardProps) {
   const theme = useTheme();
-  const preview = noteText.length > 0 ? noteText : 'Clean slate';
+  const { t, locale } = useTranslation();
+  const bounds = toDayBounds(range);
+  const preview = noteText.length > 0 ? noteText : t('notes.cleanSlate');
   const [previewTitle, ...previewBodyLines] = preview.split('\n');
   const previewBody = previewBodyLines.join('\n');
-  const visibleImages = images.slice(0, MAX_VISIBLE_IMAGES);
-  const hiddenImageCount = images.length - visibleImages.length;
 
   return (
     <Card
@@ -93,43 +124,6 @@ export function NoteCard({
       onPress={onOpenPress}
       style={[styles.card, { backgroundColor: theme.colors.elevation.level3 }]}
     >
-      {visibleImages.length > 0 ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onMediaPress}
-          style={styles.media}
-        >
-          {/* TODO: Mosaic the various media like having 1 half and one rock for 1 image, 2 images side by side when 2 images, when more images then mosaic the next mosaic like 1/2, 1/4 + 1/4, or 1/2 + 1/4 + 1/8 + 1/8 */}
-          <View style={styles.mosaic}>
-            {visibleImages.length === 1 ? (
-              <View style={styles.mosaicTile}>
-                <Text style={styles.placeholder}>{NO_IMAGE_PLACEHOLDER}</Text>
-              </View>
-            ) : null}
-            {visibleImages.map((image, index) => (
-              <View key={image} style={styles.mosaicTile}>
-                <Image source={{ uri: image }} style={styles.mosaicImage} />
-                {index === visibleImages.length - 1 && hiddenImageCount > 0 ? (
-                  <View
-                    style={[
-                      styles.mosaicOverlay,
-                      { backgroundColor: theme.colors.backdrop },
-                    ]}
-                  >
-                    <Text
-                      variant="titleMedium"
-                      style={{ color: theme.colors.onSurface }}
-                    >
-                      +{hiddenImageCount}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ))}
-          </View>
-        </Pressable>
-      ) : null}
-
       <Card.Content style={styles.textSection}>
         <Text
           variant="titleMedium"
@@ -160,12 +154,17 @@ export function NoteCard({
           variant="labelSmall"
           style={{ color: theme.colors.onSurfaceVariant }}
         >
-          {format(new Date(range.start_timestamp), 'EEE, MMM d')}
+          {formatDayRange(bounds.start, bounds.end, locale)}
         </Text>
-        <NoteCardMenu
-          onSetDayRangePress={onSetDayRangePress}
-          onDeletePress={onDeletePress}
-        />
+        <View style={styles.footerActions}>
+          {highlightCount > 0 ? (
+            <HighlightCount count={highlightCount} />
+          ) : null}
+          <NoteCardMenu
+            onSetDayRangePress={onSetDayRangePress}
+            onDeletePress={onDeletePress}
+          />
+        </View>
       </View>
     </Card>
   );
@@ -176,35 +175,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-  },
-  media: {
-    minHeight: 96,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mosaic: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '100%',
-  },
-  mosaicTile: {
-    width: '50%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mosaicImage: {
-    width: '100%',
-    height: '100%',
-  },
-  mosaicOverlay: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholder: {
-    fontSize: 28,
-    textAlign: 'center',
   },
   textSection: {
     paddingHorizontal: SPACING.md,
@@ -221,5 +191,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: SPACING.md,
+  },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  highlightCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
 });

@@ -6,7 +6,8 @@ import {
   startOfMonth,
   subYears,
 } from 'date-fns';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Locale as DateFnsLocale } from 'date-fns';
+import { useCallback, useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { Button, Modal, Portal, Text, useTheme } from 'react-native-paper';
@@ -14,29 +15,29 @@ import type { MD3Theme } from 'react-native-paper';
 
 import {
   MonthGrid,
+  monthGridDays,
+  monthGridMetrics,
   MonthGridWeekdays,
   MonthPagerHeader,
   MonthPagerList,
-  monthGridDays,
-  monthGridMetrics,
   monthsBetween,
 } from '@/components/shared';
 import type { MonthGridCell } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useMonthPager } from '@/hooks/useMonthPager';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   indexRangesByDay,
   isRunFree,
   isWithinBounds,
-  readNoteCreated,
   toDayBounds,
-} from '@/modules/notes';
+} from '@/modules/journal';
 import type {
-  DateDayRange,
-  DateDayRanges,
   DayBounds,
-  NoteEntry,
-} from '@/modules/notes';
+  DayRange,
+  DayRanges,
+  JournalNote,
+} from '@/modules/journal';
 
 type DayState = 'anchor' | 'pending' | 'blocked' | 'future' | 'free';
 
@@ -47,7 +48,7 @@ function pickerCells(
   month: Date,
   anchor: Date,
   pending: DayBounds,
-  occupied: Map<number, DateDayRange>,
+  occupied: Map<number, DayRange>,
   today: Date,
   theme: MD3Theme
 ): MonthGridCell<DayState>[] {
@@ -77,22 +78,42 @@ function pickerCells(
       };
     }
 
-    const isAnchor = isSameDay(day, anchor);
-    const isPending = isWithinBounds(day, pending);
+    return selectableCell(
+      day,
+      isSameDay(day, anchor),
+      isWithinBounds(day, pending),
+      theme
+    );
+  });
+}
 
+function selectableCell(
+  day: Date,
+  isAnchor: boolean,
+  isPending: boolean,
+  theme: MD3Theme
+): MonthGridCell<DayState> {
+  // The anchor keeps the pending runKey, so the capsule passes through it.
+  const outline = isPending
+    ? { color: theme.colors.primary, runKey: 'pending' }
+    : undefined;
+
+  if (isAnchor) {
     return {
       day,
-      fill: isAnchor
-        ? { color: theme.colors.primary }
-        : isPending
-          ? undefined
-          : { color: theme.colors.surfaceVariant },
-      outline: isPending
-        ? { color: theme.colors.primary, runKey: 'pending' }
-        : undefined,
-      data: isAnchor ? 'anchor' : isPending ? 'pending' : 'free',
+      fill: { color: theme.colors.primary },
+      outline,
+      data: 'anchor',
     };
-  });
+  }
+  if (isPending) {
+    return { day, outline, data: 'pending' };
+  }
+  return {
+    day,
+    fill: { color: theme.colors.surfaceVariant },
+    data: 'free',
+  };
 }
 
 function dayTextColor(state: DayState | undefined, theme: MD3Theme): string {
@@ -108,11 +129,17 @@ function dayTextColor(state: DayState | undefined, theme: MD3Theme): string {
   return theme.colors.onSurfaceVariant;
 }
 
-function rangeLabel(bounds: DayBounds): string {
+const SHORT_DAY = 'MMM d';
+
+function shortDay(date: Date, locale: DateFnsLocale): string {
+  return format(date, SHORT_DAY, { locale });
+}
+
+function rangeLabel(bounds: DayBounds, locale: DateFnsLocale): string {
   if (isSameDay(bounds.start, bounds.end)) {
-    return format(bounds.start, 'MMM d');
+    return shortDay(bounds.start, locale);
   }
-  return `${format(bounds.start, 'MMM d')} – ${format(bounds.end, 'MMM d')}`;
+  return `${shortDay(bounds.start, locale)} – ${shortDay(bounds.end, locale)}`;
 }
 
 // What has already been journaled does not bound the picker: any free day is
@@ -131,58 +158,111 @@ function pickerMonths(anchor: Date | null, today: Date): Date[] {
   return monthsBetween(subYears(center, PICKER_WINDOW_YEARS), today);
 }
 
+// Pressing inside the range pulls the nearer edge back to the anchor, which
+// never moves. Pressing outside extends that edge, but only over free days.
+function nextBounds(
+  day: Date,
+  anchor: Date,
+  pending: DayBounds,
+  otherRanges: readonly DayRange[]
+): DayBounds | null {
+  if (isWithinBounds(day, pending)) {
+    if (day.getTime() < anchor.getTime()) {
+      return { ...pending, start: anchor };
+    }
+    if (day.getTime() > anchor.getTime()) {
+      return { ...pending, end: anchor };
+    }
+    return null;
+  }
+
+  if (
+    day.getTime() < pending.start.getTime() &&
+    isRunFree(day, pending.start, otherRanges)
+  ) {
+    return { ...pending, start: day };
+  }
+
+  if (
+    day.getTime() > pending.end.getTime() &&
+    isRunFree(pending.end, day, otherRanges)
+  ) {
+    return { ...pending, end: day };
+  }
+
+  return null;
+}
+
+interface DayRangeSelection {
+  // The day the note was written for, which no edit may push out of the range.
+  anchor: Date | null;
+  pending: DayBounds | null;
+  occupied: Map<number, DayRange>;
+  selectDay: (day: Date) => void;
+}
+
+// Single consumer (this modal), so it stays local rather than in hooks/.
+function useDayRangeSelection(
+  note: JournalNote | null,
+  ranges: DayRanges
+): DayRangeSelection {
+  const [pending, setPending] = useState<DayBounds | null>(null);
+  const [loadedNoteId, setLoadedNoteId] = useState<string | null>(null);
+
+  if (note && loadedNoteId !== note.id) {
+    setLoadedNoteId(note.id);
+    setPending(toDayBounds(note));
+  }
+
+  const anchor = useMemo(
+    () => (note ? startOfDay(new Date(note.created_at)) : null),
+    [note]
+  );
+
+  const otherRanges = useMemo(
+    () => (note ? ranges.filter(range => range.id !== note.id) : ranges),
+    [ranges, note]
+  );
+  const occupied = useMemo(() => indexRangesByDay(otherRanges), [otherRanges]);
+
+  const selectDay = useCallback(
+    (day: Date) => {
+      if (!anchor || !pending) {
+        return;
+      }
+      const next = nextBounds(day, anchor, pending, otherRanges);
+      if (!next) {
+        return;
+      }
+      setPending(next);
+    },
+    [anchor, pending, otherRanges]
+  );
+
+  return { anchor, pending, occupied, selectDay };
+}
+
 export interface DayRangeModalProps {
-  entry: NoteEntry | null;
-  ranges: DateDayRanges;
+  note: JournalNote | null;
+  ranges: DayRanges;
   onDismiss: () => void;
-  onConfirm: (range: DateDayRange) => void;
+  onConfirm: (note: JournalNote) => void;
 }
 
 export function DayRangeModal({
-  entry,
+  note,
   ranges,
   onDismiss,
   onConfirm,
 }: DayRangeModalProps) {
   const theme = useTheme();
-  const [pending, setPending] = useState<DayBounds | null>(null);
-  const [anchor, setAnchor] = useState<Date | null>(null);
+  const { t, locale } = useTranslation();
   const [width, setWidth] = useState(0);
   const today = useMemo(() => startOfDay(new Date()), []);
-
-  useEffect(() => {
-    if (!entry) {
-      return;
-    }
-    let cancelled = false;
-    const bounds = toDayBounds(entry.range);
-    setPending(bounds);
-    // The one day that can never leave the range is the day the note was
-    // written for, not whatever the range currently spans — otherwise a
-    // saved extension becomes permanent, and there is no way back.
-    setAnchor(null);
-
-    void readNoteCreated(entry.note.id).then(result => {
-      if (cancelled) {
-        return;
-      }
-      setAnchor(
-        result.success && result.data
-          ? startOfDay(new Date(result.data.created_at))
-          : bounds.start
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [entry]);
-
-  const otherRanges = useMemo(
-    () => (entry ? ranges.filter(range => range.id !== entry.range.id) : ranges),
-    [ranges, entry]
+  const { anchor, pending, occupied, selectDay } = useDayRangeSelection(
+    note,
+    ranges
   );
-  const occupied = useMemo(() => indexRangesByDay(otherRanges), [otherRanges]);
 
   const months = useMemo(() => pickerMonths(anchor, today), [anchor, today]);
   const anchorIndex = useMemo(
@@ -201,49 +281,16 @@ export function DayRangeModal({
     setWidth(event.nativeEvent.layout.width);
   }, []);
 
-  const handleDayPress = useCallback(
-    (day: Date) => {
-      if (!anchor || !pending) {
-        return;
-      }
-
-      if (isWithinBounds(day, pending)) {
-        if (day.getTime() < anchor.getTime()) {
-          setPending(bounds => (bounds ? { ...bounds, start: anchor } : bounds));
-        } else if (day.getTime() > anchor.getTime()) {
-          setPending(bounds => (bounds ? { ...bounds, end: anchor } : bounds));
-        }
-        return;
-      }
-
-      if (
-        day.getTime() < pending.start.getTime() &&
-        isRunFree(day, pending.start, otherRanges)
-      ) {
-        setPending(bounds => (bounds ? { ...bounds, start: day } : bounds));
-        return;
-      }
-
-      if (
-        day.getTime() > pending.end.getTime() &&
-        isRunFree(pending.end, day, otherRanges)
-      ) {
-        setPending(bounds => (bounds ? { ...bounds, end: day } : bounds));
-      }
-    },
-    [anchor, pending, otherRanges]
-  );
-
   const { cellWidth, cellHeight, height } = monthGridMetrics(width);
   const gridHeight = Math.max(height, 0);
 
   const renderDay = useCallback(
     (day: Date, state: DayState | undefined) => (
       <Text variant="labelSmall" style={{ color: dayTextColor(state, theme) }}>
-        {format(day, 'd')}
+        {format(day, 'd', { locale })}
       </Text>
     ),
-    [theme]
+    [theme, locale]
   );
 
   const renderMonth = useCallback(
@@ -258,7 +305,7 @@ export function DayRangeModal({
             cellWidth={cellWidth}
             cellHeight={cellHeight}
             renderDay={renderDay}
-            onDayPress={handleDayPress}
+            onDayPress={selectDay}
           />
         </View>
       );
@@ -272,11 +319,11 @@ export function DayRangeModal({
       cellWidth,
       cellHeight,
       renderDay,
-      handleDayPress,
+      selectDay,
     ]
   );
 
-  if (!entry) {
+  if (!note) {
     return null;
   }
 
@@ -293,14 +340,16 @@ export function DayRangeModal({
         ]}
       >
         <View style={styles.body}>
-          <Text variant="titleLarge">Set day range</Text>
+          <Text variant="titleLarge">{t('dayRange.title')}</Text>
           <Text
             variant="bodyMedium"
             style={{ color: theme.colors.onSurfaceVariant }}
           >
-            Edit the note of{' '}
-            {format(anchor ?? toDayBounds(entry.range).start, 'EEE, MMM d')} by
-            tapping the squares.
+            {t('dayRange.instructions', {
+              day: format(anchor ?? toDayBounds(note).start, 'EEE, MMM d', {
+                locale,
+              }),
+            })}
           </Text>
 
           {pager.month && (
@@ -329,7 +378,7 @@ export function DayRangeModal({
           </View>
 
           <Text variant="titleMedium" style={styles.rangeLabel}>
-            {pending ? rangeLabel(pending) : ' '}
+            {pending ? rangeLabel(pending, locale) : ' '}
           </Text>
 
           <Button
@@ -340,7 +389,7 @@ export function DayRangeModal({
                 return;
               }
               onConfirm({
-                ...entry.range,
+                ...note,
                 start_timestamp: pending.start.getTime(),
                 end_timestamp: pending.end.getTime(),
               });

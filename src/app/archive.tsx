@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Button,
   Dialog,
+  Divider,
   List,
   Portal,
   Snackbar,
@@ -14,49 +15,35 @@ import {
 import { SPACING } from '@/constants/layout';
 import { useArchive } from '@/hooks/useArchive';
 import type { ArchiveAction, ArchiveReport } from '@/hooks/useArchive';
-import { ARCHIVE_ERRORS } from '@/modules/archive';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Translate } from '@/modules/i18n';
 import type { AppError } from '@/modules/types';
 
-const ERROR_MESSAGES = new Map<string, string>([
-  [ARCHIVE_ERRORS.MALFORMED_JSON, 'That file is not valid JSON.'],
-  [
-    ARCHIVE_ERRORS.VERSION_MISMATCH,
-    'That file was written by a different version of Stele.',
-  ],
-  [ARCHIVE_ERRORS.INVALID_SHAPE, 'That file is missing or misspells a field.'],
-  [
-    ARCHIVE_ERRORS.DANGLING_REFERENCE,
-    'That file points at a folder or tag it does not contain.',
-  ],
-  [ARCHIVE_ERRORS.DUPLICATE_ID, 'That file uses the same id twice.'],
-  [
-    ARCHIVE_ERRORS.OVERLAPPING_DAYS,
-    'Two dated notes in that file cover the same day.',
-  ],
-  [
-    ARCHIVE_ERRORS.INCONSISTENT_DATABASE,
-    'The database contradicts itself, so nothing was exported.',
-  ],
-  [ARCHIVE_ERRORS.FILE_FAILED, 'The file could not be read or written.'],
-]);
+interface ArchiveEntry {
+  action: ArchiveAction;
+  icon: string;
+}
 
-const IMPORT_WARNINGS = new Map<ArchiveAction, string>([
-  [
-    'importData',
-    'This erases every note, scaglia, tag, tavola and riflessione in Stele and replaces them with the contents of the file. It cannot be undone.',
-  ],
-  [
-    'importSettings',
-    'This replaces every preference in Stele with the contents of the file. It cannot be undone.',
-  ],
-]);
+const EXPORT_ENTRIES: ArchiveEntry[] = [
+  { action: 'exportData', icon: 'database-export-outline' },
+  { action: 'exportSettings', icon: 'file-export-outline' },
+];
 
-function describeError(error: AppError): string {
-  const message = ERROR_MESSAGES.get(error.code) ?? 'Something went wrong.';
+const IMPORT_ENTRIES: ArchiveEntry[] = [
+  { action: 'importData', icon: 'database-import-outline' },
+  { action: 'importSettings', icon: 'file-import-outline' },
+];
+
+// The error code names its own message, so a new code needs a catalog entry
+// and nothing else. An unmapped one falls back to the generic message.
+function describeError(error: AppError, t: Translate): string {
+  const message = t(`archive.errors.${error.code}`, {
+    defaultValue: t('archive.errors.unknown'),
+  });
   return error.cause === undefined ? message : `${message}\n\n${error.cause}`;
 }
 
-function describeReport(report: ArchiveReport): string | null {
+function describeReport(report: ArchiveReport, t: Translate): string | null {
   if (report.cancelled) {
     return null;
   }
@@ -64,17 +51,52 @@ function describeReport(report: ArchiveReport): string | null {
   const { summary } = report;
   if (summary === null) {
     return report.action === 'exportSettings'
-      ? 'Settings exported.'
-      : 'Settings imported. Restart Stele to see them applied.';
+      ? t('archive.report.settingsExported')
+      : t('archive.report.settingsImported');
   }
 
-  const counted = `${summary.notes} note, ${summary.highlights} scaglie, ${summary.tags} tag, ${summary.folders} tavole, ${summary.reflections} riflessioni`;
+  const counted = t('archive.report.counted', {
+    journalNotes: summary.journalNotes,
+    notes: summary.notes,
+    highlights: summary.highlights,
+    tags: summary.tags,
+    folders: summary.folders,
+    reflections: summary.reflections,
+  });
   return report.action === 'exportData'
-    ? `Exported ${counted}.`
-    : `Imported ${counted}. Restart Stele to see them.`;
+    ? t('archive.report.exported', { counted })
+    : t('archive.report.imported', { counted });
+}
+
+interface ArchiveItemProps {
+  entry: ArchiveEntry;
+  running: ArchiveAction | null;
+  onPress: (action: ArchiveAction) => void;
+}
+
+function ArchiveItem({ entry, running, onPress }: ArchiveItemProps) {
+  const { t } = useTranslation();
+
+  return (
+    <List.Item
+      title={t(`archive.${entry.action}.title`)}
+      description={t(`archive.${entry.action}.description`)}
+      left={props => <List.Icon {...props} icon={entry.icon} />}
+      right={props =>
+        running === entry.action ? (
+          <ActivityIndicator />
+        ) : (
+          <List.Icon {...props} icon="chevron-right" />
+        )
+      }
+      disabled={running !== null}
+      onPress={() => onPress(entry.action)}
+    />
+  );
 }
 
 export default function ArchiveScreen() {
+  const { t } = useTranslation();
   const { running, error, report, run, dismiss } = useArchive();
   const [pending, setPending] = useState<ArchiveAction | null>(null);
 
@@ -86,78 +108,67 @@ export default function ArchiveScreen() {
     }
   };
 
-  const notice = report === null ? null : describeReport(report);
+  const notice = report === null ? null : describeReport(report, t);
 
   return (
     <Surface style={styles.screen} elevation={0}>
-      <List.Subheader>Export</List.Subheader>
-      <List.Item
-        title="Export data"
-        description="Notes, scaglie, tag, tavole and riflessioni, as one JSON file"
-        left={props => <List.Icon {...props} icon="database-export-outline" />}
-        right={() => (running === 'exportData' ? <ActivityIndicator /> : null)}
-        disabled={running !== null}
-        onPress={() => void run('exportData')}
-      />
-      <List.Item
-        title="Export settings"
-        description="Every preference, as a separate JSON file"
-        left={props => <List.Icon {...props} icon="file-export-outline" />}
-        right={() =>
-          running === 'exportSettings' ? <ActivityIndicator /> : null
-        }
-        disabled={running !== null}
-        onPress={() => void run('exportSettings')}
-      />
+      <Text variant="titleLarge" style={styles.section}>
+        {t('archive.export')}
+      </Text>
+      {EXPORT_ENTRIES.map(entry => (
+        <ArchiveItem
+          key={entry.action}
+          entry={entry}
+          running={running}
+          onPress={action => void run(action)}
+        />
+      ))}
 
-      <List.Subheader>Import</List.Subheader>
-      <List.Item
-        title="Import data"
-        description="Replaces everything currently in Stele"
-        left={props => <List.Icon {...props} icon="database-import-outline" />}
-        right={() => (running === 'importData' ? <ActivityIndicator /> : null)}
-        disabled={running !== null}
-        onPress={() => setPending('importData')}
-      />
-      <List.Item
-        title="Import settings"
-        description="Replaces every preference"
-        left={props => <List.Icon {...props} icon="file-import-outline" />}
-        right={() =>
-          running === 'importSettings' ? <ActivityIndicator /> : null
-        }
-        disabled={running !== null}
-        onPress={() => setPending('importSettings')}
-      />
+      <Divider />
+
+      <Text variant="titleLarge" style={styles.section}>
+        {t('archive.import')}
+      </Text>
+      {IMPORT_ENTRIES.map(entry => (
+        <ArchiveItem
+          key={entry.action}
+          entry={entry}
+          running={running}
+          onPress={setPending}
+        />
+      ))}
+
+      <Divider />
 
       <Text variant="bodySmall" style={styles.footnote}>
-        An import checks the whole file before it writes anything. If the file
-        is rejected, Stele is left exactly as it was.
+        {t('archive.footnote')}
       </Text>
 
       <Portal>
         <Dialog visible={pending !== null} onDismiss={() => setPending(null)}>
-          <Dialog.Title>Are you sure?</Dialog.Title>
+          <Dialog.Title>{t('archive.confirmTitle')}</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              {pending === null ? '' : IMPORT_WARNINGS.get(pending)}
+              {pending === null ? '' : t(`archive.warnings.${pending}`)}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setPending(null)}>Cancel</Button>
-            <Button onPress={confirm}>Replace</Button>
+            <Button onPress={() => setPending(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onPress={confirm}>{t('archive.replace')}</Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={error !== null} onDismiss={dismiss}>
-          <Dialog.Title>That file was not imported</Dialog.Title>
+          <Dialog.Title>{t('archive.notImportedTitle')}</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              {error === null ? '' : describeError(error)}
+              {error === null ? '' : describeError(error, t)}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={dismiss}>Close</Button>
+            <Button onPress={dismiss}>{t('common.close')}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -172,6 +183,11 @@ export default function ArchiveScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+  },
+  section: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.xs,
   },
   footnote: {
     marginHorizontal: SPACING.md,

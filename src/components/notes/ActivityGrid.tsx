@@ -17,19 +17,19 @@ import Animated, {
 import type { SharedValue } from 'react-native-reanimated';
 
 import {
+  MONTH_GRID_RADIUS_RATIO,
   MonthGrid,
+  monthGridDays,
+  monthGridMetrics,
   MonthGridWeekdays,
   MonthPagerHeader,
   MonthPagerList,
-  MONTH_GRID_RADIUS_RATIO,
-  monthGridDays,
-  monthGridMetrics,
   monthsBetween,
 } from '@/components/shared';
 import type { MonthGridCell } from '@/components/shared';
 import { useMonthPager } from '@/hooks/useMonthPager';
-import { indexRangesByDay } from '@/modules/notes';
-import type { DateDayRange, DateDayRanges } from '@/modules/notes';
+import { indexRangesByDay } from '@/modules/journal';
+import type { DayRange, DayRanges } from '@/modules/journal';
 
 const TODAY_DOT_RATIO = 0.22;
 const DAY_NUMBER_SIZE_RATIO = 0.42;
@@ -43,7 +43,7 @@ const COLLAPSE_DURATION = 220;
 const COLLAPSE_SCROLL_THRESHOLD = 32;
 
 interface ActivityDay {
-  range: DateDayRange | undefined;
+  range: DayRange | undefined;
   isToday: boolean;
 }
 
@@ -52,7 +52,7 @@ interface ActivityDay {
 // rather than one long bar.
 function activityCells(
   month: Date,
-  rangesByDay: Map<number, DateDayRange>,
+  rangesByDay: Map<number, DayRange>,
   today: Date,
   theme: MD3Theme
 ): MonthGridCell<ActivityDay>[] {
@@ -72,7 +72,7 @@ function activityCells(
   });
 }
 
-function journalMonths(ranges: DateDayRanges, today: Date): Date[] {
+function journalMonths(ranges: DayRanges, today: Date): Date[] {
   const earliest = ranges.reduce(
     (found, range) => Math.min(found, range.start_timestamp),
     today.getTime()
@@ -142,7 +142,9 @@ interface DayNumberProps {
 // Fades in with the expansion so the squished, vertically distorted frames of
 // the number never show.
 function DayNumber({ day, size, color, progress }: DayNumberProps) {
-  const style = useAnimatedStyle<ViewStyle>(() => ({ opacity: progress.value }));
+  const style = useAnimatedStyle<ViewStyle>(() => ({
+    opacity: progress.value,
+  }));
 
   return (
     <Animated.View style={style}>
@@ -154,12 +156,16 @@ function DayNumber({ day, size, color, progress }: DayNumberProps) {
 }
 
 export interface ActivityGridProps {
-  ranges: DateDayRanges;
+  ranges: DayRanges;
   scrollY?: SharedValue<number>;
-  onSelectRange?: (range: DateDayRange) => void;
+  onSelectRange?: (range: DayRange) => void;
 }
 
-export function ActivityGrid({ ranges, scrollY, onSelectRange }: ActivityGridProps) {
+export function ActivityGrid({
+  ranges,
+  scrollY,
+  onSelectRange,
+}: ActivityGridProps) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -276,7 +282,11 @@ export function ActivityGrid({ ranges, scrollY, onSelectRange }: ActivityGridPro
           <Pressable disabled={isExpanded} onPress={() => setIsExpanded(true)}>
             <Animated.View style={[styles.squish, clipStyle]}>
               <Animated.View
-                style={[styles.scaleFromTop, { height: naturalHeight }, scaleStyle]}
+                style={[
+                  styles.scaleFromTop,
+                  { height: naturalHeight },
+                  scaleStyle,
+                ]}
               >
                 <MonthPagerList
                   months={months}
