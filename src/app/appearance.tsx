@@ -37,13 +37,6 @@ export default function AppearanceScreen() {
 
       <HapticsToggle />
       <List.Item
-        title={t('appearance.language.title')}
-        description={t(`appearance.language.${language}`)}
-        left={props => <List.Icon {...props} icon="translate" />}
-        right={props => <List.Icon {...props} icon="chevron-right" />}
-        onPress={() => router.push('/language')}
-      />
-      <List.Item
         title={t('appearance.stone.title')}
         description={stoneLabel(stoneId, t)}
         left={props => <List.Icon {...props} icon="palette-outline" />}
@@ -56,6 +49,13 @@ export default function AppearanceScreen() {
         left={props => <List.Icon {...props} icon="application-outline" />}
         right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={() => router.push('/app-icon')}
+      />
+      <List.Item
+        title={t('appearance.language.title')}
+        description={t(`appearance.language.${language}`)}
+        left={props => <List.Icon {...props} icon="translate" />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={() => router.push('/language')}
       />
     </Surface>
   );
