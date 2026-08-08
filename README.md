@@ -1,56 +1,100 @@
-# Welcome to your Expo app 👋
+# Stele 🗿
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A personal journal, and the notes you want to keep next to it.
 
-## Get started
+Stele is my own take on keeping a diary. It came out of a habit I already had — writing the day and pulling out the top five small wins and highlights — and it is that habit made queryable. It works fully offline, stores everything in SQLite on the device, and exports the whole archive to a single JSON file.
 
-1. Install dependencies
+The product spec is [`docs/PRD.md`](docs/PRD.md).
 
-   ```bash
-   npm install
-   ```
+<!-- TODO: header icon — assets/images/icon.png, scaled to 256px -->
 
-2. Start the app
+<!-- TODO: hero row, one table row of 4 — the loop: write → see → read → zoom out
+     1. write the day + strike the flakes  ...  note/[id]
+     2. the activity grid, filled          ...  (tabs)/index
+     3. Layers unfiltered next to Layers filtered to one tag  ...  (tabs)/log
+     4. Marker resolution, month reflection pinned on top     ...  (tabs)/log
 
-   ```bash
-   npx expo start
-   ```
+     the rest, in a <details> block or beside their bullet below:
+     - tag a flake, tag picker open        ...  note/[id]
+     - range a stone, taken days blocked   ...  note/[id]        (better as a gif)
+     - write a week or month reflection    ...  reflection editor
+     - a tablet open, Markdown rendering   ...  folder/[id]
+     - the export sheet                    ...  archive
+     - the stone palette / icon picker     ...  color, app-icon
 
-In the output, you'll find options to open the app in a
+     capture rules:
+     - turn OFF screen-capture blocking in privacy-security first, or every shot is black
+     - dark theme, one accent for all shots, English locale
+     - seed ~3 months of real content; an empty grid makes the app look unused
+     - one device: Pixel-class emulator, 1080x2400
+     - save ~400px wide PNG in docs/assets/screenshots/ -->
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## How it works
 
-## Get a fresh project
+1. You write a **journal note** for the day: free-form Markdown, at whatever length you feel like.
+2. You pull out of it a handful of **highlights** — small wins, things learned, things that happened. Each one can carry tags you create (`math`, `cs`, `new`).
+3. The highlights leave the day and flow into one continuous log you can read end to end, filter by tag, and drill back through into the day they came from.
 
-When you're ready, run:
+As weeks and months pass, **reflections** unlock: a short free-text summary of the week, then of the month, then of the year. The same record at lower resolution — the way a progressive JPEG shows the picture before the detail arrives.
+
+## The rock vocabulary
+
+A **stele** is a standing stone with a record cut into it — the thing people used when they wanted writing to outlast them. The whole app is named after that, and everything inside it is named out of the same quarry.
+
+| In the app | Italian | What it is |
+| --- | --- | --- |
+| **Stone** | Sasso | one journal note — a day, and the highlights struck off it |
+| **Flake** | Scaglia | one highlight. A chip knocked off a stone |
+| **Layers** | Strati | every flake ever, stacked in order, read top to bottom |
+| **Basket** | Gerla | the week — a load of stones carried together |
+| **Marker** | Cippo | the month. A *cippo miliario* is the Roman milestone, the carved stone set every mile to tell travellers how far they had come |
+| **Mountain** | Montagna | the year — the stones and their markers, piled up |
+| **Tablet** | Tavola | a folder of notes, after *le Dodici Tavole* |
+| **Shelf** | Scaffale | the page holding your tablets |
+
+The accent colours are stones too — basalt, slate, travertine, lapis lazuli, porphyry, malachite, cinnabar, amber, and eleven more, all read against the grey.
+
+<!-- TODO: the 18 stone icons as one composed 6x3 grid, ~600px wide,
+     built from assets/icons/previews/*.png — one image, not 18 tags -->
+
+
+## What it does
+
+- **Multi-day notes** — sometimes a day continues. A note can cover a range, 6 to 8 August, when that stretch is genuinely one thing. Ranges are exclusive, so two notes never cover the same day.
+- **Highlights** — small shards of the day, taggable, so progress on a subject scattered across dozens of non-adjacent days becomes visible.
+- **Reflections** — optional summaries at week, month and year level.
+- **Stats** — basic for now, and the part most likely to grow.
+- **Shelf and folders** — folders of ordinary notes with Markdown: bucket list, things to buy, things to improve. Not todos — the things you meant to do, sitting beside what you actually did.
+- **Export and import** — every note, highlight, tag and folder in one JSON file, complete enough to rebuild from nothing and simple enough to edit by hand.
+- **Appearance** — Italian and English, theme, accent colour, haptics, alternate app icons.
+- **Local authentication** — device biometrics or passcode to open the journal.
+- **Reminders** — a local notification when you want a nudge to write.
+- **Templates** — prefill new journal notes so you never start from a blank screen.
+
+## Your data
+
+Everything is local. The app stores notes in SQLite on the device and needs no network access — there is no account, no sync, no server, and no HTTP client in the dependency tree. The archive is text and nothing else, which is what makes the JSON export readable on its own, years from now, with or without this app.
+
+## Stack
+
+Expo SDK 57 · React Native · expo-router · react-native-paper · Drizzle ORM over expo-sqlite · zod · MMKV for settings · TypeScript.
+
+## Running it
 
 ```bash
-npm run reset-project
+pnpm install
+pnpm android   # or: pnpm ios
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+`expo-sqlite`, local authentication and dynamic app icons are native modules, so a development build is required — Expo Go will not run this app.
 
-### Other setup steps
+## Repository
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- [`docs/PRD.md`](docs/PRD.md) — what the app is, why it exists, and the naming
+- [`docs/guides/project-structure.md`](docs/guides/project-structure.md) — how the code is organised
+- [`AGENTS.md`](AGENTS.md) — the conventions the code is held to
 
-## Learn more
+## Contributing
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This is a personal project I built to use myself. I am not looking for contributions, and features land when I find I want them. You are welcome to read it, fork it, or take ideas from it.
