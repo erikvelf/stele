@@ -27,7 +27,4 @@ export type {
   MonthGridWeekdaysProps,
 } from './MonthGrid';
 export { MonthPagerHeader, MonthPagerList, monthsBetween } from './MonthPager';
-export type {
-  MonthPagerHeaderProps,
-  MonthPagerListProps,
-} from './MonthPager';
+export type { MonthPagerHeaderProps, MonthPagerListProps } from './MonthPager';

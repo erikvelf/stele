@@ -3,6 +3,7 @@
 A personal journal. The product spec is `docs/PRD.md`.
 
 ## MANDATORY
+
 For messages and answerse use always **asd-ste100 simplified technical english**
 USE **CONTEXT ENGINE MCP** FOR GETTING CONTEXT WITH QUALITY IN REPSECT OF SEARCH PATTERNS
 

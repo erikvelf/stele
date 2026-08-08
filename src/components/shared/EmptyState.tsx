@@ -20,10 +20,7 @@ export function EmptyState({ emoji, title, subtitle }: EmptyStateProps) {
     <View style={styles.container}>
       <View style={styles.circle}>
         <View
-          style={[
-            styles.circleFill,
-            { backgroundColor: theme.colors.primary },
-          ]}
+          style={[styles.circleFill, { backgroundColor: theme.colors.primary }]}
         />
         <Text style={styles.emoji}>{emoji}</Text>
       </View>

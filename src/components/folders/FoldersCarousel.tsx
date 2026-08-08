@@ -5,8 +5,8 @@ import { Text, useTheme } from 'react-native-paper';
 
 import { InfoSwatch } from '@/components/ui';
 import { contrastColor } from '@/lib/contrastColor';
-import { buildTheme, seedFor } from '@/modules/palette';
 import type { Folder } from '@/modules/folders';
+import { buildTheme, seedFor } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
 
 interface FoldersCarouselProps {
@@ -29,7 +29,10 @@ function FolderCarouselItemComponent({
   onSelectFolder,
 }: FolderCarouselItemProps) {
   const stoneId = folder.color as StoneId;
-  const stoneTheme = useMemo(() => buildTheme(stoneId, isDark), [stoneId, isDark]);
+  const stoneTheme = useMemo(
+    () => buildTheme(stoneId, isDark),
+    [stoneId, isDark]
+  );
   const labelColor = useMemo(() => contrastColor(seedFor(stoneId)), [stoneId]);
 
   return (
@@ -134,7 +137,10 @@ export function FoldersCarousel({
       if (settledIndex < folders.length || settledIndex >= 2 * folders.length) {
         const centeredIndex = centerInMiddleLap(settledIndex, folders.length);
         currentIndexRef.current = centeredIndex;
-        listRef.current?.scrollToIndex({ index: centeredIndex, animated: false });
+        listRef.current?.scrollToIndex({
+          index: centeredIndex,
+          animated: false,
+        });
       } else {
         currentIndexRef.current = settledIndex;
       }

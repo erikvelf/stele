@@ -4,9 +4,8 @@ import { Surface } from 'react-native-paper';
 
 import { Tag as TagPill } from '@/components/highlights';
 import { EdgeScroller } from '@/components/shared';
-import type { Tag } from '@/modules/highlights';
-
 import { SPACING } from '@/constants/layout';
+import type { Tag } from '@/modules/highlights';
 
 interface TagFilterBarProps {
   tags: readonly Tag[];
@@ -19,7 +18,12 @@ interface TagFilterBarProps {
 // highlight carries at most one tag, so selecting several here widens the
 // log rather than narrowing it. The inset lives on the pills rather than the
 // bar, so the row scrolls the whole width and the chevrons sit at the edges.
-export function TagFilterBar({ tags, selectedIds, onToggle, style }: TagFilterBarProps) {
+export function TagFilterBar({
+  tags,
+  selectedIds,
+  onToggle,
+  style,
+}: TagFilterBarProps) {
   if (tags.length === 0) {
     return null;
   }

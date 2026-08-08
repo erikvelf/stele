@@ -1,10 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 
+import { RADIUS } from '@/constants/layout';
 import { seedFor } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
-
-import { RADIUS } from '@/constants/layout';
 
 interface ColorSwatchProps {
   stoneId: StoneId;

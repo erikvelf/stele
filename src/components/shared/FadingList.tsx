@@ -5,8 +5,8 @@ import Animated, {
   FadeIn,
   FadeOut,
   LinearTransition,
-  SlideInRight,
   runOnJS,
+  SlideInRight,
 } from 'react-native-reanimated';
 
 const TRANSITION_DURATION = 380;

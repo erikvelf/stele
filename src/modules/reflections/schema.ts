@@ -1,4 +1,9 @@
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import {
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 import { createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
 
@@ -17,7 +22,10 @@ export const reflectionTable = sqliteTable(
     text: text('text').notNull(),
   },
   table => [
-    uniqueIndex('reflection_kind_period_start').on(table.kind, table.period_start),
+    uniqueIndex('reflection_kind_period_start').on(
+      table.kind,
+      table.period_start
+    ),
   ]
 );
 

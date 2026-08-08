@@ -1,3 +1,4 @@
+import type { Locale as DateFnsLocale } from 'date-fns';
 import {
   createContext,
   useCallback,
@@ -7,9 +8,12 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Locale as DateFnsLocale } from 'date-fns';
-
-import { dateLocale, resolveLocale, setLocale, translate } from '@/modules/i18n';
+import {
+  dateLocale,
+  resolveLocale,
+  setLocale,
+  translate,
+} from '@/modules/i18n';
 import type { Translate, TranslateValues } from '@/modules/i18n';
 import { readLanguage, writeLanguage } from '@/modules/settings';
 import type { LanguagePreference } from '@/modules/types';

@@ -4,8 +4,8 @@ import { StyleSheet } from 'react-native';
 import { Surface } from 'react-native-paper';
 
 import { EmojiPicker } from '@/components/ui';
-import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
 import { SPACING } from '@/constants/layout';
+import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
 
 export default function NewFolderEmojiScreen() {
   const router = useRouter();

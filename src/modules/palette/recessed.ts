@@ -1,8 +1,8 @@
-import { hexFromArgb } from '@material/material-color-utilities';
-
 import type { StoneId } from '@/modules/types';
 
 import { corePaletteFor } from './core';
+
+import { hexFromArgb } from '@material/material-color-utilities';
 
 // One step below the scheme's own surface tone (6 dark, 98 light), taken
 // from the same neutral palette so it reads as a deeper cut of the surface

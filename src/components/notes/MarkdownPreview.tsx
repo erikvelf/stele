@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import {
   EnrichedMarkdownText,
   type MarkdownStyle,
 } from 'react-native-enriched-markdown';
+import { useTheme } from 'react-native-paper';
 
 interface MarkdownPreviewProps {
   markdown: string;

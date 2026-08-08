@@ -1,10 +1,10 @@
-import { Platform } from 'react-native';
 import {
   allowScreenCaptureAsync,
   disableAppSwitcherProtectionAsync,
   enableAppSwitcherProtectionAsync,
   preventScreenCaptureAsync,
 } from 'expo-screen-capture';
+import { Platform } from 'react-native';
 
 // FLAG_SECURE (Android) and app switcher protection (iOS) are persistent
 // window-level toggles enforced by the OS compositor, not per-transition

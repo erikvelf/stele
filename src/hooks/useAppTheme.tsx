@@ -1,13 +1,18 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import type { MD3Theme } from 'react-native-paper';
 
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { buildTheme } from '@/modules/palette';
 import { readAppearance, writeAppearance } from '@/modules/settings';
 import type { Appearance, ThemeMode } from '@/modules/settings';
 import type { StoneId } from '@/modules/types';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface AppThemeContextValue {
   theme: MD3Theme;
@@ -63,7 +68,9 @@ export function AppThemeProvider({ children }: AppThemeProviderProps) {
   );
 
   return (
-    <AppThemeContext.Provider value={value}>{children}</AppThemeContext.Provider>
+    <AppThemeContext.Provider value={value}>
+      {children}
+    </AppThemeContext.Provider>
   );
 }
 

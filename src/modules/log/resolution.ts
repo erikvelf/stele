@@ -1,4 +1,11 @@
-import { addMonths, addWeeks, endOfMonth, endOfWeek, startOfMonth, startOfWeek } from 'date-fns';
+import {
+  addMonths,
+  addWeeks,
+  endOfMonth,
+  endOfWeek,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
 
 import { WEEK_OPTIONS } from './calendar';
 import type { Direction, Resolution, Span } from './types';
@@ -24,15 +31,21 @@ function pageUnits(resolution: Resolution): number {
 }
 
 function unitStart(resolution: Resolution, date: Date): Date {
-  return isMonthly(resolution) ? startOfMonth(date) : startOfWeek(date, WEEK_OPTIONS);
+  return isMonthly(resolution)
+    ? startOfMonth(date)
+    : startOfWeek(date, WEEK_OPTIONS);
 }
 
 function unitEnd(resolution: Resolution, date: Date): Date {
-  return isMonthly(resolution) ? endOfMonth(date) : endOfWeek(date, WEEK_OPTIONS);
+  return isMonthly(resolution)
+    ? endOfMonth(date)
+    : endOfWeek(date, WEEK_OPTIONS);
 }
 
 function shiftUnits(resolution: Resolution, date: Date, amount: number): Date {
-  return isMonthly(resolution) ? addMonths(date, amount) : addWeeks(date, amount);
+  return isMonthly(resolution)
+    ? addMonths(date, amount)
+    : addWeeks(date, amount);
 }
 
 // The calendar span page `page` covers, counting away from `anchor` in the
@@ -73,7 +86,12 @@ export function pagesSpan(
   pageCount: number
 ): Span {
   const first = pageSpan(resolution, direction, anchor, FIRST_PAGE);
-  const last = pageSpan(resolution, direction, anchor, Math.max(pageCount - 1, FIRST_PAGE));
+  const last = pageSpan(
+    resolution,
+    direction,
+    anchor,
+    Math.max(pageCount - 1, FIRST_PAGE)
+  );
 
   return direction === 'newest'
     ? { start: last.start, end: first.end }

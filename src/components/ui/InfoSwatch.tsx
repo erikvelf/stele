@@ -35,7 +35,11 @@ export function InfoSwatch({
 
   return (
     <View
-      style={[styles.swatch, { width: size, height: size, backgroundColor: color }, style]}
+      style={[
+        styles.swatch,
+        { width: size, height: size, backgroundColor: color },
+        style,
+      ]}
     >
       <View
         style={[

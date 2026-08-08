@@ -23,7 +23,11 @@ export function CreationStats({ rows }: CreationStatsProps) {
       {rows.map(row => (
         <View key={row.icon} style={styles.row}>
           <View style={styles.iconSlot}>
-            <Icon source={row.icon} size={ICON_SIZE} color={theme.colors.onSurfaceVariant} />
+            <Icon
+              source={row.icon}
+              size={ICON_SIZE}
+              color={theme.colors.onSurfaceVariant}
+            />
           </View>
           <Text variant="bodyMedium" style={styles.text}>
             {row.text}

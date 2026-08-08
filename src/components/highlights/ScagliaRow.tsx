@@ -1,10 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
+import { SPACING } from '@/constants/layout';
 import type { Tag as TagType } from '@/modules/highlights';
 import { TRANSPARENT } from '@/modules/palette';
-
-import { SPACING } from '@/constants/layout';
 
 import { Tag as TagPill } from './Tag';
 

@@ -1,11 +1,12 @@
-import { hexFromArgb, Scheme } from '@material/material-color-utilities';
-import type { Scheme as SchemeType } from '@material/material-color-utilities';
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 
 import type { StoneId } from '@/modules/types';
 
 import { corePaletteFor } from './core';
+
+import { hexFromArgb, Scheme } from '@material/material-color-utilities';
+import type { Scheme as SchemeType } from '@material/material-color-utilities';
 
 type MD3Colors = MD3Theme['colors'];
 
@@ -49,7 +50,11 @@ function mixOpaque(base: string, tint: string, tintAlpha: number): string {
   const onto = parseHex(tint);
   const mix = (fromChannel: number, ontoChannel: number) =>
     fromChannel * (1 - tintAlpha) + ontoChannel * tintAlpha;
-  return formatHex(mix(from.r, onto.r), mix(from.g, onto.g), mix(from.b, onto.b));
+  return formatHex(
+    mix(from.r, onto.r),
+    mix(from.g, onto.g),
+    mix(from.b, onto.b)
+  );
 }
 
 function rgba(hex: string, alpha: number): string {

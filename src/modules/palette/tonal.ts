@@ -1,8 +1,12 @@
-import { TonalPalette, argbFromHex, hexFromArgb } from '@material/material-color-utilities';
-
 import type { StoneId } from '@/modules/types';
 
 import { seedFor } from './constants';
+
+import {
+  argbFromHex,
+  hexFromArgb,
+  TonalPalette,
+} from '@material/material-color-utilities';
 
 // MD3's container/on-container tone pair: a low-chroma-reads-as-tinted
 // background with body-text-legible contrast against it, generated in HCT
@@ -31,7 +35,9 @@ export function tonalPairFor(stoneId: StoneId, isDark: boolean): TonalPair {
 
   const palette = TonalPalette.fromInt(argbFromHex(seedFor(stoneId)));
   const containerTone = isDark ? CONTAINER_TONE_DARK : CONTAINER_TONE_LIGHT;
-  const onContainerTone = isDark ? ON_CONTAINER_TONE_DARK : ON_CONTAINER_TONE_LIGHT;
+  const onContainerTone = isDark
+    ? ON_CONTAINER_TONE_DARK
+    : ON_CONTAINER_TONE_LIGHT;
 
   const pair: TonalPair = {
     container: hexFromArgb(palette.tone(containerTone)),

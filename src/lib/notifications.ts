@@ -1,9 +1,9 @@
 import {
-  SchedulableTriggerInputTypes,
   addNotificationResponseReceivedListener,
   cancelAllScheduledNotificationsAsync,
   getPermissionsAsync,
   requestPermissionsAsync,
+  SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
   setNotificationHandler,
 } from 'expo-notifications';

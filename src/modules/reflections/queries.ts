@@ -12,7 +12,10 @@ import type { Reflection, ReflectionKind } from './schema';
 
 // A period owns at most one reflection, so its identity is derivable rather
 // than generated — no read is needed before a write.
-export function reflectionIdFor(kind: ReflectionKind, periodStart: number): string {
+export function reflectionIdFor(
+  kind: ReflectionKind,
+  periodStart: number
+): string {
   return `${kind}-${periodStart}`;
 }
 
@@ -30,7 +33,11 @@ export async function listReflections(
           eq(reflectionTable.kind, kind),
           // Snapped back to a boundary: a period the caller's range only
           // overlaps still begins before it, and would otherwise be missed.
-          between(reflectionTable.period_start, periodStartOf(kind, from).getTime(), to)
+          between(
+            reflectionTable.period_start,
+            periodStartOf(kind, from).getTime(),
+            to
+          )
         )
       );
     return ok(rows);
