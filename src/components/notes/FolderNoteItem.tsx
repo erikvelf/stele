@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { IconButton, List, Menu, useTheme } from 'react-native-paper';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Note } from '@/modules/notes';
 
 import { MarkdownPreview } from './MarkdownPreview';
@@ -14,11 +15,9 @@ export interface FolderNoteItemProps {
   onDeletePress: (note: Note) => void;
 }
 
-const EMPTY_NOTE_TITLE = 'Empty note';
-
-function titleFor(text: string): string {
+function titleFor(text: string, emptyTitle: string): string {
   const [firstLine] = text.split('\n');
-  return firstLine.length > 0 ? firstLine : EMPTY_NOTE_TITLE;
+  return firstLine.length > 0 ? firstLine : emptyTitle;
 }
 
 function NoteActionsMenu({
@@ -31,6 +30,7 @@ function NoteActionsMenu({
   onDeletePress: () => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const runAndClose = (action: () => void) => () => {
@@ -45,24 +45,24 @@ function NoteActionsMenu({
       anchor={
         <IconButton
           icon="dots-vertical"
-          accessibilityLabel="Note actions"
+          accessibilityLabel={t('noteActions.label')}
           onPress={() => setIsMenuOpen(true)}
         />
       }
     >
       <Menu.Item
         leadingIcon="pencil"
-        title="Edit"
+        title={t('common.edit')}
         onPress={runAndClose(onEditPress)}
       />
       <Menu.Item
         leadingIcon="folder-move"
-        title="Move"
+        title={t('common.move')}
         onPress={runAndClose(onMovePress)}
       />
       <Menu.Item
         leadingIcon="delete"
-        title="Delete"
+        title={t('common.delete')}
         theme={{
           colors: {
             onSurface: theme.colors.error,
@@ -83,13 +83,14 @@ export function FolderNoteItem({
   onDeletePress,
 }: FolderNoteItemProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <List.Item
       style={[styles.item, { borderColor: theme.colors.outlineVariant }]}
       title={() => (
         <MarkdownPreview
-          markdown={titleFor(note.text)}
+          markdown={titleFor(note.text, t('notes.emptyTitle'))}
           fontSize={theme.fonts.bodyLarge.fontSize}
           lineHeight={theme.fonts.bodyLarge.lineHeight}
         />

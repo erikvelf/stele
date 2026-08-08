@@ -13,19 +13,22 @@ import { ConfirmDeleteModal } from '@/components/shared';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolders } from '@/hooks/useFolders';
 import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Folder } from '@/modules/folders';
 
 const EMPTY_STATE_TRANSITION_DURATION = 380;
 
 export default function FoldersScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { folders, createFolder, updateFolder, removeFolder } = useFolders();
   const { openSheet, openSheetFor, reset } = useNewFolderDraft();
   const [pendingFolderId, setPendingFolderId] = useState<string | undefined>(
     undefined
   );
-  const [folderPendingDelete, setFolderPendingDelete] =
-    useState<Folder | null>(null);
+  const [folderPendingDelete, setFolderPendingDelete] = useState<Folder | null>(
+    null
+  );
 
   const handleCreatePress = () => {
     reset();
@@ -47,7 +50,7 @@ export default function FoldersScreen() {
   return (
     <Surface style={styles.screen} elevation={0}>
       <Appbar.Header>
-        <Appbar.Content title="Scaffale" />
+        <Appbar.Content title={t('folders.title')} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.body}>
@@ -76,7 +79,7 @@ export default function FoldersScreen() {
 
       <ConfirmDeleteModal
         visible={folderPendingDelete !== null}
-        subject="cartella"
+        subject={t('common.folder')}
         onConfirm={() => {
           if (folderPendingDelete) {
             removeFolder(folderPendingDelete.id);

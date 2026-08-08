@@ -3,9 +3,11 @@ import { StyleSheet } from 'react-native';
 import { List, Surface, TextInput } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 import { readEntryTemplate, writeEntryTemplate } from '@/modules/settings';
 
 export default function JournalBehaviourScreen() {
+  const { t } = useTranslation();
   const [entryTemplate, setEntryTemplate] = useState(readEntryTemplate);
 
   const changeText = (text: string) => {
@@ -17,8 +19,8 @@ export default function JournalBehaviourScreen() {
   return (
     <Surface style={styles.screen} elevation={0}>
       <List.Item
-        title="Entry template"
-        description="Pre-fills new sassi with this text. Leave blank to start empty."
+        title={t('journalBehaviour.entryTemplate.title')}
+        description={t('journalBehaviour.entryTemplate.description')}
         left={props => <List.Icon {...props} icon="text-box-outline" />}
       />
       <TextInput
@@ -27,7 +29,7 @@ export default function JournalBehaviourScreen() {
         style={styles.input}
         value={entryTemplate.text}
         onChangeText={changeText}
-        placeholder="How was your day?"
+        placeholder={t('journalBehaviour.entryTemplate.placeholder')}
       />
     </Surface>
   );

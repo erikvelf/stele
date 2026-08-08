@@ -1,21 +1,16 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
-import { formatPeriod } from '@/lib/format-period';
-import type { Period } from '@/lib/format-period';
-
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import { capitalize } from '@/lib/capitalize';
+import { formatPeriod } from '@/modules/i18n';
+import type { Period } from '@/modules/types';
 
 interface HeaderProps {
   period: Period;
   variant: 'medium' | 'small';
   onPress?: () => void;
-}
-
-// Dates come out of the locale lowercase; a divider reads better with its
-// first letter raised.
-function capitalize(label: string): string {
-  return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
 }
 
 // A period divider, drawn as a tinted band rather than a rule: the layer it
@@ -25,6 +20,7 @@ function capitalize(label: string): string {
 // small is the layer nested inside it.
 export function Header({ period, variant, onPress }: HeaderProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isMedium = variant === 'medium';
 
   const content = (
@@ -41,10 +37,12 @@ export function Header({ period, variant, onPress }: HeaderProps) {
       <Text
         variant={isMedium ? 'titleMedium' : 'labelLarge'}
         style={{
-          color: isMedium ? theme.colors.onSurface : theme.colors.onSurfaceVariant,
+          color: isMedium
+            ? theme.colors.onSurface
+            : theme.colors.onSurfaceVariant,
         }}
       >
-        {capitalize(formatPeriod(period))}
+        {capitalize(formatPeriod(period, t))}
       </Text>
     </View>
   );

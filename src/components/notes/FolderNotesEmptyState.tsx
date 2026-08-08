@@ -1,11 +1,14 @@
 import { EmptyState } from '@/components/shared';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function FolderNotesEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <EmptyState
       emoji="📜"
-      title="This tavola is empty"
-      subtitle="Tap the pencil to add its first nota."
+      title={t('folderNotes.empty.title')}
+      subtitle={t('folderNotes.empty.subtitle')}
     />
   );
 }

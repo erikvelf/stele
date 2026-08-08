@@ -9,11 +9,11 @@ import {
 } from 'react-native-paper';
 
 import { ColorSwatch } from '@/components/ui';
+import { RADIUS, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Folder } from '@/modules/folders';
 import { buildTheme } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
-import type { Folder } from '@/modules/folders';
-
-import { RADIUS, SPACING } from '@/constants/layout';
 
 interface FolderCardProps {
   folder: Folder;
@@ -36,6 +36,7 @@ function FolderActionsMenu({
   onDeletePress: () => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const runAndClose = (action: () => void) => () => {
@@ -50,19 +51,19 @@ function FolderActionsMenu({
       anchor={
         <IconButton
           icon="dots-vertical"
-          accessibilityLabel="Folder actions"
+          accessibilityLabel={t('folderActions.label')}
           onPress={() => setIsMenuOpen(true)}
         />
       }
     >
       <Menu.Item
         leadingIcon="pencil"
-        title="Edit"
+        title={t('common.edit')}
         onPress={runAndClose(onEditPress)}
       />
       <Menu.Item
         leadingIcon="delete"
-        title="Delete"
+        title={t('common.delete')}
         theme={{
           colors: {
             onSurface: theme.colors.error,

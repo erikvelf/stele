@@ -3,19 +3,19 @@ import { Keyboard, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { PanGesture } from 'react-native-gesture-handler';
+import { IconButton, TextInput, useTheme } from 'react-native-paper';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { IconButton, TextInput, useTheme } from 'react-native-paper';
 
 import { FadingList } from '@/components/shared';
+import { RADIUS, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 import { createId } from '@/lib/id';
 import type { Tag } from '@/modules/highlights';
-
-import { RADIUS, SPACING } from '@/constants/layout';
 import { TRANSPARENT } from '@/modules/palette';
 
 import { Tag as TagPill } from './Tag';
@@ -50,6 +50,10 @@ interface HighlightRow {
   isDraft: boolean;
 }
 
+function isBlank(text: string): boolean {
+  return text.trim().length === 0;
+}
+
 function rowSlotHeight(id: string, heights: Map<string, number>): number {
   return heights.get(id) ?? DEFAULT_ROW_SLOT_HEIGHT;
 }
@@ -60,7 +64,11 @@ function sameOrder(a: string[], b: string[]): boolean {
 
 // Sum of the slot heights of every row before `index` in `order` — the
 // pixel offset of that slot's top edge from the top of the list.
-function cumulativeOffset(order: string[], index: number, heights: Map<string, number>): number {
+function cumulativeOffset(
+  order: string[],
+  index: number,
+  heights: Map<string, number>
+): number {
   let offset = 0;
   for (let i = 0; i < index; i += 1) {
     offset += rowSlotHeight(order.at(i) ?? '', heights);
@@ -98,7 +106,8 @@ function computeDragTarget(
     neighborIndex >= 0 && neighborIndex < startOrderHeights.length;
     neighborIndex += direction
   ) {
-    const neighborHeight = startOrderHeights.at(neighborIndex) ?? DEFAULT_ROW_SLOT_HEIGHT;
+    const neighborHeight =
+      startOrderHeights.at(neighborIndex) ?? DEFAULT_ROW_SLOT_HEIGHT;
     if (remaining < neighborHeight / 2) {
       break;
     }
@@ -131,6 +140,7 @@ function HighlightRowContent({
   onBlur,
 }: HighlightRowContentProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View
@@ -138,14 +148,17 @@ function HighlightRowContent({
         styles.row,
         { borderColor: theme.colors.outlineVariant },
         isFocused && { backgroundColor: theme.colors.surfaceVariant },
-        isDragged && [styles.rowDragged, { backgroundColor: theme.colors.surfaceVariant }],
+        isDragged && [
+          styles.rowDragged,
+          { backgroundColor: theme.colors.surfaceVariant },
+        ],
       ]}
     >
       <TextInput
         mode="flat"
         dense
         multiline
-        placeholder="Un piccolo traguardo…"
+        placeholder={t('highlights.placeholder')}
         value={row.text}
         onChangeText={onChangeText}
         onFocus={onFocus}
@@ -202,10 +215,20 @@ function HighlightRowView({
         dragHandle={
           dragGesture ? (
             <GestureDetector gesture={dragGesture}>
-              <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} style={styles.handle} />
+              <IconButton
+                icon="menu"
+                size={BULLET_ICON_SIZE}
+                onPress={onFocus}
+                style={styles.handle}
+              />
             </GestureDetector>
           ) : (
-            <IconButton icon="menu" size={BULLET_ICON_SIZE} onPress={onFocus} style={styles.handle} />
+            <IconButton
+              icon="menu"
+              size={BULLET_ICON_SIZE}
+              onPress={onFocus}
+              style={styles.handle}
+            />
           )
         }
       />
@@ -230,16 +253,24 @@ function DragOverlay({ row, top, translateY }: DragOverlayProps) {
   }));
 
   return (
-    <Animated.View style={[styles.dragOverlay, { top }, animatedStyle]} pointerEvents="none">
+    <Animated.View
+      style={[styles.dragOverlay, { top }, animatedStyle]}
+      pointerEvents="none"
+    >
       <HighlightRowContent
         row={row}
         isFocused={false}
         isDragged
-        onChangeText={() => { }}
-        onFocus={() => { }}
-        onBlur={() => { }}
+        onChangeText={() => {}}
+        onFocus={() => {}}
+        onBlur={() => {}}
         dragHandle={
-          <IconButton icon="menu" size={BULLET_ICON_SIZE} disabled style={styles.handle} />
+          <IconButton
+            icon="menu"
+            size={BULLET_ICON_SIZE}
+            disabled
+            style={styles.handle}
+          />
         }
       />
     </Animated.View>
@@ -285,7 +316,9 @@ function useDragReorder(
     setPreviousHighlights(highlights);
     const nextIds = new Set(highlights.map(h => h.id));
     const kept = orderedIds.filter(id => nextIds.has(id));
-    const addedIds = highlights.map(h => h.id).filter(id => !orderedIds.includes(id));
+    const addedIds = highlights
+      .map(h => h.id)
+      .filter(id => !orderedIds.includes(id));
     const merged = [...kept, ...addedIds];
     if (!sameOrder(merged, orderedIds)) {
       setOrderedIds(merged);
@@ -308,9 +341,18 @@ function useDragReorder(
       const startIndex = startOrder.indexOf(id);
       lastTargetIndexRef.current = startIndex;
       dragTranslateY.value = 0;
-      dragStartHeights.value = startOrder.map(rowId => rowSlotHeight(rowId, rowHeightsRef.current));
+      dragStartHeights.value = startOrder.map(rowId =>
+        rowSlotHeight(rowId, rowHeightsRef.current)
+      );
       dragStartIndex.value = startIndex;
-      setDrag({ id, originTop: cumulativeOffset(startOrder, startIndex, rowHeightsRef.current) });
+      setDrag({
+        id,
+        originTop: cumulativeOffset(
+          startOrder,
+          startIndex,
+          rowHeightsRef.current
+        ),
+      });
     },
     [dragTranslateY, dragStartHeights, dragStartIndex]
   );
@@ -328,11 +370,15 @@ function useDragReorder(
 
   const handleDragEnd = useCallback(
     (id: string, settleY: number) => {
-      dragTranslateY.value = withTiming(settleY, { duration: DRAG_SNAP_DURATION_MS }, finished => {
-        if (finished) {
-          runOnJS(setDrag)(null);
+      dragTranslateY.value = withTiming(
+        settleY,
+        { duration: DRAG_SNAP_DURATION_MS },
+        finished => {
+          if (finished) {
+            runOnJS(setDrag)(null);
+          }
         }
-      });
+      );
       const from = dragStartOrderRef.current.indexOf(id);
       if (from !== lastTargetIndexRef.current) {
         onReorderHighlights(orderedIdsRef.current);
@@ -397,12 +443,16 @@ export function HighlightList({
 }: HighlightListProps) {
   const [draftId, setDraftId] = useState(createId);
   const [draftText, setDraftText] = useState('');
-  const [pendingRowId, setPendingRowId] = useState<string | undefined>(undefined);
-  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
-  const { orderedIds, drag, dragTranslateY, dragGestures, handleRowLayout } = useDragReorder(
-    highlights,
-    onReorderHighlights
+  const [pendingRowId, setPendingRowId] = useState<string | undefined>(
+    undefined
   );
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+  // `isDraft` only turns false once the promotion has been committed, and a
+  // burst of input events is delivered before that. A ref settles which of
+  // them did the promoting while they are still arriving.
+  const promotedIds = useRef<Set<string>>(new Set());
+  const { orderedIds, drag, dragTranslateY, dragGestures, handleRowLayout } =
+    useDragReorder(highlights, onReorderHighlights);
 
   const highlightById = useMemo(
     () => new Map(highlights.map(highlight => [highlight.id, highlight])),
@@ -413,7 +463,14 @@ export function HighlightList({
     ...orderedIds.flatMap(id => {
       const highlight = highlightById.get(id);
       return highlight
-        ? [{ id: highlight.id, text: highlight.text, tag: highlight.tag, isDraft: false }]
+        ? [
+            {
+              id: highlight.id,
+              text: highlight.text,
+              tag: highlight.tag,
+              isDraft: false,
+            },
+          ]
         : [];
     }),
     { id: draftId, text: draftText, tag: null, isDraft: true },
@@ -422,16 +479,17 @@ export function HighlightList({
   const draggedRow = drag ? rows.find(row => row.id === drag.id) : undefined;
 
   const handleChangeText = (row: HighlightRow, text: string) => {
-    if (!row.isDraft) {
+    if (!row.isDraft || promotedIds.current.has(row.id)) {
       onChangeText(row.id, text);
       return;
     }
-    if (text.length === 0) {
+    if (isBlank(text)) {
       setDraftText(text);
       return;
     }
-    onAddHighlight(draftId, text);
-    setPendingRowId(draftId);
+    promotedIds.current.add(row.id);
+    onAddHighlight(row.id, text);
+    setPendingRowId(row.id);
     setDraftId(createId());
     setDraftText('');
   };
@@ -439,7 +497,7 @@ export function HighlightList({
   const handleBlur = (row: HighlightRow) => {
     setFocusedRowId(current => (current === row.id ? null : current));
     onBlurHighlight(row.id);
-    if (!row.isDraft && row.text.trim().length === 0) {
+    if (!row.isDraft && isBlank(row.text)) {
       onChangeText(row.id, '');
     }
   };
@@ -471,7 +529,11 @@ export function HighlightList({
         renderItem={renderRow}
       />
       {drag && draggedRow ? (
-        <DragOverlay row={draggedRow} top={drag.originTop} translateY={dragTranslateY} />
+        <DragOverlay
+          row={draggedRow}
+          top={drag.originTop}
+          translateY={dragTranslateY}
+        />
       ) : null}
     </View>
   );

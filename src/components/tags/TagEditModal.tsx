@@ -1,11 +1,25 @@
 import { useState } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useKeyboardState } from 'react-native-keyboard-controller';
-import { Button, Modal, Portal, Text, TextInput, useTheme } from 'react-native-paper';
+import {
+  Button,
+  Modal,
+  Portal,
+  Text,
+  TextInput,
+  useTheme,
+} from 'react-native-paper';
 
 import { ColorSwatch } from '@/components/ui';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useTags } from '@/hooks/useTags';
+import { useTranslation } from '@/hooks/useTranslation';
 import { TRANSPARENT } from '@/modules/palette';
 import { DEFAULT_STONE_ID, STONE_IDS } from '@/modules/types';
 import type { StoneId } from '@/modules/types';
@@ -31,6 +45,10 @@ function ColorCirclePicker({
 }) {
   const theme = useTheme();
 
+  const pick = (id: StoneId) => {
+    onChange(id);
+  };
+
   return (
     <View style={styles.circles}>
       {STONE_IDS.map(id => {
@@ -42,7 +60,7 @@ function ColorCirclePicker({
             accessibilityRole="button"
             accessibilityLabel={id}
             accessibilityState={{ selected }}
-            onPress={() => onChange(id)}
+            onPress={() => pick(id)}
             style={[
               styles.circleWrapper,
               selected
@@ -59,6 +77,7 @@ function ColorCirclePicker({
 }
 
 export function TagEditModal({ visible, tagId, onDismiss }: TagEditModalProps) {
+  const { t } = useTranslation();
   const { tags, createTag, updateTag, removeTag } = useTags();
   const editingTag = tagId ? tags.find(tag => tag.id === tagId) : undefined;
 
@@ -135,22 +154,22 @@ export function TagEditModal({ visible, tagId, onDismiss }: TagEditModalProps) {
           keyboardShouldPersistTaps="always"
         >
           <Text variant="titleLarge">
-            {tagId ? 'Modifica tag' : 'Nuovo tag'}
+            {tagId ? t('tagEditor.edit') : t('tagEditor.create')}
           </Text>
           <TextInput
             mode="outlined"
-            label="Nome"
+            label={t('common.name')}
             value={name}
             onChangeText={setName}
             autoFocus
           />
           <ColorCirclePicker value={stoneId} onChange={setStoneId} />
           <Button mode="contained" onPress={handleSubmit} disabled={!canSubmit}>
-            {tagId ? 'Salva' : 'Crea'}
+            {tagId ? t('common.save') : t('common.create')}
           </Button>
           {tagId ? (
             <Button mode="outlined" onPress={handleDelete}>
-              Elimina
+              {t('common.delete')}
             </Button>
           ) : null}
         </ScrollView>

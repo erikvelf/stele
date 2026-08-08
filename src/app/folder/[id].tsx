@@ -18,10 +18,11 @@ import {
 import { FolderPickerModal } from '@/components/folders';
 import { FolderNoteList } from '@/components/notes/FolderNoteList';
 import { FolderNotesEmptyState } from '@/components/notes/FolderNotesEmptyState';
-import { NoteSortMenu, type NoteSort } from '@/components/notes/NoteSortMenu';
+import { type NoteSort, NoteSortMenu } from '@/components/notes/NoteSortMenu';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolderNotes } from '@/hooks/useFolderNotes';
 import { useFolders } from '@/hooks/useFolders';
+import { useTranslation } from '@/hooks/useTranslation';
 import { readFolder } from '@/modules/folders';
 import type { Folder } from '@/modules/folders';
 import type { Note } from '@/modules/notes';
@@ -33,6 +34,7 @@ function matchesQuery(note: Note, query: string): boolean {
 export default function FolderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const [folder, setFolder] = useState<Folder | null>(null);
   const [sort, setSort] = useState<NoteSort>('newest');
   const [isSearching, setIsSearching] = useState(false);
@@ -52,7 +54,9 @@ export default function FolderScreen() {
   const visibleNotes = useMemo(() => {
     const ordered = sort === 'newest' ? notes : [...notes].reverse();
     const needle = query.trim().toLowerCase();
-    return needle ? ordered.filter(note => matchesQuery(note, needle)) : ordered;
+    return needle
+      ? ordered.filter(note => matchesQuery(note, needle))
+      : ordered;
   }, [notes, sort, query]);
 
   const toggleSearch = () => {
@@ -86,7 +90,7 @@ export default function FolderScreen() {
     if (visibleNotes.length === 0) {
       return (
         <Surface elevation={0} style={styles.centered}>
-          <Text variant="bodyMedium">Nessuna nota trovata</Text>
+          <Text variant="bodyMedium">{t('folder.noNotesFound')}</Text>
         </Surface>
       );
     }
@@ -106,13 +110,13 @@ export default function FolderScreen() {
     <Surface elevation={0} style={styles.screen}>
       <Stack.Screen
         options={{
-          title: folder?.name ?? 'Tavola',
+          title: folder?.name ?? t('routes.folder'),
           headerRight: () =>
             notes.length > 1 ? (
               <Surface elevation={0} style={styles.headerActions}>
                 <IconButton
                   icon={isSearching ? 'close' : 'magnify'}
-                  accessibilityLabel="Search notes"
+                  accessibilityLabel={t('folder.searchNotes')}
                   onPress={toggleSearch}
                 />
                 <NoteSortMenu sort={sort} onSortChange={setSort} />
@@ -124,7 +128,7 @@ export default function FolderScreen() {
       {isSearching ? (
         <Searchbar
           autoFocus
-          placeholder="Cerca una nota"
+          placeholder={t('folder.searchPlaceholder')}
           value={query}
           onChangeText={setQuery}
           style={styles.search}
@@ -146,8 +150,8 @@ export default function FolderScreen() {
       <FolderPickerModal
         visible={notePendingMove !== null}
         folders={moveTargets}
-        title="Sposta in"
-        emptyLabel="Nessun'altra tavola"
+        title={t('folder.moveTo')}
+        emptyLabel={t('folder.noOtherFolders')}
         onSelect={folder => {
           if (notePendingMove) {
             moveNote(notePendingMove.id, folder.id);

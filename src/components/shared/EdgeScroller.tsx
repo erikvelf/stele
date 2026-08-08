@@ -11,6 +11,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon, useTheme } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Fractional pixel widths mean the scroll offset rarely lands exactly on the
 // content edge, so an edge counts as reached within a pixel of it.
@@ -40,17 +41,25 @@ interface EdgeChevronProps {
 
 // Keeps its slot in the row even when hidden, so reaching an edge does not
 // resize the scroller and shift the content under the finger.
-function EdgeChevron({ direction, isVisible, color, onPress }: EdgeChevronProps) {
+function EdgeChevron({
+  direction,
+  isVisible,
+  color,
+  onPress,
+}: EdgeChevronProps) {
+  const { t } = useTranslation();
   const isLeft = direction === 'left';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={isLeft ? 'Scorri a sinistra' : 'Scorri a destra'}
+      accessibilityLabel={t(isLeft ? 'scroller.left' : 'scroller.right')}
       accessibilityElementsHidden={!isVisible}
       disabled={!isVisible}
       onPress={onPress}
-      style={isVisible ? styles.chevron : [styles.chevron, styles.chevronHidden]}
+      style={
+        isVisible ? styles.chevron : [styles.chevron, styles.chevronHidden]
+      }
     >
       <Icon
         source={isLeft ? 'chevron-left' : 'chevron-right'}
@@ -92,19 +101,24 @@ export function EdgeScroller({
     setMetrics(current => ({ ...current, content }));
   }, []);
 
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-    setMetrics({
-      offset: contentOffset.x,
-      viewport: layoutMeasurement.width,
-      content: contentSize.width,
-    });
-  }, []);
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } =
+        event.nativeEvent;
+      setMetrics({
+        offset: contentOffset.x,
+        viewport: layoutMeasurement.width,
+        content: contentSize.width,
+      });
+    },
+    []
+  );
 
   const scrollByPage = useCallback(
     (towards: Direction) => {
       const step = metrics.viewport * PAGE_FRACTION;
-      const target = towards === 'left' ? metrics.offset - step : metrics.offset + step;
+      const target =
+        towards === 'left' ? metrics.offset - step : metrics.offset + step;
       scroller.current?.scrollTo({ x: Math.max(target, 0), animated: true });
     },
     [metrics]
@@ -115,7 +129,8 @@ export function EdgeScroller({
 
   const canScroll = metrics.content - metrics.viewport > EDGE_EPSILON;
   const atStart = metrics.offset <= EDGE_EPSILON;
-  const atEnd = metrics.offset + metrics.viewport >= metrics.content - EDGE_EPSILON;
+  const atEnd =
+    metrics.offset + metrics.viewport >= metrics.content - EDGE_EPSILON;
 
   return (
     <View style={[styles.row, style]}>

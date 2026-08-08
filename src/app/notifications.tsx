@@ -1,19 +1,32 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { List, Surface, Switch, Text, useTheme } from 'react-native-paper';
+import {
+  List,
+  Snackbar,
+  Surface,
+  Switch,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 
 import { DailyReminderTimePicker } from '@/components/settings/DailyReminderTimePicker';
 import { SPACING } from '@/constants/layout';
 import { useDailyReminder } from '@/hooks/useDailyReminder';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NotificationsScreen() {
   const theme = useTheme();
-  const { reminder, setReminder } = useDailyReminder();
+  const { t } = useTranslation();
+  const { reminder, setReminder, error, dismissError } = useDailyReminder();
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   const toggleEnabled = (enabled: boolean) => {
     void setReminder(enabled, reminder.hour, reminder.minute).then(granted => {
-      setPermissionDenied(enabled && !granted);
+      const denied = enabled && !granted;
+      setPermissionDenied(denied);
+      if (denied) {
+        return;
+      }
     });
   };
 
@@ -24,11 +37,15 @@ export default function NotificationsScreen() {
   return (
     <Surface style={styles.screen} elevation={0}>
       <List.Item
-        title="Daily reminder"
-        description="A single reminder at a time you choose"
+        title={t('notifications.dailyReminder.title')}
+        description={t('notifications.dailyReminder.description')}
         left={props => <List.Icon {...props} icon="bell-outline" />}
-        right={() => (
-          <Switch value={reminder.enabled} onValueChange={toggleEnabled} />
+        right={({ style }) => (
+          <Switch
+            style={style}
+            value={reminder.enabled}
+            onValueChange={toggleEnabled}
+          />
         )}
       />
       {permissionDenied && (
@@ -36,8 +53,7 @@ export default function NotificationsScreen() {
           variant="bodySmall"
           style={[styles.permissionHint, { color: theme.colors.error }]}
         >
-          Notifications are off for Stele in system settings. Enable them
-          there to turn this on.
+          {t('notifications.permissionDenied')}
         </Text>
       )}
       {reminder.enabled && (
@@ -47,6 +63,10 @@ export default function NotificationsScreen() {
           onChange={changeTime}
         />
       )}
+
+      <Snackbar visible={error !== null} onDismiss={dismissError}>
+        {t('notifications.scheduleFailed')}
+      </Snackbar>
     </Surface>
   );
 }

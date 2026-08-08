@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Modal, Portal, Text, useTheme } from 'react-native-paper';
 
 import { RADIUS, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export interface ConfirmDeleteModalProps {
   visible: boolean;
@@ -17,6 +18,7 @@ export function ConfirmDeleteModal({
   onDismiss,
 }: ConfirmDeleteModalProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const handleConfirm = () => {
     onConfirm();
@@ -35,10 +37,10 @@ export function ConfirmDeleteModal({
       >
         <View style={styles.text}>
           <Text variant="headlineSmall" style={styles.centered}>
-            {`Elimina ${subject}`}
+            {t('confirmDelete.title', { subject })}
           </Text>
           <Text variant="bodyLarge" style={styles.centered}>
-            {`Questa azione eliminerà definitivamente ${subject}.`}
+            {t('confirmDelete.body', { subject })}
           </Text>
         </View>
         <View style={styles.buttons}>
@@ -49,10 +51,10 @@ export function ConfirmDeleteModal({
             textColor={theme.colors.onError}
             onPress={handleConfirm}
           >
-            Sì
+            {t('common.yes')}
           </Button>
           <Button style={styles.button} mode="contained" onPress={onDismiss}>
-            No
+            {t('common.no')}
           </Button>
         </View>
       </Modal>

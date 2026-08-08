@@ -2,8 +2,7 @@ import { StyleSheet } from 'react-native';
 import { TextInput } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
-
-const PLACEHOLDER = 'Una riga su questo periodo, se ti va';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ReflectionFieldProps {
   value: string;
@@ -15,6 +14,8 @@ interface ReflectionFieldProps {
 // divider above already says which period this belongs to, and a labelled
 // field would read as something the period is asking you to fill in.
 export function ReflectionField({ value, onChangeText }: ReflectionFieldProps) {
+  const { t } = useTranslation();
+
   return (
     <TextInput
       mode="flat"
@@ -22,7 +23,7 @@ export function ReflectionField({ value, onChangeText }: ReflectionFieldProps) {
       multiline
       value={value}
       onChangeText={onChangeText}
-      placeholder={PLACEHOLDER}
+      placeholder={t('reflection.placeholder')}
       style={styles.field}
     />
   );

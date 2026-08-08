@@ -3,9 +3,9 @@ import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { IconButton, Surface, Text } from 'react-native-paper';
 
 import { EdgeScroller } from '@/components/shared';
-import type { Tag } from '@/modules/highlights';
-
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Tag } from '@/modules/highlights';
 
 import { Tag as TagPill } from './Tag';
 
@@ -29,6 +29,8 @@ export function TagPickerSheet({
   onSelectTag,
   onManageTagsPress,
 }: TagPickerSheetProps) {
+  const { t } = useTranslation();
+
   return (
     <KeyboardStickyView
       enabled={isOpen}
@@ -60,7 +62,7 @@ export function TagPickerSheet({
             icon="plus"
             size={ADD_ICON_SIZE}
             style={styles.add}
-            accessibilityLabel="Gestisci tag"
+            accessibilityLabel={t('tags.manage')}
             onPress={onManageTagsPress}
           />
         </View>

@@ -5,6 +5,8 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 // Every month from `start` to `end` inclusive, normalised to the first of the
 // month. An `end` before `start` yields nothing.
 export function monthsBetween(start: Date, end: Date): Date[] {
@@ -35,10 +37,14 @@ export function MonthPagerHeader({
   onBack,
   onForward,
 }: MonthPagerHeaderProps) {
+  const { locale } = useTranslation();
+
   return (
     <View style={styles.header}>
       <IconButton icon="chevron-left" disabled={!canGoBack} onPress={onBack} />
-      <Text variant="titleMedium">{format(month, 'MMMM yyyy')}</Text>
+      <Text variant="titleMedium">
+        {format(month, 'MMMM yyyy', { locale })}
+      </Text>
       <IconButton
         icon="chevron-right"
         disabled={!canGoForward}
@@ -81,6 +87,8 @@ export function MonthPagerList({
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const next = Math.round(event.nativeEvent.contentOffset.x / width);
+      if (next !== settledIndex.current) {
+      }
       settledIndex.current = next;
       onIndexChange(next);
     },

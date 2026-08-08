@@ -1,9 +1,13 @@
 import { Tabs } from 'expo-router';
 import { BottomNavigation } from 'react-native-paper';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
+
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
@@ -38,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, focused, size }) => (
             <MaterialCommunityIcons
               name={focused ? 'home' : 'home-outline'}
@@ -51,7 +55,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="log"
         options={{
-          title: 'Strati',
+          title: t('tabs.log'),
           tabBarIcon: ({ color, focused, size }) => (
             <MaterialCommunityIcons
               name={focused ? 'layers' : 'layers-outline'}
@@ -64,7 +68,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="folders"
         options={{
-          title: 'Scaffale',
+          title: t('tabs.shelf'),
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="bookshelf"
@@ -77,7 +81,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, focused, size }) => (
             <MaterialCommunityIcons
               name={focused ? 'cog' : 'cog-outline'}

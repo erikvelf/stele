@@ -1,11 +1,14 @@
 import { EmptyState } from '@/components/shared';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function FoldersEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <EmptyState
       emoji="🏛️"
-      title="Start building your 12 Tavole"
-      subtitle="Tap plus to create your first tavola."
+      title={t('folders.empty.title')}
+      subtitle={t('folders.empty.subtitle')}
     />
   );
 }

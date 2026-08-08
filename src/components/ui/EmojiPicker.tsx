@@ -2,13 +2,14 @@ import { memo, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Searchbar, Text } from 'react-native-paper';
 
+import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   type EmojiCategory,
   type EmojiEntry,
   getEmojiCategories,
   searchEmojis,
 } from '@/lib/emoji';
-import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 
 export interface EmojiPickerProps {
   onSelect: (emoji: string) => void;
@@ -53,32 +54,39 @@ function buildRows(query: string, categories: EmojiCategory[]): EmojiRow[] {
 }
 
 const EmojiRowItem = memo(
-  ({ row, onSelect }: { row: EmojiRow; onSelect: (emoji: string) => void }) => (
-    <View style={styles.section}>
-      {row.title && (
-        <Text variant="titleMedium" style={styles.sectionTitle}>
-          {row.title}
-        </Text>
-      )}
-      <View style={styles.grid}>
-        {row.emojis.map(entry => (
-          <Pressable
-            key={entry.slug}
-            accessibilityRole="button"
-            accessibilityLabel={entry.name}
-            onPress={() => onSelect(entry.emoji)}
-            style={styles.cell}
-          >
-            <Text style={styles.emoji}>{entry.emoji}</Text>
-          </Pressable>
-        ))}
+  ({ row, onSelect }: { row: EmojiRow; onSelect: (emoji: string) => void }) => {
+    const pick = (emoji: string) => {
+      onSelect(emoji);
+    };
+
+    return (
+      <View style={styles.section}>
+        {row.title && (
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            {row.title}
+          </Text>
+        )}
+        <View style={styles.grid}>
+          {row.emojis.map(entry => (
+            <Pressable
+              key={entry.slug}
+              accessibilityRole="button"
+              accessibilityLabel={entry.name}
+              onPress={() => pick(entry.emoji)}
+              style={styles.cell}
+            >
+              <Text style={styles.emoji}>{entry.emoji}</Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
-    </View>
-  )
+    );
+  }
 );
 EmojiRowItem.displayName = 'EmojiRowItem';
 
 export function EmojiPicker({ onSelect }: EmojiPickerProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const categories = useMemo(() => getEmojiCategories(), []);
   const rows = useMemo(() => buildRows(query, categories), [query, categories]);
@@ -86,7 +94,7 @@ export function EmojiPicker({ onSelect }: EmojiPickerProps) {
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder="Cerca"
+        placeholder={t('common.search')}
         value={query}
         onChangeText={setQuery}
         style={styles.searchbar}

@@ -3,19 +3,18 @@ import { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput, useTheme } from 'react-native-paper';
 
+import { ColorSwatch } from '@/components/ui';
+import { RADIUS, SPACING } from '@/constants/layout';
+import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
+import { useTranslation } from '@/hooks/useTranslation';
+import { contrastColor } from '@/lib/contrastColor';
+import { seedFor } from '@/modules/palette';
+import type { StoneId } from '@/modules/types';
+
 import FolderBottomSheet, {
   BottomSheetView,
 } from '@expo/ui/community/bottom-sheet';
-
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-
-import { ColorSwatch } from '@/components/ui';
-import { seedFor } from '@/modules/palette';
-import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
-import type { StoneId } from '@/modules/types';
-
-import { RADIUS, SPACING } from '@/constants/layout';
-import { contrastColor } from '@/lib/contrastColor';
 
 interface NewFolderSheetProps {
   onCreate: (input: { name: string; emoji: string; color: StoneId }) => void;
@@ -31,6 +30,7 @@ const PENCIL_ICON_SIZE = 24;
 const EMOJI_GLYPH_SIZE = 28;
 
 export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
   const {
@@ -94,13 +94,13 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
     >
       <BottomSheetView style={styles.body}>
         <Text variant="titleLarge">
-          {editingId ? 'Modifica tavola' : 'Nuova tavola'}
+          {editingId ? t('folderEditor.edit') : t('folderEditor.create')}
         </Text>
 
         <View style={styles.topRow}>
           <TextInput
             mode="outlined"
-            label="Nome"
+            label={t('common.name')}
             value={name}
             onChangeText={setName}
             autoFocus={isSheetOpen}
@@ -112,18 +112,24 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
           <View style={styles.circleColumn}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Scegli emoji"
+              accessibilityLabel={t('folderEditor.chooseEmoji')}
               onPress={openEmojiPicker}
-              style={[styles.emojiCircle, { borderColor: theme.colors.outline }]}
+              style={[
+                styles.emojiCircle,
+                { borderColor: theme.colors.outline },
+              ]}
             >
               <Text style={styles.emojiGlyph}>{emoji}</Text>
             </Pressable>
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Scegli colore"
+              accessibilityLabel={t('folderEditor.chooseColor')}
               onPress={openColorPicker}
-              style={[styles.colorCircle, { borderColor: theme.colors.outline }]}
+              style={[
+                styles.colorCircle,
+                { borderColor: theme.colors.outline },
+              ]}
             >
               <ColorSwatch
                 stoneId={stoneId}
@@ -140,7 +146,7 @@ export function NewFolderSheet({ onCreate, onEdit }: NewFolderSheetProps) {
         </View>
 
         <Button mode="contained" onPress={handleSubmit} disabled={!canSubmit}>
-          {editingId ? 'Salva' : 'Crea'}
+          {editingId ? t('common.save') : t('common.create')}
         </Button>
       </BottomSheetView>
     </FolderBottomSheet>

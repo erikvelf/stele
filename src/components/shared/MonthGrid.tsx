@@ -3,14 +3,18 @@ import {
   differenceInCalendarDays,
   endOfMonth,
   endOfWeek,
+  format,
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
+import type { Locale as DateFnsLocale } from 'date-fns';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const MONTH_GRID_COLUMNS = 7;
 export const MONTH_GRID_GAP = 4;
@@ -21,7 +25,18 @@ export const MONTH_GRID_RADIUS_RATIO = 0.32;
 
 const MAX_CELL_HEIGHT = 34;
 const DEFAULT_OUTLINE_WIDTH = 2;
-const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const WEEKDAY_INITIAL = 'EEEEE';
+
+// Read from a real week rather than hardcoded, so the initials follow the
+// active locale.
+function weekdayLabels(locale: DateFnsLocale): string[] {
+  const weekStart = startOfWeek(new Date(), {
+    weekStartsOn: MONTH_GRID_WEEK_STARTS_ON,
+  });
+  return Array.from({ length: MONTH_GRID_COLUMNS }, (_unused, index) =>
+    format(addDays(weekStart, index), WEEKDAY_INITIAL, { locale })
+  );
+}
 const DAY_LABEL_FORMAT: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   month: 'long',
@@ -100,7 +115,8 @@ export function monthGridMetrics(
     cellWidth,
     cellHeight,
     rowWidth:
-      cellWidth * MONTH_GRID_COLUMNS + MONTH_GRID_GAP * (MONTH_GRID_COLUMNS - 1),
+      cellWidth * MONTH_GRID_COLUMNS +
+      MONTH_GRID_GAP * (MONTH_GRID_COLUMNS - 1),
     height: rows * cellHeight + MONTH_GRID_GAP * (rows - 1),
   };
 }
@@ -120,11 +136,12 @@ function buildRuns<T, P extends MonthGridPaint>(
   cells: readonly MonthGridCell<T>[],
   paintOf: (cell: MonthGridCell<T>) => P | undefined
 ): PaintRun<P>[] {
+  const paints = cells.map(paintOf);
   const runs: PaintRun<P>[] = [];
   let index = 0;
 
-  while (index < cells.length) {
-    const paint = paintOf(cells[index]);
+  while (index < paints.length) {
+    const paint = paints.at(index);
     if (!paint) {
       index += 1;
       continue;
@@ -135,7 +152,7 @@ function buildRuns<T, P extends MonthGridPaint>(
     if (paint.runKey !== undefined) {
       while (
         span < MONTH_GRID_COLUMNS - column &&
-        paintOf(cells[index + span])?.runKey === paint.runKey
+        paints.at(index + span)?.runKey === paint.runKey
       ) {
         span += 1;
       }
@@ -186,7 +203,8 @@ function DaySlot<T>({
   renderDay,
   onDayPress,
 }: DaySlotProps<T>) {
-  const isPressable = !cell.padding && !cell.disabled && onDayPress !== undefined;
+  const isPressable =
+    !cell.padding && !cell.disabled && onDayPress !== undefined;
   const rect = slotRect(
     Math.floor(index / MONTH_GRID_COLUMNS),
     index % MONTH_GRID_COLUMNS,
@@ -227,7 +245,8 @@ export function MonthGrid<T = undefined>({
   // Every run is one cell tall, so the radius is the same for all of them.
   const radiusStyle = useAnimatedStyle(() => ({
     borderRadius:
-      cellHeight * (typeof radiusRatio === 'number' ? radiusRatio : radiusRatio.value),
+      cellHeight *
+      (typeof radiusRatio === 'number' ? radiusRatio : radiusRatio.value),
   }));
 
   if (cells.length % MONTH_GRID_COLUMNS !== 0) {
@@ -244,7 +263,8 @@ export function MonthGrid<T = undefined>({
     <View
       style={{
         width:
-          cellWidth * MONTH_GRID_COLUMNS + MONTH_GRID_GAP * (MONTH_GRID_COLUMNS - 1),
+          cellWidth * MONTH_GRID_COLUMNS +
+          MONTH_GRID_GAP * (MONTH_GRID_COLUMNS - 1),
         height: rows * cellHeight + MONTH_GRID_GAP * (rows - 1),
       }}
     >
@@ -296,9 +316,11 @@ export interface MonthGridWeekdaysProps {
 }
 
 export function MonthGridWeekdays({ cellWidth }: MonthGridWeekdaysProps) {
+  const { locale } = useTranslation();
+
   return (
     <View style={styles.weekdays}>
-      {WEEKDAY_LABELS.map((label, index) => (
+      {weekdayLabels(locale).map((label, index) => (
         <Text
           key={index}
           variant="labelSmall"

@@ -1,11 +1,14 @@
 import { EmptyState } from '@/components/shared';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function NotesEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <EmptyState
       emoji="🪨"
-      title="Start building your Gran Sasso"
-      subtitle="Tap the pencil to place your first stone."
+      title={t('notes.empty.title')}
+      subtitle={t('notes.empty.subtitle')}
     />
   );
 }

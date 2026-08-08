@@ -1,15 +1,21 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-
-import { STONE_DETAILS, STONE_FAMILIES, TRANSPARENT, seedFor } from '@/modules/palette';
+import { RADIUS, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Translate } from '@/modules/i18n';
+import {
+  seedFor,
+  STONE_DETAILS,
+  STONE_FAMILIES,
+  TRANSPARENT,
+} from '@/modules/palette';
 import type { Stone, StoneFamily } from '@/modules/palette';
 import type { StoneId } from '@/modules/types';
 
-import { RADIUS, SPACING } from '@/constants/layout';
-
 import { familyLabel, stoneLabel } from './stone-labels';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 interface StonePickerProps {
   value: StoneId;
@@ -42,26 +48,35 @@ const FAMILY_MEMBERS = buildFamilyMembers();
 function rowHeading(
   family: StoneFamily,
   members: StoneId[],
-  activeId: StoneId
+  activeId: StoneId,
+  t: Translate
 ): string {
-  const base = familyLabel(family);
+  const base = familyLabel(family, t);
   return members.includes(activeId)
-    ? `${base} — ${stoneLabel(activeId)}`
+    ? `${base} — ${stoneLabel(activeId, t)}`
     : base;
 }
 
 export function StonePicker({ value, onChange }: StonePickerProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  const pick = (id: StoneId) => {
+    onChange(id);
+  };
 
   return (
     <View style={styles.container}>
+      <Text variant="titleLarge" style={styles.title}>
+        {t('appearance.stone.title')}
+      </Text>
       {STONE_FAMILIES.map(family => {
         const members = FAMILY_MEMBERS.get(family) ?? [];
 
         return (
           <View key={family} style={styles.row}>
             <Text variant="titleMedium" style={styles.heading}>
-              {rowHeading(family, members, value)}
+              {rowHeading(family, members, value, t)}
             </Text>
             <View style={styles.swatches}>
               {members.map(id => {
@@ -71,9 +86,9 @@ export function StonePicker({ value, onChange }: StonePickerProps) {
                   <View key={id} style={styles.swatchWrapper}>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={stoneLabel(id)}
+                      accessibilityLabel={stoneLabel(id, t)}
                       accessibilityState={{ selected }}
-                      onPress={() => onChange(id)}
+                      onPress={() => pick(id)}
                       style={[
                         styles.swatch,
                         { backgroundColor: seedFor(id) },
@@ -111,6 +126,9 @@ export function StonePicker({ value, onChange }: StonePickerProps) {
 const styles = StyleSheet.create({
   container: {
     gap: SPACING.md,
+  },
+  title: {
+    marginLeft: SPACING.xs,
   },
   row: {
     gap: SPACING.xs,

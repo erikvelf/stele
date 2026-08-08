@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/shared';
 import { TagEditModal, TagRow, TagsEmptyState } from '@/components/tags';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useTags } from '@/hooks/useTags';
+import { useTranslation } from '@/hooks/useTranslation';
 import { assignTag } from '@/modules/highlights';
 import type { Tag } from '@/modules/highlights';
 
@@ -14,6 +15,7 @@ export default function TagListScreen() {
   const router = useRouter();
   const { highlightId } = useLocalSearchParams<{ highlightId: string }>();
   const { tags } = useTags();
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
@@ -48,8 +50,8 @@ export default function TagListScreen() {
       return (
         <EmptyState
           emoji="🔍"
-          title="Nessun tag trovato"
-          subtitle="Prova a cercare qualcos'altro."
+          title={t('tags.noneFound.title')}
+          subtitle={t('tags.noneFound.subtitle')}
         />
       );
     }
@@ -68,7 +70,7 @@ export default function TagListScreen() {
   return (
     <Surface elevation={0} style={styles.screen}>
       <Searchbar
-        placeholder="Cerca un tag"
+        placeholder={t('tags.searchPlaceholder')}
         value={query}
         onChangeText={setQuery}
         style={styles.search}

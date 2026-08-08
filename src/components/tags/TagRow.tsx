@@ -2,10 +2,10 @@ import { Pressable, StyleSheet } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 
 import { ColorSwatch } from '@/components/ui';
+import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Tag } from '@/modules/highlights';
 import type { StoneId } from '@/modules/types';
-
-import { SPACING } from '@/constants/layout';
 
 interface TagRowProps {
   tag: Tag;
@@ -16,6 +16,7 @@ interface TagRowProps {
 const SWATCH_SIZE = 24;
 
 export function TagRow({ tag, onPress, onEditPress }: TagRowProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   // Every tag is written with a color from STONE_IDS — see the same cast in
   // FolderCard.
@@ -33,7 +34,7 @@ export function TagRow({ tag, onPress, onEditPress }: TagRowProps) {
       </Text>
       <IconButton
         icon="pencil"
-        accessibilityLabel="Modifica tag"
+        accessibilityLabel={t('tagEditor.edit')}
         onPress={() => onEditPress(tag)}
       />
     </Pressable>

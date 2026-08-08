@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { List, SegmentedButtons, Surface, Switch } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   applyPrivacyProtection,
   readAppLock,
@@ -12,15 +13,18 @@ import {
 } from '@/modules/settings';
 import type { RelockIntervalMs } from '@/modules/settings';
 
-const RELOCK_INTERVAL_OPTIONS: { value: RelockIntervalMs; label: string }[] = [
-  { value: '0', label: 'Immediate' },
-  { value: '60000', label: '1 min' },
-  { value: '120000', label: '2 min' },
-  { value: '180000', label: '3 min' },
-  { value: '300000', label: '5 min' },
+const MS_PER_MINUTE = 60000;
+
+const RELOCK_INTERVALS: RelockIntervalMs[] = [
+  '0',
+  '60000',
+  '120000',
+  '180000',
+  '300000',
 ];
 
 export default function PrivacySecurityScreen() {
+  const { t } = useTranslation();
   const [appLock, setAppLock] = useState(readAppLock);
   const [privacy, setPrivacy] = useState(readPrivacy);
 
@@ -43,27 +47,46 @@ export default function PrivacySecurityScreen() {
     writeAppLock(next);
   };
 
+  const relockIntervalButtons = RELOCK_INTERVALS.map(value => ({
+    value,
+    label: t('privacySecurity.relockMinutes', {
+      count: Number(value) / MS_PER_MINUTE,
+    }),
+  }));
+
   return (
     <Surface style={styles.screen} elevation={0}>
       <List.Item
-        title="App lock"
-        description="Require biometric or device auth to open the app"
+        title={t('privacySecurity.appLock.title')}
+        description={t('privacySecurity.appLock.description')}
         left={props => <List.Icon {...props} icon="lock-outline" />}
-        right={() => <Switch value={appLock.enabled} onValueChange={toggleAppLock} />}
+        right={({ style }) => (
+          <Switch
+            style={style}
+            value={appLock.enabled}
+            onValueChange={toggleAppLock}
+          />
+        )}
       />
       {appLock.enabled ? (
         <SegmentedButtons
           style={styles.relockInterval}
           value={appLock.relockIntervalMs}
           onValueChange={value => setRelockInterval(value as RelockIntervalMs)}
-          buttons={RELOCK_INTERVAL_OPTIONS}
+          buttons={relockIntervalButtons}
         />
       ) : null}
       <List.Item
-        title="Hide in recents"
-        description="Cover the app with a blank screen while switching apps"
+        title={t('privacySecurity.hideInRecents.title')}
+        description={t('privacySecurity.hideInRecents.description')}
         left={props => <List.Icon {...props} icon="eye-off-outline" />}
-        right={() => <Switch value={privacy.hideInRecents} onValueChange={toggleHideInRecents} />}
+        right={({ style }) => (
+          <Switch
+            style={style}
+            value={privacy.hideInRecents}
+            onValueChange={toggleHideInRecents}
+          />
+        )}
       />
     </Surface>
   );

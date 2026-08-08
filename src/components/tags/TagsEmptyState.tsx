@@ -1,11 +1,14 @@
 import { EmptyState } from '@/components/shared';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function TagsEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <EmptyState
       emoji="🏷️"
-      title="Nessun tag ancora"
-      subtitle="Tocca più per creare il tuo primo tag."
+      title={t('tags.empty.title')}
+      subtitle={t('tags.empty.subtitle')}
     />
   );
 }

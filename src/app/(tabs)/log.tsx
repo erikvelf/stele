@@ -11,30 +11,23 @@ import {
 
 import { LayerRowView, TagFilterBar } from '@/components/log';
 import { EmptyState } from '@/components/shared';
-import { formatPeriod } from '@/lib/format-period';
-import type { Period } from '@/lib/format-period';
+import { SPACING } from '@/constants/layout';
+import { useReflections } from '@/hooks/useReflections';
+import { useStrati } from '@/hooks/useStrati';
+import { useTranslation } from '@/hooks/useTranslation';
+import { formatPeriod } from '@/modules/i18n';
 import type { LayerRow, Resolution } from '@/modules/log';
 import type { ReflectionKind } from '@/modules/reflections';
 import { readLogView, writeLogView } from '@/modules/settings';
 import type { LogView } from '@/modules/settings';
-
-import { SPACING } from '@/constants/layout';
-import { useReflections } from '@/hooks/useReflections';
-import { useStrati } from '@/hooks/useStrati';
+import type { Period } from '@/modules/types';
 
 const END_REACHED_THRESHOLD = 0.5;
 const NO_PERIOD = 0;
 
-const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
-  { value: 'day', label: 'Giorno' },
-  { value: 'week', label: 'Carrello' },
-  { value: 'month', label: 'Cippo' },
-];
+const RESOLUTIONS: Resolution[] = ['day', 'week', 'month'];
 
-const DIRECTION_OPTIONS: { value: LogView['direction']; label: string }[] = [
-  { value: 'newest', label: 'Prima i più recenti' },
-  { value: 'oldest', label: 'Prima i più vecchi' },
-];
+const DIRECTIONS: LogView['direction'][] = ['newest', 'oldest'];
 
 // Only weeks and months hold a reflection; a single day already has its note.
 function reflectionKindFor(resolution: Resolution): ReflectionKind | null {
@@ -50,6 +43,7 @@ function periodStartOf(row: LayerRow): number {
 
 export default function LogScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [view, setView] = useState<LogView>(readLogView);
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [scopePeriod, setScopePeriod] = useState<Period | null>(null);
@@ -59,7 +53,8 @@ export default function LogScreen() {
   // Drilling into a month reads it a week at a time, whatever the menu says.
   const resolution: Resolution = scopePeriod ? 'week' : view.resolution;
   const scope = useMemo(
-    () => (scopePeriod ? { start: scopePeriod.start, end: scopePeriod.end } : null),
+    () =>
+      scopePeriod ? { start: scopePeriod.start, end: scopePeriod.end } : null,
     [scopePeriod]
   );
 
@@ -69,7 +64,10 @@ export default function LogScreen() {
     tagIds,
     scope,
   });
-  const { textFor, setText } = useReflections(reflectionKindFor(resolution), span);
+  const { textFor, setText } = useReflections(
+    reflectionKindFor(resolution),
+    span
+  );
 
   // A filter is a question you are asking now: leaving the screen drops it,
   // so the log never quietly under-reports the archive on your next visit.
@@ -94,7 +92,9 @@ export default function LogScreen() {
 
   const toggleTag = useCallback((tagId: string) => {
     setTagIds(current =>
-      current.includes(tagId) ? current.filter(id => id !== tagId) : [...current, tagId]
+      current.includes(tagId)
+        ? current.filter(id => id !== tagId)
+        : [...current, tagId]
     );
   }, []);
 
@@ -110,8 +110,12 @@ export default function LogScreen() {
   return (
     <Surface style={styles.screen} elevation={0}>
       <Appbar.Header style={chrome}>
-        {scopePeriod ? <Appbar.BackAction onPress={() => setScopePeriod(null)} /> : null}
-        <Appbar.Content title={scopePeriod ? formatPeriod(scopePeriod) : 'Strati'} />
+        {scopePeriod ? (
+          <Appbar.BackAction onPress={() => setScopePeriod(null)} />
+        ) : null}
+        <Appbar.Content
+          title={scopePeriod ? formatPeriod(scopePeriod, t) : t('log.title')}
+        />
         <Menu
           visible={isSortMenuVisible}
           onDismiss={() => setIsSortMenuVisible(false)}
@@ -122,12 +126,12 @@ export default function LogScreen() {
             />
           }
         >
-          {DIRECTION_OPTIONS.map(option => (
+          {DIRECTIONS.map(direction => (
             <Menu.Item
-              key={option.value}
-              title={option.label}
-              leadingIcon={view.direction === option.value ? 'check' : undefined}
-              onPress={() => applyView({ direction: option.value })}
+              key={direction}
+              title={t(`log.direction.${direction}`)}
+              leadingIcon={view.direction === direction ? 'check' : undefined}
+              onPress={() => applyView({ direction })}
             />
           ))}
         </Menu>
@@ -141,12 +145,12 @@ export default function LogScreen() {
             />
           }
         >
-          {RESOLUTION_OPTIONS.map(option => (
+          {RESOLUTIONS.map(resolution => (
             <Menu.Item
-              key={option.value}
-              title={option.label}
-              leadingIcon={view.resolution === option.value ? 'check' : undefined}
-              onPress={() => applyView({ resolution: option.value })}
+              key={resolution}
+              title={t(`log.resolution.${resolution}`)}
+              leadingIcon={view.resolution === resolution ? 'check' : undefined}
+              onPress={() => applyView({ resolution })}
             />
           ))}
         </Menu>
@@ -183,8 +187,8 @@ export default function LogScreen() {
           isLoading ? null : (
             <EmptyState
               emoji="🗿"
-              title="Nessuna scaglia"
-              subtitle="Le scaglie che stacchi dai tuoi sassi finiscono qui, a strati."
+              title={t('log.empty.title')}
+              subtitle={t('log.empty.subtitle')}
             />
           )
         }

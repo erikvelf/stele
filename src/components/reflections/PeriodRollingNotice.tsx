@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
-import type { PeriodKind } from '@/lib/format-period';
-
 import { RADIUS, SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { PeriodKind } from '@/modules/types';
 
 const MOAI = '🗿';
 const AVATAR_SIZE = 36;
@@ -11,13 +11,11 @@ const EMOJI_SIZE = 18;
 // The same tinted disc the empty states use, at the size a list row affords.
 const CIRCLE_FILL_OPACITY = 0.24;
 
-const WEEK_MESSAGE =
-  'La settimana sta ancora rotolando. Aspetta che si fermi per rifletterci.';
-const MONTH_MESSAGE =
-  'Il mese sta ancora rotolando. Aspetta che si fermi per rifletterci.';
-
-function messageFor(kind: PeriodKind): string {
-  return kind === 'month' ? MONTH_MESSAGE : WEEK_MESSAGE;
+// Only weeks and months roll; any other kind reads as a week.
+function messageKeyFor(kind: PeriodKind): string {
+  return kind === 'month'
+    ? 'reflection.rolling.month'
+    : 'reflection.rolling.week';
 }
 
 interface PeriodRollingNoticeProps {
@@ -29,6 +27,7 @@ interface PeriodRollingNoticeProps {
 // asks for nothing — the period simply has not finished yet.
 export function PeriodRollingNotice({ kind }: PeriodRollingNoticeProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.row}>
@@ -42,7 +41,7 @@ export function PeriodRollingNotice({ kind }: PeriodRollingNoticeProps) {
         variant="bodySmall"
         style={[styles.message, { color: theme.colors.onSurfaceVariant }]}
       >
-        {messageFor(kind)}
+        {t(messageKeyFor(kind))}
       </Text>
     </View>
   );

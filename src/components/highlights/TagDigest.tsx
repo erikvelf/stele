@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 
-import type { Tag as TagType } from '@/modules/highlights';
-
 import { SPACING } from '@/constants/layout';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Tag as TagType } from '@/modules/highlights';
 
 import { Tag as TagPill } from './Tag';
 
@@ -12,7 +12,7 @@ export interface TagDigestEntry {
   count: number;
 }
 
-const UNTAGGED_LABEL = 'senza tag';
+const UNTAGGED_KEY = 'untagged';
 
 interface TagDigestProps {
   entries: readonly TagDigestEntry[];
@@ -23,19 +23,26 @@ interface TagDigestProps {
 // so the counts add up to the period.
 export function TagDigest({ entries }: TagDigestProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.list}>
       {entries.map(entry => (
-        <View key={entry.tag?.id ?? UNTAGGED_LABEL} style={styles.row}>
+        <View key={entry.tag?.id ?? UNTAGGED_KEY} style={styles.row}>
           {entry.tag ? (
             <TagPill tag={entry.tag} isSmall />
           ) : (
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              {UNTAGGED_LABEL}
+            <Text
+              variant="bodyMedium"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              {t('highlights.untagged')}
             </Text>
           )}
-          <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant }}>
+          <Text
+            variant="labelLarge"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
             {entry.count}
           </Text>
         </View>
