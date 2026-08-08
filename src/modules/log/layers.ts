@@ -8,7 +8,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 
-import type { Period } from '@/lib/format-period';
+import type { Period } from '@/modules/types';
 
 import { WEEK_OPTIONS } from './calendar';
 import { countByTag } from './stats';
@@ -54,13 +54,16 @@ function ordered<T extends { start: Date }>(
   items: readonly T[],
   direction: Direction
 ): T[] {
-  const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const sorted = [...items].sort(
+    (a, b) => a.start.getTime() - b.start.getTime()
+  );
   return direction === 'newest' ? sorted.reverse() : sorted;
 }
 
 function coversDay(period: Period, day: Date): boolean {
   return (
-    day.getTime() >= period.start.getTime() && day.getTime() <= period.end.getTime()
+    day.getTime() >= period.start.getTime() &&
+    day.getTime() <= period.end.getTime()
   );
 }
 
@@ -110,7 +113,12 @@ function reflectionRow(period: Period, today: Date): LayerRow {
 }
 
 function digestRow(period: Period, counts: TagCount[]): LayerRow {
-  return { kind: 'digest', id: `digest-${period.start.getTime()}`, period, counts };
+  return {
+    kind: 'digest',
+    id: `digest-${period.start.getTime()}`,
+    period,
+    counts,
+  };
 }
 
 function scagliaRows(entries: readonly LayerEntry[]): LayerRow[] {
@@ -128,11 +136,19 @@ function rangePeriod(group: RangeGroup): Period {
 }
 
 function rangeSection(group: RangeGroup, variant: HeaderVariant): LayerRow[] {
-  return [headerRow(rangePeriod(group), variant), ...scagliaRows(group.entries)];
+  return [
+    headerRow(rangePeriod(group), variant),
+    ...scagliaRows(group.entries),
+  ];
 }
 
-function buildDayLayers(groups: readonly RangeGroup[], direction: Direction): LayerRow[] {
-  return ordered(groups, direction).flatMap(group => rangeSection(group, 'medium'));
+function buildDayLayers(
+  groups: readonly RangeGroup[],
+  direction: Direction
+): LayerRow[] {
+  return ordered(groups, direction).flatMap(group =>
+    rangeSection(group, 'medium')
+  );
 }
 
 function buildWeekLayers(
@@ -141,8 +157,11 @@ function buildWeekLayers(
   direction: Direction,
   today: Date
 ): LayerRow[] {
-  const starts = periodStarts(span, direction, date => startOfWeek(date, WEEK_OPTIONS), date =>
-    addWeeks(date, 1)
+  const starts = periodStarts(
+    span,
+    direction,
+    date => startOfWeek(date, WEEK_OPTIONS),
+    date => addWeeks(date, 1)
   );
 
   return starts.flatMap(weekStart => {
@@ -179,7 +198,9 @@ function buildMonthLayers(
   direction: Direction,
   today: Date
 ): LayerRow[] {
-  const starts = periodStarts(span, direction, startOfMonth, date => addMonths(date, 1));
+  const starts = periodStarts(span, direction, startOfMonth, date =>
+    addMonths(date, 1)
+  );
 
   return starts.flatMap(monthStart => {
     const period: Period = {
