@@ -10,19 +10,30 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import type { AppStateStatus } from 'react-native';
-import { Avatar, Button, PaperProvider, Surface, Text } from 'react-native-paper';
-import type { MD3Theme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import {
+  Avatar,
+  Button,
+  PaperProvider,
+  Surface,
+  Text,
+} from 'react-native-paper';
+import type { MD3Theme } from 'react-native-paper';
 
+import { SPACING } from '@/constants/layout';
 import { AppThemeProvider, useAppTheme } from '@/hooks/useAppTheme';
 import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { NewFolderDraftProvider } from '@/hooks/useNewFolderDraft';
-import { SPACING } from '@/constants/layout';
+import { TranslationProvider, useTranslation } from '@/hooks/useTranslation';
 import { addNotificationResponseListener } from '@/lib/notifications';
 import { db, migrations } from '@/modules/db';
 import { seedJournalFolder } from '@/modules/folders';
-import { applyPrivacyProtection, readAppLock, readPrivacy } from '@/modules/settings';
+import {
+  applyPrivacyProtection,
+  readAppLock,
+  readPrivacy,
+} from '@/modules/settings';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -49,12 +60,108 @@ const paperSettings = {
   ),
 };
 
-function RootLayoutNavigator() {
-  const { theme } = useAppTheme();
-  const router = useRouter();
-  const { reschedule } = useDailyReminder();
+const LOCK_ICON_SIZE = 112;
+
+interface AppLock {
+  isLocked: boolean;
+  attemptUnlock: () => void;
+}
+
+// Single consumer (this navigator), so it stays local rather than in hooks/.
+function useAppLock(): AppLock {
   const [isLocked, setIsLocked] = useState(() => readAppLock().enabled);
   const backgroundedAt = useRef<number | null>(null);
+
+  const attemptUnlock = useCallback(() => {
+    void authenticateAsync().then(result => {
+      if (result.success) {
+        setIsLocked(false);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isLocked) {
+      attemptUnlock();
+    }
+  }, [isLocked, attemptUnlock]);
+
+  // The lock returns once the app has spent longer than the interval away.
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      (status: AppStateStatus) => {
+        const { enabled, relockIntervalMs } = readAppLock();
+        if (!enabled) {
+          return;
+        }
+
+        if (status === 'background' || status === 'inactive') {
+          backgroundedAt.current = Date.now();
+          return;
+        }
+
+        if (status === 'active' && backgroundedAt.current !== null) {
+          const elapsed = Date.now() - backgroundedAt.current;
+          if (elapsed >= Number(relockIntervalMs)) {
+            setIsLocked(true);
+          }
+          backgroundedAt.current = null;
+        }
+      }
+    );
+
+    return () => subscription.remove();
+  }, []);
+
+  return { isLocked, attemptUnlock };
+}
+
+interface LockScreenProps {
+  theme: MD3Theme;
+  onUnlock: () => void;
+}
+
+function LockScreen({ theme, onUnlock }: LockScreenProps) {
+  const { t } = useTranslation();
+
+  return (
+    <PaperProvider theme={theme} settings={paperSettings}>
+      <Surface elevation={0} style={styles.lockScreen}>
+        <Avatar.Icon
+          size={LOCK_ICON_SIZE}
+          icon="lock"
+          style={{ backgroundColor: theme.colors.primaryContainer }}
+          color={theme.colors.onPrimaryContainer}
+        />
+        <View style={styles.lockScreenCopy}>
+          <Text
+            variant="headlineSmall"
+            style={{ color: theme.colors.onSurface }}
+          >
+            {t('lock.title')}
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            {t('lock.subtitle')}
+          </Text>
+        </View>
+        <Button mode="contained" onPress={onUnlock}>
+          {t('lock.action')}
+        </Button>
+      </Surface>
+    </PaperProvider>
+  );
+}
+
+function RootLayoutNavigator() {
+  const { theme } = useAppTheme();
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { reschedule } = useDailyReminder();
+  const { isLocked, attemptUnlock } = useAppLock();
 
   useEffect(() => {
     const subscription = addNotificationResponseListener(() => {
@@ -75,78 +182,21 @@ function RootLayoutNavigator() {
     return () => subscription.remove();
   }, [reschedule]);
 
-  const attemptUnlock = useCallback(() => {
-    void authenticateAsync().then(result => {
-      if (result.success) {
-        setIsLocked(false);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (isLocked) {
-      attemptUnlock();
-    }
-  }, [isLocked, attemptUnlock]);
-
   useEffect(() => {
     applyPrivacyProtection(readPrivacy().hideInRecents);
   }, []);
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (status: AppStateStatus) => {
-      const { enabled, relockIntervalMs } = readAppLock();
-      if (!enabled) {
-        return;
-      }
-
-      if (status === 'background' || status === 'inactive') {
-        backgroundedAt.current = Date.now();
-        return;
-      }
-
-      if (status === 'active' && backgroundedAt.current !== null) {
-        const elapsed = Date.now() - backgroundedAt.current;
-        if (elapsed >= Number(relockIntervalMs)) {
-          setIsLocked(true);
-        }
-        backgroundedAt.current = null;
-      }
-    });
-
-    return () => subscription.remove();
-  }, []);
-
   const navigationTheme = useMemo(
     () =>
-      adaptTheme(theme.dark ? NavigationDarkTheme : NavigationLightTheme, theme),
+      adaptTheme(
+        theme.dark ? NavigationDarkTheme : NavigationLightTheme,
+        theme
+      ),
     [theme]
   );
 
   if (isLocked) {
-    return (
-      <PaperProvider theme={theme} settings={paperSettings}>
-        <Surface elevation={0} style={styles.lockScreen}>
-          <Avatar.Icon
-            size={112}
-            icon="lock"
-            style={{ backgroundColor: theme.colors.primaryContainer }}
-            color={theme.colors.onPrimaryContainer}
-          />
-          <View style={styles.lockScreenCopy}>
-            <Text variant="headlineSmall" style={{ color: theme.colors.onSurface }}>
-              Stele is locked
-            </Text>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              Unlock to continue
-            </Text>
-          </View>
-          <Button mode="contained" onPress={attemptUnlock}>
-            Unlock
-          </Button>
-        </Surface>
-      </PaperProvider>
-    );
+    return <LockScreen theme={theme} onUnlock={attemptUnlock} />;
   }
 
   return (
@@ -154,32 +204,48 @@ function RootLayoutNavigator() {
       <ThemeProvider value={navigationTheme}>
         <Stack screenOptions={{ headerShadowVisible: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="note/[id]" options={{ title: 'Sasso' }} />
-          <Stack.Screen name="note/plain/[id]" options={{ title: 'Nota' }} />
-          <Stack.Screen name="folder/[id]" options={{ title: 'Tavola' }} />
+          <Stack.Screen
+            name="note/[id]"
+            options={{ title: t('routes.stone') }}
+          />
+          <Stack.Screen
+            name="note/plain/[id]"
+            options={{ title: t('routes.note') }}
+          />
+          <Stack.Screen
+            name="folder/[id]"
+            options={{ title: t('routes.folder') }}
+          />
           <Stack.Screen
             name="folder/new-color"
-            options={{ title: 'Colore', presentation: 'modal' }}
+            options={{ title: t('routes.folderColor'), presentation: 'modal' }}
           />
           <Stack.Screen
             name="folder/new-emoji"
-            options={{ title: 'Emoji', presentation: 'modal' }}
+            options={{ title: t('routes.folderEmoji'), presentation: 'modal' }}
           />
-          <Stack.Screen name="tag/index" options={{ title: 'Tag' }} />
-          <Stack.Screen name="appearance" options={{ title: 'Aspetto' }} />
+          <Stack.Screen name="tag/index" options={{ title: t('routes.tag') }} />
+          <Stack.Screen
+            name="appearance"
+            options={{ title: t('routes.appearance') }}
+          />
           <Stack.Screen
             name="privacy-security"
-            options={{ title: 'Privacy & security' }}
+            options={{ title: t('routes.privacySecurity') }}
           />
           <Stack.Screen
             name="notifications"
-            options={{ title: 'Notifications' }}
+            options={{ title: t('routes.notifications') }}
           />
-          <Stack.Screen name="archive" options={{ title: 'Archivio' }} />
+          <Stack.Screen
+            name="archive"
+            options={{ title: t('routes.archive') }}
+          />
           <Stack.Screen
             name="journal-behaviour"
-            options={{ title: 'Journal behaviour' }}
+            options={{ title: t('routes.journalBehaviour') }}
           />
+          <Stack.Screen name="about" options={{ title: t('routes.about') }} />
         </Stack>
       </ThemeProvider>
     </PaperProvider>
@@ -219,11 +285,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <KeyboardProvider>
-        <AppThemeProvider>
-          <NewFolderDraftProvider>
-            <RootLayoutNavigator />
-          </NewFolderDraftProvider>
-        </AppThemeProvider>
+        <TranslationProvider>
+          <AppThemeProvider>
+            <NewFolderDraftProvider>
+              <RootLayoutNavigator />
+            </NewFolderDraftProvider>
+          </AppThemeProvider>
+        </TranslationProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
   );
