@@ -42,6 +42,27 @@ As weeks and months pass, **reflections** unlock: a short free-text summary of t
 
 </details>
 
+## Where it came from
+
+I was already journaling, in [Joplin](https://joplinapp.org) — a plain open-source note app — to process the day and reprogram how I wanted to head into the next one. Every entry was the same template, four prompts:
+
+- the top five highlights and small wins of the day
+- a description of the day
+- conclusions
+- what I learnt today
+
+It worked, and it stayed a pile of documents. The five highlights were the part I most wanted to read back months later, and the part a note app could do least with: no way to ask what happened with a subject, no way to put a year of small wins in one column. So the template became the app, and a highlight became a thing of its own instead of a bullet inside a file.
+
+Ranges came out of the same notebook. Some days felt like several and were genuinely one long stretch; on others I procrastinated, took nothing but a highlight or two, and simply let the day keep running rather than open a new entry for it. On paper you do that by not drawing the line. Here a note covers 6 to 8 August and the app keeps the accounting straight.
+
+The notes on the shelf come from the same habit. Whenever I drifted off my plan — not following the day I had laid out — I would write a different kind of entry: a look back at the week and a decision about what to change next, a PID controller nudging the course back. Those, and ideas, and the bucket list, are not the record of a day; they are the things you want within arm's reach. In a flat note app they sank into the pile with everything else. Here they sit beside the journal instead of inside it.
+
+None of it is invented, then. Every part of the app is a habit I already had, standardised — the template, the five highlights, the days that ran long, the off-plan course correction — with the one thing paper could not give me added on top: the ability to ask the archive a question.
+
+Text and nothing else, deliberately. No photos, no attachments, no voice notes. Text is enough to write a day, and your gallery already holds every picture you would attach — the journal does not need to become a second, worse copy of it.
+
+The name arrived on the subway. I was on my way to the park, dressed head to toe in light grey, monochrome, and it occurred to me that I looked like a rock. Everything in the app is named from there.
+
 ## The rock vocabulary
 
 A **stele** is a standing stone with a record cut into it — the thing people used when they wanted writing to outlast them. The whole app is named after that, and everything inside it is named out of the same quarry.
@@ -65,9 +86,6 @@ The app icon is one of them too, and switching the accent does not switch the ic
   <img src="docs/assets/screenshots/14-icons.png" width="320" alt="The stone icons">
 </p>
 
-<!-- TODO: not built yet — surface a stone from a year ago on the home page,
-     the macigno roulette in the PRD. Add to the list below once it ships. -->
-
 ## What it does
 
 - **Multi-day notes** — sometimes a day continues. A note can cover a range, 6 to 8 August, when that stretch is genuinely one thing. Ranges are exclusive, so two notes never cover the same day.
@@ -80,6 +98,15 @@ The app icon is one of them too, and switching the accent does not switch the ic
 - **Local authentication** — device biometrics or passcode to open the journal, with a grace period of up to five minutes, and an option to blank the app in the recents switcher.
 - **Reminders** — a local notification when you want a nudge to write.
 - **Templates** — prefill new journal notes so you never start from a blank screen.
+
+## Not built yet
+
+Things I want, in no particular order. They move up into the list above when they ship.
+
+- **Surfacing the past** — a stone from a year ago, or a month ago, brought back to the home page. The _macigno_ roulette in the PRD: the archive reminding you of itself instead of waiting to be searched.
+- **A year wrapped** — the year read back as one screen. Waiting on enough of my own data to make it worth building.
+- **Encrypted cloud backup** — an idea, still pending. It would be the first network access in the app, so it has to earn it: encrypted on the device, opt-in, and never a requirement.
+- **A pre-commit hook** — lint and format before a commit lands, rather than by remembering to.
 
 ## Your data
 
