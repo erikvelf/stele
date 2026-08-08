@@ -589,8 +589,11 @@ const styles = StyleSheet.create({
   inputUnderline: {
     display: 'none',
   },
+  // The pill and the handle keep their intrinsic width; the field is the
+  // elastic one.
   trailingSlot: {
     alignItems: 'flex-end',
+    flexShrink: 0,
     gap: SPACING.xs,
   },
   handle: {

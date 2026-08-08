@@ -47,7 +47,8 @@ export function Tag({
   const label = (
     <Text
       variant={isSmall ? 'labelSmall' : 'labelLarge'}
-      style={{ color: onContainer }}
+      numberOfLines={1}
+      style={[styles.label, { color: onContainer }]}
     >
       {tag.name}
     </Text>
@@ -82,6 +83,10 @@ const styles = StyleSheet.create({
   shape: {
     alignSelf: 'flex-start',
     overflow: 'hidden',
+  },
+  // The name sets the pill's width; nothing above it may take width away.
+  label: {
+    flexShrink: 0,
   },
   shapeSelected: {
     borderWidth: SELECTED_BORDER_WIDTH,

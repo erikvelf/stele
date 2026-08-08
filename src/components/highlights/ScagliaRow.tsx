@@ -52,9 +52,12 @@ const styles = StyleSheet.create({
   },
   text: {
     flex: 1,
+    flexShrink: 1,
   },
+  // The pill keeps its intrinsic width; the sentence is the elastic one.
   trailingSlot: {
     alignItems: 'flex-end',
+    flexShrink: 0,
     gap: SPACING.xs,
   },
 });
