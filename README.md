@@ -84,10 +84,17 @@ Expo SDK 57 · React Native · expo-router · react-native-paper · Drizzle ORM 
 
 ```bash
 pnpm install
+pnpm assets    # renders the icons app.json points at
 pnpm android   # or: pnpm ios
 ```
 
 `expo-sqlite`, local authentication and dynamic app icons are native modules, so a development build is required — Expo Go will not run this app.
+
+### Icons
+
+Only the hand-drawn source (`assets/logo/source/stele-writing.svg`) and the scripts that read it are in the repository. Everything under `assets/images/` and `assets/icons/` is rendered, so a fresh clone has none of it and `app.json` points at files that are not there yet. `pnpm assets` builds all of them — the app icon, the two splash variants, the Android adaptive layers, the favicon, and one icon plus one picker preview per stone.
+
+It needs [ImageMagick](https://imagemagick.org) on the path as `magick`, and `python3`. The Python side is standard library only, so there is nothing to install for it. Re-run it after editing the source SVG or adding a stone to `STONE_SEEDS`.
 
 ## Repository
 
