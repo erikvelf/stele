@@ -2,13 +2,18 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { JOURNAL_FOLDER_ID } from '@/modules/folders';
-import { listHighlightsForNotes, listTags } from '@/modules/highlights';
+import { listHighlightsForJournalNotes, listTags } from '@/modules/highlights';
 import type { Tag } from '@/modules/highlights';
+import { readDayRanges } from '@/modules/journal';
+import type { DayRange } from '@/modules/journal';
 import { buildLayers, pagesSpan } from '@/modules/log';
-import type { Direction, LayerEntry, LayerRow, Resolution, Span } from '@/modules/log';
-import { readFolderDateDayRanges } from '@/modules/notes';
-import type { DateDayRange } from '@/modules/notes';
+import type {
+  Direction,
+  LayerEntry,
+  LayerRow,
+  Resolution,
+  Span,
+} from '@/modules/log';
 import type { AppError } from '@/modules/types';
 
 const FIRST_PAGE_COUNT = 1;
@@ -36,30 +41,30 @@ interface UseStratiResult {
 
 interface HighlightRow {
   id: string;
-  note_id: string;
+  journal_note_id: string;
   text: string;
   tag_id: string | null;
 }
 
-function startDayOf(range: DateDayRange): number {
+function startDayOf(range: DayRange): number {
   return startOfDay(new Date(range.start_timestamp)).getTime();
 }
 
 function toEntries(
   highlights: readonly HighlightRow[],
-  ranges: readonly DateDayRange[]
+  ranges: readonly DayRange[]
 ): LayerEntry[] {
-  const byNote = new Map(ranges.map(range => [range.note_id, range]));
+  const byNote = new Map(ranges.map(range => [range.id, range]));
 
   return highlights.flatMap(highlight => {
-    const range = byNote.get(highlight.note_id);
+    const range = byNote.get(highlight.journal_note_id);
     if (!range) {
       return [];
     }
     return [
       {
         id: highlight.id,
-        noteId: highlight.note_id,
+        noteId: highlight.journal_note_id,
         text: highlight.text,
         tagId: highlight.tag_id,
         start: startOfDay(new Date(range.start_timestamp)),
@@ -69,7 +74,7 @@ function toEntries(
   });
 }
 
-function coveredBySpan(range: DateDayRange, span: Span): boolean {
+function coveredBySpan(range: DayRange, span: Span): boolean {
   const start = startDayOf(range);
   return start >= span.start.getTime() && start <= span.end.getTime();
 }
@@ -77,7 +82,7 @@ function coveredBySpan(range: DateDayRange, span: Span): boolean {
 // Whether the archive continues past the loaded window in the direction
 // being read.
 function extendsBeyond(
-  ranges: readonly DateDayRange[],
+  ranges: readonly DayRange[],
   span: Span,
   direction: Direction
 ): boolean {
@@ -98,7 +103,7 @@ function clampToToday(end: Date, today: Date): Date {
 
 // Reading oldest-first starts at the archive's own beginning; anchoring on
 // today would page forward into empty future weeks.
-function earliestStart(ranges: readonly DateDayRange[]): number | null {
+function earliestStart(ranges: readonly DayRange[]): number | null {
   return ranges.reduce<number | null>(
     (earliest, range) =>
       earliest === null || range.start_timestamp < earliest
@@ -126,7 +131,7 @@ export function useStrati({
   // it during render, and a ref may not be read there.
   const [today] = useState(() => new Date());
   const [pageCount, setPageCount] = useState(FIRST_PAGE_COUNT);
-  const [ranges, setRanges] = useState<DateDayRange[]>([]);
+  const [ranges, setRanges] = useState<DayRange[]>([]);
   const [entries, setEntries] = useState<LayerEntry[]>([]);
   const [tags, setTags] = useState<Map<string, Tag>>(new Map());
   const [error, setError] = useState<AppError | null>(null);
@@ -150,7 +155,8 @@ export function useStrati({
     if (scope) {
       return scope;
     }
-    const anchor = direction === 'oldest' && oldest !== null ? new Date(oldest) : today;
+    const anchor =
+      direction === 'oldest' && oldest !== null ? new Date(oldest) : today;
     const window = pagesSpan(resolution, direction, anchor, pageCount);
     return { start: window.start, end: clampToToday(window.end, today) };
   }, [scope, resolution, direction, pageCount, oldest, today]);
@@ -165,22 +171,21 @@ export function useStrati({
     useCallback(() => {
       let cancelled = false;
 
-      void Promise.all([
-        readFolderDateDayRanges(JOURNAL_FOLDER_ID),
-        listTags(),
-      ]).then(([rangeResult, tagResult]) => {
-        if (cancelled) {
-          return;
+      void Promise.all([readDayRanges(), listTags()]).then(
+        ([rangeResult, tagResult]) => {
+          if (cancelled) {
+            return;
+          }
+          if (rangeResult.success) {
+            setRanges([...rangeResult.data]);
+          } else {
+            setError(rangeResult.error);
+          }
+          if (tagResult.success) {
+            setTags(new Map(tagResult.data.map(tag => [tag.id, tag])));
+          }
         }
-        if (rangeResult.success) {
-          setRanges([...rangeResult.data]);
-        } else {
-          setError(rangeResult.error);
-        }
-        if (tagResult.success) {
-          setTags(new Map(tagResult.data.map(tag => [tag.id, tag])));
-        }
-      });
+      );
 
       return () => {
         cancelled = true;
@@ -192,8 +197,8 @@ export function useStrati({
     let cancelled = false;
     const visible = ranges.filter(range => coveredBySpan(range, span));
 
-    void listHighlightsForNotes(
-      visible.map(range => range.note_id),
+    void listHighlightsForJournalNotes(
+      visible.map(range => range.id),
       tagIds
     ).then(result => {
       if (cancelled) {
@@ -209,12 +214,10 @@ export function useStrati({
       setEntries(loaded);
       setSettledKey(requestKey);
 
-      // Days and weeks render nothing at all across an empty stretch, so
-      // the list has no content to scroll and would never ask for the next
-      // page. Walk past the gap rather than stalling on it. Months always
-      // draw their digest, so they can never stall.
+      // An empty stretch renders nothing at all, so the list has no content
+      // to scroll and would never ask for the next page. Walk past the gap
+      // rather than stalling on it.
       if (
-        resolution !== 'month' &&
         loaded.length === 0 &&
         !scope &&
         extendsBeyond(ranges, span, direction)
@@ -228,7 +231,7 @@ export function useStrati({
     };
     // tagIds is compared by its joined key, carried in requestKey: a fresh
     // array holding the same tags is the same filter.
-  }, [ranges, span, requestKey, tagIds, resolution, direction, scope]);
+  }, [ranges, span, requestKey, tagIds, direction, scope]);
 
   const hasMore = useMemo(
     () => (scope ? false : extendsBeyond(ranges, span, direction)),

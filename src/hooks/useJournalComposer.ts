@@ -5,46 +5,37 @@ import { useCallback, useState } from 'react';
 
 import { useDailyReminder } from '@/hooks/useDailyReminder';
 import { createId } from '@/lib/id';
-import { JOURNAL_FOLDER_ID } from '@/modules/folders';
-import {
-  writeDateDayRange,
-  writeNote,
-  writeNoteCreated,
-  writeNoteFolder,
-  type NoteEntry,
-} from '@/modules/notes';
+import { type JournalNote, writeJournalNote } from '@/modules/journal';
 import { readEntryTemplate } from '@/modules/settings';
 
 interface UseJournalComposerOptions {
-  entries: NoteEntry[];
-  isLoadingEntries: boolean;
-  prependEntry: (entry: NoteEntry) => void;
+  notes: JournalNote[];
+  isLoadingNotes: boolean;
+  prependNote: (note: JournalNote) => void;
   onCreated: () => void;
 }
 
 interface UseJournalComposerResult {
   isCreating: boolean;
-  pendingEntryId: string | undefined;
+  pendingNoteId: string | undefined;
   handleCreate: () => void;
-  handleTopEntrySettled: () => void;
+  handleTopNoteSettled: () => void;
   resetCreating: () => void;
 }
 
-// Owns opening today's sasso, whether from the FAB or a tapped daily-reminder
-// notification: find-or-create, then hand off navigation once the created
-// entry settles into the list. Composes notes with the reminder scheduler,
-// which a domain module may not do itself.
+// Composes the journal with the reminder scheduler, which a domain module may
+// not do itself.
 export function useJournalComposer({
-  entries,
-  isLoadingEntries,
-  prependEntry,
+  notes,
+  isLoadingNotes,
+  prependNote,
   onCreated,
 }: UseJournalComposerOptions): UseJournalComposerResult {
   const router = useRouter();
   const { openComposer } = useLocalSearchParams<{ openComposer?: string }>();
   const { reschedule: rescheduleDailyReminder } = useDailyReminder();
   const [isCreating, setIsCreating] = useState(false);
-  const [pendingEntryId, setPendingEntryId] = useState<string | undefined>(
+  const [pendingNoteId, setPendingNoteId] = useState<string | undefined>(
     undefined
   );
 
@@ -52,77 +43,63 @@ export function useJournalComposer({
     void impactAsync(ImpactFeedbackStyle.Light);
 
     const today = startOfDay(new Date());
-    const todaysEntry = entries.find(entry => {
-      const start = startOfDay(new Date(entry.range.start_timestamp));
-      const end = startOfDay(new Date(entry.range.end_timestamp));
+    const todaysNote = notes.find(note => {
+      const start = startOfDay(new Date(note.start_timestamp));
+      const end = startOfDay(new Date(note.end_timestamp));
       return today >= start && today <= end;
     });
 
-    if (todaysEntry) {
-      router.push(`/note/${todaysEntry.note.id}`);
+    if (todaysNote) {
+      router.push(`/note/${todaysNote.id}`);
       return;
     }
 
     setIsCreating(true);
-    const noteId = createId();
-    const rangeId = createId();
-    const newEntry: NoteEntry = {
-      note: { id: noteId, text: readEntryTemplate().text },
-      range: {
-        id: rangeId,
-        note_id: noteId,
-        start_timestamp: today.getTime(),
-        end_timestamp: today.getTime(),
-      },
+    const newNote: JournalNote = {
+      id: createId(),
+      text: readEntryTemplate().text,
+      created_at: today.getTime(),
+      start_timestamp: today.getTime(),
+      end_timestamp: today.getTime(),
     };
 
-    setPendingEntryId(rangeId);
-    prependEntry(newEntry);
+    setPendingNoteId(newNote.id);
+    prependNote(newNote);
 
-    void Promise.all([
-      writeNote(newEntry.note),
-      writeDateDayRange(newEntry.range),
-      writeNoteCreated({ note_id: noteId, created_at: today.getTime() }),
-      writeNoteFolder({ note_id: noteId, folder_id: JOURNAL_FOLDER_ID }),
-    ]).then(() => {
+    void writeJournalNote(newNote).then(() => {
       onCreated();
       rescheduleDailyReminder();
     });
-  }, [entries, router, prependEntry, onCreated, rescheduleDailyReminder]);
+  }, [notes, router, prependNote, onCreated, rescheduleDailyReminder]);
 
-  // A tapped daily-reminder notification deep-links here with this param, so
-  // the app opens straight into today's compose flow, as if the FAB had been
-  // pressed.
+  // A tapped daily-reminder notification deep-links here with this param.
   useFocusEffect(
     useCallback(() => {
-      if (openComposer !== '1' || isLoadingEntries) {
+      if (openComposer !== '1' || isLoadingNotes) {
         return;
       }
       router.setParams({ openComposer: undefined });
       handleCreate();
-    }, [openComposer, isLoadingEntries, router, handleCreate])
+    }, [openComposer, isLoadingNotes, router, handleCreate])
   );
 
-  const handleTopEntrySettled = useCallback(() => {
-    if (!pendingEntryId) {
+  const handleTopNoteSettled = useCallback(() => {
+    if (!pendingNoteId) {
       return;
     }
-    const pendingEntry = entries.find(
-      entry => entry.range.id === pendingEntryId
-    );
-    if (pendingEntry) {
-      router.push(`/note/${pendingEntry.note.id}`);
+    if (notes.some(note => note.id === pendingNoteId)) {
+      router.push(`/note/${pendingNoteId}`);
     }
-    setPendingEntryId(undefined);
-  }, [router, pendingEntryId, entries]);
+    setPendingNoteId(undefined);
+  }, [router, pendingNoteId, notes]);
 
   const resetCreating = useCallback(() => setIsCreating(false), []);
 
   return {
     isCreating,
-    pendingEntryId,
+    pendingNoteId,
     handleCreate,
-    handleTopEntrySettled,
+    handleTopNoteSettled,
     resetCreating,
   };
 }

@@ -1,24 +1,57 @@
 import { addDays, isBefore, setHours, setMinutes, setSeconds } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 
+import { COMMON_ERRORS } from '@/constants/error-codes';
 import {
   cancelAllScheduledNotifications,
   hasNotificationPermission,
   requestNotificationPermission,
   scheduleOneShotNotification,
 } from '@/lib/notifications';
-import { JOURNAL_FOLDER_ID } from '@/modules/folders';
-import { readNoteEntryForDate } from '@/modules/notes';
+import { translate } from '@/modules/i18n';
+import { readJournalNoteForDate } from '@/modules/journal';
 import { readDailyReminder, writeDailyReminder } from '@/modules/settings';
 import type { DailyReminder } from '@/modules/settings';
+import type { AppError } from '@/modules/types';
 
-const JOURNALED_TITLE = 'Stele';
-const JOURNALED_TODAY_BODY = 'Anything else from today?';
-const NOT_JOURNALED_TODAY_BODY = 'Got a minute for today?';
+const REMINDER_TITLE = 'Stele';
 
 function nextOccurrence(hour: number, minute: number, now: Date): Date {
   const candidate = setSeconds(setMinutes(setHours(now, hour), minute), 0);
   return isBefore(candidate, now) ? addDays(candidate, 1) : candidate;
+}
+
+function toAppError(cause: unknown): AppError {
+  return { code: COMMON_ERRORS.UNDEFINED, cause: String(cause) };
+}
+
+// Cancels the queued notification and, when the reminder is on and permitted,
+// queues the next one. A failed journal read only decides the wording, so it
+// leaves the notification scheduled rather than aborting.
+async function applySchedule(current: DailyReminder): Promise<void> {
+  if (!current.enabled) {
+    await cancelAllScheduledNotifications();
+    return;
+  }
+
+  const granted = await hasNotificationPermission();
+  if (!granted) {
+    return;
+  }
+
+  const today = await readJournalNoteForDate(Date.now());
+  const journaledToday = today.success && today.data !== null;
+  // Read at schedule time rather than at fire time: a language changed
+  // between the two leaves one notification in the previous language.
+  const body = translate(
+    journaledToday
+      ? 'notifications.body.journaled'
+      : 'notifications.body.notJournaled'
+  );
+  const fireDate = nextOccurrence(current.hour, current.minute, new Date());
+
+  await cancelAllScheduledNotifications();
+  await scheduleOneShotNotification({ title: REMINDER_TITLE, body }, fireDate);
 }
 
 interface UseDailyReminderResult {
@@ -34,58 +67,38 @@ interface UseDailyReminderResult {
   // today's journal state. Call after a note is created or deleted, or the
   // app returns to the foreground, so the queued notification stays fresh.
   reschedule: () => void;
+  // Reports a failed OS notification call from this hook instance.
+  error: AppError | null;
+  dismissError: () => void;
 }
 
-// Composes the notes and settings domains to keep a single freshly-computed
-// local notification queued. Neither domain module may import the other, so
-// this hook is where they meet.
+// Composes the journal and settings domains, which may not import each other.
 export function useDailyReminder(): UseDailyReminderResult {
   const [reminder, setReminderState] = useState<DailyReminder>(() =>
     readDailyReminder()
   );
 
+  const [error, setError] = useState<AppError | null>(null);
+
   const reschedule = useCallback(() => {
-    const current = readDailyReminder();
-
-    if (!current.enabled) {
-      void cancelAllScheduledNotifications();
-      return;
-    }
-
-    void hasNotificationPermission().then(granted => {
-      if (!granted) {
-        return;
-      }
-
-      void readNoteEntryForDate(JOURNAL_FOLDER_ID, Date.now()).then(
-        result => {
-          const journaledToday = result.success && result.data !== null;
-          const body = journaledToday
-            ? JOURNALED_TODAY_BODY
-            : NOT_JOURNALED_TODAY_BODY;
-          const fireDate = nextOccurrence(
-            current.hour,
-            current.minute,
-            new Date()
-          );
-
-          void cancelAllScheduledNotifications().then(() =>
-            scheduleOneShotNotification(
-              { title: JOURNALED_TITLE, body },
-              fireDate
-            )
-          );
-        }
-      );
-    });
+    void applySchedule(readDailyReminder()).then(
+      () => setError(null),
+      (cause: unknown) => setError(toAppError(cause))
+    );
   }, []);
+
+  const dismissError = useCallback(() => setError(null), []);
 
   useEffect(() => {
     reschedule();
   }, [reschedule]);
 
   const setReminder = useCallback(
-    async (enabled: boolean, hour: number, minute: number): Promise<boolean> => {
+    async (
+      enabled: boolean,
+      hour: number,
+      minute: number
+    ): Promise<boolean> => {
       if (!enabled) {
         const next = { enabled: false, hour, minute };
         writeDailyReminder(next);
@@ -94,15 +107,20 @@ export function useDailyReminder(): UseDailyReminderResult {
         return true;
       }
 
-      const granted = await requestNotificationPermission();
-      const next = { enabled: granted, hour, minute };
-      writeDailyReminder(next);
-      setReminderState(next);
-      reschedule();
-      return granted;
+      try {
+        const granted = await requestNotificationPermission();
+        const next = { enabled: granted, hour, minute };
+        writeDailyReminder(next);
+        setReminderState(next);
+        reschedule();
+        return granted;
+      } catch (cause) {
+        setError(toAppError(cause));
+        return false;
+      }
     },
     [reschedule]
   );
 
-  return { reminder, setReminder, reschedule };
+  return { reminder, setReminder, reschedule, error, dismissError };
 }

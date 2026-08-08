@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import {
   assignTag as assignTagQuery,
@@ -9,9 +10,62 @@ import {
   writeHighlight,
 } from '@/modules/highlights';
 import type { DayHighlight } from '@/modules/highlights';
-import type { AppError } from '@/modules/types';
+import type { AppError, Result } from '@/modules/types';
 
 import { useAutosave } from './useAutosave';
+
+function isBlank(text: string): boolean {
+  return text.trim().length === 0;
+}
+
+type OperationChains = Map<string, Promise<void>>;
+
+// Runs `operation` after everything already queued for that highlight. Writes
+// are transactions and deletes single statements, so calls left unsequenced
+// commit in the order the database finishes them, not the order they were
+// made.
+function enqueue(
+  chains: OperationChains,
+  id: string,
+  operation: () => Promise<Result<void>>,
+  onError: (error: AppError) => void
+): void {
+  const next = (chains.get(id) ?? Promise.resolve()).then(async () => {
+    const result = await operation();
+    if (!result.success) {
+      onError(result.error);
+    }
+  });
+
+  chains.set(id, next);
+  void next.then(() => {
+    if (chains.get(id) === next) {
+      chains.delete(id);
+    }
+  });
+}
+
+type RunOperation = (
+  id: string,
+  operation: () => Promise<Result<void>>
+) => void;
+
+// Blank deletes, anything else writes — decided once the field settles, not
+// on the keystroke that blanked it: an IME commit clears the composing text
+// before inserting the correction, so the field is briefly empty.
+function persistSettled(
+  id: string,
+  highlight: DayHighlight,
+  run: RunOperation,
+  setHighlights: Dispatch<SetStateAction<DayHighlight[]>>
+): void {
+  if (isBlank(highlight.text)) {
+    setHighlights(previous => previous.filter(current => current.id !== id));
+    run(id, () => deleteHighlight(id));
+    return;
+  }
+  run(id, () => writeHighlight(highlight));
+}
 
 interface UseHighlightsResult {
   highlights: DayHighlight[];
@@ -25,7 +79,7 @@ interface UseHighlightsResult {
 
 // Loads a note's highlights and keeps them in sync. A highlight with no text
 // is never persisted; clearing an existing one's text deletes it.
-export function useHighlights(noteId: string): UseHighlightsResult {
+export function useHighlights(journalNoteId: string): UseHighlightsResult {
   const [highlights, setHighlights] = useState<DayHighlight[]>([]);
   const [error, setError] = useState<AppError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,19 +89,18 @@ export function useHighlights(noteId: string): UseHighlightsResult {
   // and the rest of the highlight has to come from somewhere the write can
   // still read once the screen is gone.
   const highlightsRef = useRef<DayHighlight[]>([]);
+  const chainsRef = useRef<OperationChains>(new Map());
 
-  const { schedule, cancel, peek } = useAutosave<string, DayHighlight>(
-    (id, highlight) => {
-      void writeHighlight(highlight).then(result => {
-        if (!result.success) {
-          setError(result.error);
-        }
-      });
-    }
+  const run = useCallback<RunOperation>((id, operation) => {
+    enqueue(chainsRef.current, id, operation, setError);
+  }, []);
+
+  const { schedule, peek } = useAutosave<string, DayHighlight>(
+    (id, highlight) => persistSettled(id, highlight, run, setHighlights)
   );
 
-  if (loadedNoteId !== noteId) {
-    setLoadedNoteId(noteId);
+  if (loadedNoteId !== journalNoteId) {
+    setLoadedNoteId(journalNoteId);
     setIsLoading(true);
     setHighlights([]);
     setError(null);
@@ -60,7 +113,7 @@ export function useHighlights(noteId: string): UseHighlightsResult {
   useEffect(() => {
     let cancelled = false;
 
-    void listHighlights(noteId).then(result => {
+    void listHighlights(journalNoteId).then(result => {
       if (cancelled) {
         return;
       }
@@ -77,7 +130,7 @@ export function useHighlights(noteId: string): UseHighlightsResult {
     return () => {
       cancelled = true;
     };
-  }, [noteId]);
+  }, [journalNoteId]);
 
   // A tag can be assigned from the /tag screen, which writes straight to the
   // db without going through this hook's instance. Refresh on refocus so a
@@ -87,25 +140,30 @@ export function useHighlights(noteId: string): UseHighlightsResult {
       if (isLoading) {
         return;
       }
-      void listHighlights(noteId).then(result => {
+      void listHighlights(journalNoteId).then(result => {
         if (result.success) {
           setHighlights(result.data);
         }
       });
-    }, [noteId, isLoading])
+    }, [journalNoteId, isLoading])
   );
 
   const addHighlight = useCallback(
     (id: string, text: string) => {
-      const highlight: DayHighlight = { id, note_id: noteId, text, tag_id: null };
-      setHighlights(previous => [...previous, highlight]);
-      void writeHighlight(highlight).then(result => {
-        if (!result.success) {
-          setError(result.error);
-        }
-      });
+      const highlight: DayHighlight = {
+        id,
+        journal_note_id: journalNoteId,
+        text,
+        tag_id: null,
+      };
+      setHighlights(previous =>
+        previous.some(current => current.id === id)
+          ? previous
+          : [...previous, highlight]
+      );
+      run(id, () => writeHighlight(highlight));
     },
-    [noteId]
+    [journalNoteId, run]
   );
 
   const updateText = useCallback(
@@ -116,24 +174,15 @@ export function useHighlights(noteId: string): UseHighlightsResult {
         )
       );
 
-      if (text.trim().length === 0) {
-        cancel(id);
-        setHighlights(previous => previous.filter(highlight => highlight.id !== id));
-        void deleteHighlight(id).then(result => {
-          if (!result.success) {
-            setError(result.error);
-          }
-        });
-        return;
-      }
-
-      const existing = highlightsRef.current.find(highlight => highlight.id === id);
+      const existing = highlightsRef.current.find(
+        highlight => highlight.id === id
+      );
       const highlight: DayHighlight = existing
         ? { ...existing, text }
-        : { id, note_id: noteId, text, tag_id: null };
+        : { id, journal_note_id: journalNoteId, text, tag_id: null };
       schedule(id, highlight);
     },
-    [noteId, cancel, schedule]
+    [journalNoteId, schedule]
   );
 
   const assignTag = useCallback(
@@ -151,21 +200,21 @@ export function useHighlights(noteId: string): UseHighlightsResult {
         schedule(id, { ...pending, tag_id: tagId });
       }
 
-      void assignTagQuery(id, tagId).then(result => {
-        if (!result.success) {
-          setError(result.error);
-        }
-      });
+      run(id, () => assignTagQuery(id, tagId));
     },
-    [peek, schedule]
+    [peek, schedule, run]
   );
 
   const reorderHighlights = useCallback((orderedIds: string[]) => {
     setHighlights(previous => {
-      const byId = new Map(previous.map(highlight => [highlight.id, highlight]));
+      const byId = new Map(
+        previous.map(highlight => [highlight.id, highlight])
+      );
       return orderedIds
         .map(id => byId.get(id))
-        .filter((highlight): highlight is DayHighlight => highlight !== undefined);
+        .filter(
+          (highlight): highlight is DayHighlight => highlight !== undefined
+        );
     });
     void reorderHighlightsQuery(orderedIds).then(result => {
       if (!result.success) {

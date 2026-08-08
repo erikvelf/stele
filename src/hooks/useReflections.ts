@@ -28,9 +28,11 @@ export function useReflections(
   span: Span
 ): UseReflectionsResult {
   const [texts, setTexts] = useState<Map<number, string>>(new Map());
-  const { schedule } = useAutosave<number, PendingReflection>((periodStart, pending) => {
-    void writeReflection(pending.kind, periodStart, pending.text);
-  });
+  const { schedule } = useAutosave<number, PendingReflection>(
+    (periodStart, pending) => {
+      void writeReflection(pending.kind, periodStart, pending.text);
+    }
+  );
 
   const from = span.start.getTime();
   const to = span.end.getTime();
@@ -48,7 +50,12 @@ export function useReflections(
         return;
       }
       setTexts(
-        new Map(result.data.map(reflection => [reflection.period_start, reflection.text]))
+        new Map(
+          result.data.map(reflection => [
+            reflection.period_start,
+            reflection.text,
+          ])
+        )
       );
     });
 

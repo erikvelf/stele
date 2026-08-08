@@ -4,10 +4,9 @@ import { createId } from '@/lib/id';
 import {
   deleteNote,
   listFolderNotes,
-  writeNote,
-  writeNoteCreated,
-  writeNoteFolder,
+  moveNoteToFolder,
   type Note,
+  writeNote,
 } from '@/modules/notes';
 import type { AppError } from '@/modules/types';
 
@@ -21,8 +20,6 @@ interface UseFolderNotesResult {
   removeNote: (id: string) => void;
 }
 
-// A folder's plain notes, newest first — the note_created join gives them an
-// order without requiring the date_day_range a journal sasso needs.
 export function useFolderNotes(folderId: string): UseFolderNotesResult {
   const [notes, setNotes] = useState<Note[]>([]);
   const [error, setError] = useState<AppError | null>(null);
@@ -45,33 +42,31 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
   }, [refresh]);
 
   const createNote = useCallback((): string => {
-    const noteId = createId();
-    const note: Note = { id: noteId, text: '' };
+    const note: Note = {
+      id: createId(),
+      text: '',
+      folder_id: folderId,
+      created_at: Date.now(),
+    };
 
     setNotes(previous => [note, ...previous]);
 
-    void Promise.all([
-      writeNote(note),
-      writeNoteCreated({ note_id: noteId, created_at: Date.now() }),
-      writeNoteFolder({ note_id: noteId, folder_id: folderId }),
-    ]).then(([writeResult]) => {
-      if (!writeResult.success) {
-        setError(writeResult.error);
+    void writeNote(note).then(result => {
+      if (!result.success) {
+        setError(result.error);
       }
     });
 
-    return noteId;
+    return note.id;
   }, [folderId]);
 
   const moveNote = useCallback((id: string, targetFolderId: string) => {
     setNotes(previous => previous.filter(note => note.id !== id));
-    void writeNoteFolder({ note_id: id, folder_id: targetFolderId }).then(
-      result => {
-        if (!result.success) {
-          setError(result.error);
-        }
+    void moveNoteToFolder(id, targetFolderId).then(result => {
+      if (!result.success) {
+        setError(result.error);
       }
-    );
+    });
   }, []);
 
   const removeNote = useCallback((id: string) => {

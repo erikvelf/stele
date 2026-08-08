@@ -1,25 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { readNote, writeNote } from '@/modules/notes';
-import type { Note } from '@/modules/notes';
+import { readJournalNote, writeJournalNote } from '@/modules/journal';
+import type { JournalNote } from '@/modules/journal';
 import type { AppError } from '@/modules/types';
 
 const AUTOSAVE_DEBOUNCE_MS = 500;
 
-interface UseNoteResult {
-  note: Note | null;
+interface UseJournalNoteResult {
+  note: JournalNote | null;
   error: AppError | null;
   isLoading: boolean;
   setText: (text: string) => void;
 }
 
-export function useNote(noteId: string): UseNoteResult {
-  const [note, setNote] = useState<Note | null>(null);
+export function useJournalNote(noteId: string): UseJournalNoteResult {
+  const [note, setNote] = useState<JournalNote | null>(null);
   const [error, setError] = useState<AppError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadedNoteId, setLoadedNoteId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const noteRef = useRef<Note | null>(null);
+  const noteRef = useRef<JournalNote | null>(null);
 
   // setState during render: React applies it before paint, with no extra pass.
   if (loadedNoteId !== noteId) {
@@ -33,7 +33,7 @@ export function useNote(noteId: string): UseNoteResult {
     let cancelled = false;
     noteRef.current = null;
 
-    void readNote(noteId).then(result => {
+    void readJournalNote(noteId).then(result => {
       if (cancelled) {
         return;
       }
@@ -68,7 +68,7 @@ export function useNote(noteId: string): UseNoteResult {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
-      void writeNote(updated).then(result => {
+      void writeJournalNote(updated).then(result => {
         if (!result.success) {
           setError(result.error);
         }

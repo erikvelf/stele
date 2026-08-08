@@ -12,8 +12,12 @@ interface Autosave<K, T> {
 // away rather than dropped, so leaving a screen mid-edit saves. The payload
 // is stored beside its timer, which is what makes the flush possible: at that
 // point the state it came from is already gone.
-export function useAutosave<K, T>(write: (key: K, payload: T) => void): Autosave<K, T> {
-  const pending = useRef(new Map<K, { timer: ReturnType<typeof setTimeout>; payload: T }>());
+export function useAutosave<K, T>(
+  write: (key: K, payload: T) => void
+): Autosave<K, T> {
+  const pending = useRef(
+    new Map<K, { timer: ReturnType<typeof setTimeout>; payload: T }>()
+  );
   const writeRef = useRef(write);
 
   useEffect(() => {

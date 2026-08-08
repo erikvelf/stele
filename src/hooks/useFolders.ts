@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createId } from '@/lib/id';
 import {
-  JOURNAL_FOLDER_ID,
   deleteFolder,
+  JOURNAL_FOLDER_ID,
   listFolders,
   writeFolder,
 } from '@/modules/folders';
