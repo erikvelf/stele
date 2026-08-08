@@ -54,3 +54,7 @@ assets/logo/output/
 # Rendered icons (rebuild: pnpm assets)
 assets/icons/
 assets/images/
+
+# Working material the app does not bundle
+docs/superpowers/
+prototypes/
