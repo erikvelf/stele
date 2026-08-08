@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { IconButton, List, Menu, useTheme } from 'react-native-paper';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { IconButton, Menu, useTheme } from 'react-native-paper';
 
+import { SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Note } from '@/modules/notes';
+import { TRANSPARENT } from '@/modules/palette';
 
 import { MarkdownPreview } from './MarkdownPreview';
+
+const ROW_MIN_HEIGHT = 44;
+const PREVIEW_MAX_LINES = 2;
+const MENU_ICON_SIZE = 20;
 
 export interface FolderNoteItemProps {
   note: Note;
@@ -45,6 +51,8 @@ function NoteActionsMenu({
       anchor={
         <IconButton
           icon="dots-vertical"
+          size={MENU_ICON_SIZE}
+          style={styles.menuButton}
           accessibilityLabel={t('noteActions.label')}
           onPress={() => setIsMenuOpen(true)}
         />
@@ -75,6 +83,9 @@ function NoteActionsMenu({
   );
 }
 
+// The same flush row a scaglia draws: hairlines above and below, collapsed
+// into a single shared line between neighbours, so a folder reads as one
+// stack of notes rather than a column of list items.
 export function FolderNoteItem({
   note,
   onPress,
@@ -86,30 +97,53 @@ export function FolderNoteItem({
   const { t } = useTranslation();
 
   return (
-    <List.Item
-      style={[styles.item, { borderColor: theme.colors.outlineVariant }]}
-      title={() => (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => onPress(note)}
+      style={[styles.row, { borderColor: theme.colors.outlineVariant }]}
+    >
+      <View style={styles.preview}>
         <MarkdownPreview
           markdown={titleFor(note.text, t('notes.emptyTitle'))}
-          fontSize={theme.fonts.bodyLarge.fontSize}
-          lineHeight={theme.fonts.bodyLarge.lineHeight}
+          fontSize={theme.fonts.bodyMedium.fontSize}
+          lineHeight={theme.fonts.bodyMedium.lineHeight}
+          maxLines={PREVIEW_MAX_LINES}
         />
-      )}
-      onPress={() => onPress(note)}
-      right={() => (
+      </View>
+      <View style={styles.trailingSlot}>
         <NoteActionsMenu
           onEditPress={() => onEditPress(note)}
           onMovePress={() => onMovePress(note)}
           onDeletePress={() => onDeletePress(note)}
         />
-      )}
-    />
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  item: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  row: {
+    alignItems: 'center',
+    backgroundColor: TRANSPARENT,
     borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: -StyleSheet.hairlineWidth,
+    minHeight: ROW_MIN_HEIGHT,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+  },
+  // The menu keeps its intrinsic width; the preview is the elastic one.
+  preview: {
+    flex: 1,
+    flexShrink: 1,
+  },
+  trailingSlot: {
+    alignItems: 'flex-end',
+    flexShrink: 0,
+  },
+  menuButton: {
+    margin: 0,
   },
 });
