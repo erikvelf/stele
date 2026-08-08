@@ -103,6 +103,7 @@ The app icon is one of them too, and switching the accent does not switch the ic
 
 Things I want, in no particular order. They move up into the list above when they ship.
 
+- **Fix hilights drag to reorder** (bug on IOS or phisical device)
 - **Surfacing the past** — a stone from a year ago, or a month ago, brought back to the home page. The _macigno_ roulette in the PRD: the archive reminding you of itself instead of waiting to be searched.
 - **A year wrapped** — the year read back as one screen. Waiting on enough of my own data to make it worth building.
 - **Encrypted cloud backup** — an idea, still pending. It would be the first network access in the app, so it has to earn it: encrypted on the device, opt-in, and never a requirement.
