@@ -25,7 +25,10 @@ const BULLET_ICON_SIZE = 20;
 const DEFAULT_ROW_SLOT_HEIGHT = 44;
 const ROW_GAP = 0;
 const ROW_MIN_HEIGHT = 44;
-const DRAG_MIN_DISTANCE = 10;
+// The pan claims the touch on a held finger, before the enclosing scroll view
+// can claim it on movement. Moving before the delay elapses cancels the
+// activation, so a swipe that starts on the handle still scrolls the page.
+const DRAG_ACTIVATION_DELAY_MS = 200;
 const DRAG_SNAP_DURATION_MS = 220;
 
 // Tag already resolved by the caller; the list only renders it.
@@ -400,7 +403,7 @@ function useDragReorder(
       gestures.set(
         id,
         Gesture.Pan()
-          .minDistance(DRAG_MIN_DISTANCE)
+          .activateAfterLongPress(DRAG_ACTIVATION_DELAY_MS)
           .onStart(() => {
             runOnJS(handleDragStart)(id);
           })
