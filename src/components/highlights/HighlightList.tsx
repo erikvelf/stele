@@ -311,6 +311,11 @@ function useDragReorder(
   const dragTranslateY = useSharedValue(0);
   const dragStartHeights = useSharedValue<number[]>([]);
   const dragStartIndex = useSharedValue(0);
+  // The pan worklet reads the order and the slot heights on the frame the
+  // drag starts, so both have to already live on the UI thread. Their JS
+  // twins below stay the source the UI thread copies from.
+  const orderedIdsValue = useSharedValue(orderedIds);
+  const slotHeights = useSharedValue<number[]>([]);
   const rowHeightsRef = useRef<Map<string, number>>(new Map());
   const dragStartOrderRef = useRef<string[]>([]);
   const lastTargetIndexRef = useRef(0);
@@ -329,50 +334,55 @@ function useDragReorder(
     }
   }
 
+  // Hands the current order, and the slot height of every row in it, to the
+  // UI thread. Runs on every order change and every row measurement.
+  const publishOrder = useCallback(
+    (order: string[]) => {
+      orderedIdsRef.current = order;
+      orderedIdsValue.value = order;
+      slotHeights.value = order.map(rowId =>
+        rowSlotHeight(rowId, rowHeightsRef.current)
+      );
+    },
+    [orderedIdsValue, slotHeights]
+  );
+
   useEffect(() => {
-    orderedIdsRef.current = orderedIds;
-  }, [orderedIds]);
+    publishOrder(orderedIds);
+  }, [orderedIds, publishOrder]);
 
   const handleRowLayout = (id: string, event: LayoutChangeEvent) => {
     rowHeightsRef.current.set(id, event.nativeEvent.layout.height + ROW_GAP);
+    publishOrder(orderedIdsRef.current);
   };
 
-  const handleDragStart = useCallback(
-    (id: string) => {
-      Keyboard.dismiss();
-      haptics.pickUp();
-      const startOrder = orderedIdsRef.current;
-      dragStartOrderRef.current = startOrder;
-      const startIndex = startOrder.indexOf(id);
-      lastTargetIndexRef.current = startIndex;
-      dragTranslateY.value = 0;
-      dragStartHeights.value = startOrder.map(rowId =>
-        rowSlotHeight(rowId, rowHeightsRef.current)
-      );
-      dragStartIndex.value = startIndex;
-      setDrag({
-        id,
-        originTop: cumulativeOffset(
-          startOrder,
-          startIndex,
-          rowHeightsRef.current
-        ),
-      });
-    },
-    [dragTranslateY, dragStartHeights, dragStartIndex]
-  );
-
-  const handleDragUpdate = useCallback((id: string, targetIndex: number) => {
-    if (targetIndex === lastTargetIndexRef.current) {
-      return;
-    }
-    lastTargetIndexRef.current = targetIndex;
-    haptics.select();
-    const nextOrder = dragStartOrderRef.current.filter(rowId => rowId !== id);
-    nextOrder.splice(targetIndex, 0, id);
-    setOrderedIds(nextOrder);
-    orderedIdsRef.current = nextOrder;
+  const handleDragStart = useCallback((id: string) => {
+    Keyboard.dismiss();
+    haptics.pickUp();
+    const startOrder = orderedIdsRef.current;
+    dragStartOrderRef.current = startOrder;
+    const startIndex = startOrder.indexOf(id);
+    lastTargetIndexRef.current = startIndex;
+    setDrag({
+      id,
+      originTop: cumulativeOffset(startOrder, startIndex, rowHeightsRef.current),
+    });
   }, []);
+
+  const handleDragUpdate = useCallback(
+    (id: string, targetIndex: number) => {
+      if (targetIndex === lastTargetIndexRef.current) {
+        return;
+      }
+      lastTargetIndexRef.current = targetIndex;
+      haptics.select();
+      const nextOrder = dragStartOrderRef.current.filter(rowId => rowId !== id);
+      nextOrder.splice(targetIndex, 0, id);
+      setOrderedIds(nextOrder);
+      publishOrder(nextOrder);
+    },
+    [publishOrder]
+  );
 
   const handleDragEnd = useCallback(
     (id: string, settleY: number) => {
@@ -405,6 +415,10 @@ function useDragReorder(
         Gesture.Pan()
           .activateAfterLongPress(DRAG_ACTIVATION_DELAY_MS)
           .onStart(() => {
+            const startOrder = orderedIdsValue.value;
+            dragTranslateY.value = 0;
+            dragStartIndex.value = startOrder.indexOf(id);
+            dragStartHeights.value = slotHeights.value;
             runOnJS(handleDragStart)(id);
           })
           .onUpdate(event => {
@@ -432,6 +446,8 @@ function useDragReorder(
     dragTranslateY,
     dragStartHeights,
     dragStartIndex,
+    orderedIdsValue,
+    slotHeights,
     handleDragStart,
     handleDragUpdate,
     handleDragEnd,
