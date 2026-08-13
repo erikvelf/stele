@@ -1,4 +1,3 @@
-
 # Stele 🗿
 
 A personal journal, and the notes you want to keep next to it.
