@@ -92,6 +92,7 @@
       "subtitle": "Tap the pencil to place your first stone."
     },
     "emptyTitle": "Empty note",
+    "defaultTitle": "Title",
     "cleanSlate": "Clean slate"
   },
   "note": {
@@ -261,7 +262,11 @@
   "notifications": {
     "dailyReminder": {
       "title": "Daily reminder",
-      "description": "A single reminder at a time you choose"
+      "description": "A single reminder at a time you choose",
+      "hours": "hours",
+      "minutes": "minutes",
+      "increase": "Increase %{unit}",
+      "decrease": "Decrease %{unit}"
     },
     "permissionDenied": "Notifications are off for Stele in system settings. Enable them there to turn this on.",
     "scheduleFailed": "The reminder could not be scheduled.",

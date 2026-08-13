@@ -92,6 +92,7 @@
       "subtitle": "Tocca la matita per posare il primo sasso."
     },
     "emptyTitle": "Nota vuota",
+    "defaultTitle": "Titolo",
     "cleanSlate": "Tabula rasa"
   },
   "note": {
@@ -261,7 +262,11 @@
   "notifications": {
     "dailyReminder": {
       "title": "Promemoria giornaliero",
-      "description": "Un solo promemoria, all'ora che scegli tu"
+      "description": "Un solo promemoria, all'ora che scegli tu",
+      "hours": "ore",
+      "minutes": "minuti",
+      "increase": "Aumenta %{unit}",
+      "decrease": "Diminuisci %{unit}"
     },
     "permissionDenied": "Le notifiche di Stele sono disattivate nelle impostazioni di sistema. Attivale lì per abilitare questa opzione.",
     "scheduleFailed": "Impossibile programmare il promemoria.",

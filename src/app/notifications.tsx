@@ -33,7 +33,7 @@ export default function NotificationsScreen() {
     });
   };
 
-  const changeTime = (hour: number, minute: number) => {
+  const saveTime = (hour: number, minute: number) => {
     void setReminder(true, hour, minute);
   };
 
@@ -63,7 +63,7 @@ export default function NotificationsScreen() {
         <DailyReminderTimePicker
           hour={reminder.hour}
           minute={reminder.minute}
-          onChange={changeTime}
+          onSave={saveTime}
         />
       )}
 
