@@ -1,0 +1,1 @@
+DROP INDEX `reflection_kind_period_start`;
