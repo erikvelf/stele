@@ -103,7 +103,18 @@
   "note": {
     "placeholder": "Scrivi…",
     "saveFailed": "Impossibile salvare — %{cause}",
-    "tryAgain": "riprova"
+    "tryAgain": "riprova",
+    "format": {
+      "bold": "Grassetto",
+      "italic": "Corsivo",
+      "strikethrough": "Barrato",
+      "code": "Codice",
+      "heading1": "Titolo 1",
+      "heading2": "Titolo 2",
+      "heading3": "Titolo 3",
+      "bullet": "Elenco",
+      "quote": "Citazione"
+    }
   },
   "noteActions": {
     "label": "Azioni della nota",

@@ -6,12 +6,14 @@ import { ActivityIndicator, Surface, Text } from 'react-native-paper';
 
 import { HighlightList, TagPickerSheet } from '@/components/highlights';
 import type { ResolvedHighlight } from '@/components/highlights';
+import { FormatBar } from '@/components/notes/FormatBar';
 import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
 import { HeaderIconButton } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useHighlights } from '@/hooks/useHighlights';
 import { useJournalNote } from '@/hooks/useJournalNote';
+import { useMarkdownFormat } from '@/hooks/useMarkdownFormat';
 import { useRenderMode } from '@/hooks/useRenderMode';
 import { useTags } from '@/hooks/useTags';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -29,6 +31,10 @@ export default function NoteScreen() {
   const { tags } = useTags();
   const { t } = useTranslation();
   const { theme, stoneId } = useAppTheme();
+  const formatting = useMarkdownFormat({
+    text: note?.text ?? '',
+    onChangeText: setText,
+  });
   const { isRenderMode, toggleRenderMode } = useRenderMode({
     noteId: id,
     isLoading,
@@ -102,6 +108,10 @@ export default function NoteScreen() {
         value={note?.text ?? ''}
         onChangeText={setText}
         isRenderMode={isRenderMode}
+        selection={formatting.selection}
+        onSelectionChange={formatting.onSelectionChange}
+        onFocus={formatting.onFocus}
+        onBlur={formatting.onBlur}
       >
         <View
           style={[
@@ -127,6 +137,14 @@ export default function NoteScreen() {
           {t('note.saveFailed', { cause: error.cause ?? t('note.tryAgain') })}
         </Text>
       ) : null}
+
+      <FormatBar
+        isOpen={
+          formatting.isFocused && !isRenderMode && focusedHighlightId === null
+        }
+        activeFormats={formatting.formats}
+        onFormatPress={formatting.onFormatPress}
+      />
 
       <TagPickerSheet
         isOpen={focusedHighlightId !== null}

@@ -2,13 +2,14 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
+import type { EditorCaretProps } from '@/components/notes/MarkdownEditor';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { SPACING } from '@/constants/layout';
 
 const CARET_KEYBOARD_GAP = SPACING.xl;
 const EDITOR_MIN_HEIGHT = 240;
 
-interface NoteEditorAreaProps {
+interface NoteEditorAreaProps extends EditorCaretProps {
   value: string;
   onChangeText: (text: string) => void;
   isRenderMode: boolean;
@@ -22,6 +23,10 @@ export function NoteEditorArea({
   isRenderMode,
   placeholder,
   children,
+  selection,
+  onSelectionChange,
+  onFocus,
+  onBlur,
 }: NoteEditorAreaProps) {
   return (
     <KeyboardAwareScrollView
@@ -39,6 +44,10 @@ export function NoteEditorArea({
           onChangeText={onChangeText}
           isRenderMode={isRenderMode}
           style={styles.editor}
+          selection={selection}
+          onSelectionChange={onSelectionChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
       </View>
     </KeyboardAwareScrollView>

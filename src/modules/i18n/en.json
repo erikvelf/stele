@@ -103,7 +103,18 @@
   "note": {
     "placeholder": "Writing…",
     "saveFailed": "Couldn't save — %{cause}",
-    "tryAgain": "try again"
+    "tryAgain": "try again",
+    "format": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "strikethrough": "Strikethrough",
+      "code": "Code",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bullet": "List",
+      "quote": "Quote"
+    }
   },
   "noteActions": {
     "label": "Note actions",
