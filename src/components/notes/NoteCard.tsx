@@ -14,6 +14,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { formatDayRange } from '@/modules/i18n';
 import { toDayBounds } from '@/modules/journal';
 import type { DayRange } from '@/modules/journal';
+import { bodyOf, titleOf } from '@/modules/notes';
 
 import { MarkdownPreview } from './MarkdownPreview';
 
@@ -27,7 +28,7 @@ export interface NoteCardProps {
 }
 
 const PREVIEW_TITLE_LINES = 1;
-const PREVIEW_BODY_LINES = 2;
+const PREVIEW_BODY_LINES = 3;
 const MENU_ICON_SIZE = 16;
 const HIGHLIGHT_ICON_SIZE = 12;
 
@@ -115,8 +116,8 @@ export function NoteCard({
   const { t, locale } = useTranslation();
   const bounds = toDayBounds(range);
   const preview = noteText.length > 0 ? noteText : t('notes.cleanSlate');
-  const [previewTitle, ...previewBodyLines] = preview.split('\n');
-  const previewBody = previewBodyLines.join('\n');
+  const previewTitle = titleOf(preview);
+  const previewBody = bodyOf(preview);
 
   return (
     <Card
@@ -125,13 +126,15 @@ export function NoteCard({
       style={[styles.card, { backgroundColor: theme.colors.elevation.level3 }]}
     >
       <Card.Content style={styles.textSection}>
-        <Text
-          variant="titleMedium"
-          numberOfLines={PREVIEW_TITLE_LINES}
-          style={{ color: theme.colors.onSurface }}
-        >
-          {previewTitle}
-        </Text>
+        {previewTitle ? (
+          <Text
+            variant="titleLarge"
+            numberOfLines={PREVIEW_TITLE_LINES}
+            style={{ color: theme.colors.onSurface }}
+          >
+            {previewTitle}
+          </Text>
+        ) : null}
         {previewBody ? (
           <View style={styles.previewBody}>
             <MarkdownPreview

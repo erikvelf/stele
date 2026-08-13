@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { createId } from '@/lib/id';
 import {
   deleteNote,
@@ -24,6 +25,7 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
   const [notes, setNotes] = useState<Note[]>([]);
   const [error, setError] = useState<AppError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   const refresh = useCallback(() => {
     void listFolderNotes(folderId).then(result => {
@@ -44,7 +46,7 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
   const createNote = useCallback((): string => {
     const note: Note = {
       id: createId(),
-      text: '',
+      text: `# ${t('notes.defaultTitle')}`,
       folder_id: folderId,
       created_at: Date.now(),
     };
@@ -58,7 +60,7 @@ export function useFolderNotes(folderId: string): UseFolderNotesResult {
     });
 
     return note.id;
-  }, [folderId]);
+  }, [folderId, t]);
 
   const moveNote = useCallback((id: string, targetFolderId: string) => {
     setNotes(previous => previous.filter(note => note.id !== id));

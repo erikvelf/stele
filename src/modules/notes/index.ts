@@ -10,3 +10,4 @@ export {
   replaceNotes,
   writeNote,
 } from './queries';
+export { bodyOf, titleOf } from './title';

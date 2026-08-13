@@ -4,6 +4,7 @@ import { IconButton, Menu, useTheme } from 'react-native-paper';
 
 import { SPACING } from '@/constants/layout';
 import { useTranslation } from '@/hooks/useTranslation';
+import { titleOf } from '@/modules/notes';
 import type { Note } from '@/modules/notes';
 import { TRANSPARENT } from '@/modules/palette';
 
@@ -19,11 +20,6 @@ export interface FolderNoteItemProps {
   onEditPress: (note: Note) => void;
   onMovePress: (note: Note) => void;
   onDeletePress: (note: Note) => void;
-}
-
-function titleFor(text: string, emptyTitle: string): string {
-  const [firstLine] = text.split('\n');
-  return firstLine.length > 0 ? firstLine : emptyTitle;
 }
 
 function NoteActionsMenu({
@@ -104,7 +100,7 @@ export function FolderNoteItem({
     >
       <View style={styles.preview}>
         <MarkdownPreview
-          markdown={titleFor(note.text, t('notes.emptyTitle'))}
+          markdown={titleOf(note.text) ?? t('notes.untitled')}
           fontSize={theme.fonts.bodyMedium.fontSize}
           lineHeight={theme.fonts.bodyMedium.lineHeight}
           maxLines={PREVIEW_MAX_LINES}
