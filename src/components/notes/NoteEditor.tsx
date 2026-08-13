@@ -1,5 +1,5 @@
 import type { StyleProp, ViewStyle } from 'react-native';
-import { ScrollView, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 
 import { MarkdownEditor } from '@/components/notes/MarkdownEditor';
 import { MarkdownPreview } from '@/components/notes/MarkdownPreview';
@@ -21,9 +21,9 @@ export function NoteEditor({
 }: NoteEditorProps) {
   if (isRenderMode) {
     return (
-      <ScrollView style={[styles.renderContainer, style]}>
+      <View style={style}>
         <MarkdownPreview markdown={value} />
-      </ScrollView>
+      </View>
     );
   }
 
@@ -32,16 +32,7 @@ export function NoteEditor({
       placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
-      style={[styles.input, style]}
+      style={style}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    flex: 1,
-  },
-  renderContainer: {
-    flex: 1,
-  },
-});

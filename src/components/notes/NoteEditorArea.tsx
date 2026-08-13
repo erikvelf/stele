@@ -6,7 +6,6 @@ import { NoteEditor } from '@/components/notes/NoteEditor';
 import { SPACING } from '@/constants/layout';
 
 const CARET_KEYBOARD_GAP = SPACING.xl;
-const EDITOR_TRAILING_SLACK = 128;
 const EDITOR_MIN_HEIGHT = 240;
 
 interface NoteEditorAreaProps {
@@ -27,7 +26,7 @@ export function NoteEditorArea({
   return (
     <KeyboardAwareScrollView
       style={styles.editorArea}
-      contentContainerStyle={styles.scrollContent}
+      mode="layout"
       bottomOffset={CARET_KEYBOARD_GAP}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -49,9 +48,6 @@ export function NoteEditorArea({
 const styles = StyleSheet.create({
   editorArea: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: EDITOR_TRAILING_SLACK,
   },
   noteBody: {
     paddingVertical: SPACING.xl,
