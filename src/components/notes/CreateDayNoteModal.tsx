@@ -52,7 +52,11 @@ export function CreateDayNoteModal({
           </Text>
         </View>
         <View style={styles.buttons}>
-          <Button style={styles.button} mode="contained" onPress={handleConfirm}>
+          <Button
+            style={styles.button}
+            mode="contained"
+            onPress={handleConfirm}
+          >
             {t('common.create')}
           </Button>
           <Button style={styles.button} mode="outlined" onPress={onDismiss}>
