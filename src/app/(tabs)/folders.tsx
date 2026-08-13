@@ -13,6 +13,7 @@ import { ConfirmDeleteModal } from '@/components/shared';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolders } from '@/hooks/useFolders';
 import { useNewFolderDraft } from '@/hooks/useNewFolderDraft';
+import { usePendingDelete } from '@/hooks/usePendingDelete';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Folder } from '@/modules/folders';
 
@@ -26,8 +27,8 @@ export default function FoldersScreen() {
   const [pendingFolderId, setPendingFolderId] = useState<string | undefined>(
     undefined
   );
-  const [folderPendingDelete, setFolderPendingDelete] = useState<Folder | null>(
-    null
+  const folderDelete = usePendingDelete<Folder>(folder =>
+    removeFolder(folder.id)
   );
 
   const handleCreatePress = () => {
@@ -67,7 +68,7 @@ export default function FoldersScreen() {
             onTopFolderSettled={handleTopFolderSettled}
             onPress={folder => router.push(`/folder/${folder.id}`)}
             onEditPress={openSheetFor}
-            onDeletePress={setFolderPendingDelete}
+            onDeletePress={folderDelete.request}
             style={styles.list}
           />
         )}
@@ -78,14 +79,10 @@ export default function FoldersScreen() {
       <NewFolderSheet onCreate={handleCreate} onEdit={updateFolder} />
 
       <ConfirmDeleteModal
-        visible={folderPendingDelete !== null}
+        visible={folderDelete.isVisible}
         subject={t('common.folder')}
-        onConfirm={() => {
-          if (folderPendingDelete) {
-            removeFolder(folderPendingDelete.id);
-          }
-        }}
-        onDismiss={() => setFolderPendingDelete(null)}
+        onConfirm={folderDelete.confirm}
+        onDismiss={folderDelete.cancel}
       />
     </Surface>
   );

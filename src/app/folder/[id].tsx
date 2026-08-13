@@ -18,10 +18,11 @@ import { FolderPickerModal } from '@/components/folders';
 import { FolderNoteList } from '@/components/notes/FolderNoteList';
 import { FolderNotesEmptyState } from '@/components/notes/FolderNotesEmptyState';
 import { type NoteSort, NoteSortMenu } from '@/components/notes/NoteSortMenu';
-import { HeaderIconButton } from '@/components/shared';
+import { ConfirmDeleteModal, HeaderIconButton } from '@/components/shared';
 import { FAB_CLEARANCE, SPACING } from '@/constants/layout';
 import { useFolderNotes } from '@/hooks/useFolderNotes';
 import { useFolders } from '@/hooks/useFolders';
+import { usePendingDelete } from '@/hooks/usePendingDelete';
 import { useTranslation } from '@/hooks/useTranslation';
 import { readFolder } from '@/modules/folders';
 import type { Folder } from '@/modules/folders';
@@ -43,6 +44,7 @@ export default function FolderScreen() {
   const { notes, isLoading, refresh, createNote, moveNote, removeNote } =
     useFolderNotes(id);
   const { folders } = useFolders();
+  const noteDelete = usePendingDelete<Note>(note => removeNote(note.id));
 
   const moveTargets = useMemo(
     () => folders.filter(folder => folder.id !== id),
@@ -101,7 +103,7 @@ export default function FolderScreen() {
         onPress={openNote}
         onEditPress={openNote}
         onMovePress={setNotePendingMove}
-        onDeletePress={note => removeNote(note.id)}
+        onDeletePress={noteDelete.request}
       />
     );
   };
@@ -158,6 +160,13 @@ export default function FolderScreen() {
           }
         }}
         onDismiss={() => setNotePendingMove(null)}
+      />
+
+      <ConfirmDeleteModal
+        visible={noteDelete.isVisible}
+        subject={t('common.note')}
+        onConfirm={noteDelete.confirm}
+        onDismiss={noteDelete.cancel}
       />
     </Surface>
   );
