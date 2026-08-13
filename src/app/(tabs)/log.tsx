@@ -4,12 +4,12 @@ import { FlatList, StyleSheet } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
-  Menu,
+  Snackbar,
   Surface,
   useTheme,
 } from 'react-native-paper';
 
-import { LayerRowView, TagFilterBar } from '@/components/log';
+import { LayerRowView, LogOptionMenu, TagFilterBar } from '@/components/log';
 import { EmptyState } from '@/components/shared';
 import { SPACING } from '@/constants/layout';
 import { useReflections } from '@/hooks/useReflections';
@@ -24,6 +24,7 @@ import type { Period } from '@/modules/types';
 
 const END_REACHED_THRESHOLD = 0.5;
 const NO_PERIOD = 0;
+const ERROR_SNACKBAR_DURATION = 5000;
 
 const RESOLUTIONS: Resolution[] = ['day', 'week', 'month'];
 
@@ -47,8 +48,6 @@ export default function LogScreen() {
   const [view, setView] = useState<LogView>(readLogView);
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [scopePeriod, setScopePeriod] = useState<Period | null>(null);
-  const [isViewMenuVisible, setIsViewMenuVisible] = useState(false);
-  const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
 
   // Drilling into a month reads it a week at a time, whatever the menu says.
   const resolution: Resolution = scopePeriod ? 'week' : view.resolution;
@@ -64,7 +63,7 @@ export default function LogScreen() {
     tagIds,
     scope,
   });
-  const { textFor, setText } = useReflections(
+  const { textFor, setText, error, dismissError } = useReflections(
     reflectionKindFor(resolution),
     span
   );
@@ -81,8 +80,6 @@ export default function LogScreen() {
   );
 
   const applyView = useCallback((patch: Partial<LogView>) => {
-    setIsViewMenuVisible(false);
-    setIsSortMenuVisible(false);
     setView(current => {
       const next = { ...current, ...patch };
       writeLogView(next);
@@ -116,44 +113,20 @@ export default function LogScreen() {
         <Appbar.Content
           title={scopePeriod ? formatPeriod(scopePeriod, t) : t('log.title')}
         />
-        <Menu
-          visible={isSortMenuVisible}
-          onDismiss={() => setIsSortMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="filter-variant"
-              onPress={() => setIsSortMenuVisible(true)}
-            />
-          }
-        >
-          {DIRECTIONS.map(direction => (
-            <Menu.Item
-              key={direction}
-              title={t(`log.direction.${direction}`)}
-              leadingIcon={view.direction === direction ? 'check' : undefined}
-              onPress={() => applyView({ direction })}
-            />
-          ))}
-        </Menu>
-        <Menu
-          visible={isViewMenuVisible}
-          onDismiss={() => setIsViewMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="tune-variant"
-              onPress={() => setIsViewMenuVisible(true)}
-            />
-          }
-        >
-          {RESOLUTIONS.map(resolution => (
-            <Menu.Item
-              key={resolution}
-              title={t(`log.resolution.${resolution}`)}
-              leadingIcon={view.resolution === resolution ? 'check' : undefined}
-              onPress={() => applyView({ resolution })}
-            />
-          ))}
-        </Menu>
+        <LogOptionMenu
+          icon="filter-variant"
+          options={DIRECTIONS}
+          selected={view.direction}
+          labelFor={direction => t(`log.direction.${direction}`)}
+          onSelect={direction => applyView({ direction })}
+        />
+        <LogOptionMenu
+          icon="tune-variant"
+          options={RESOLUTIONS}
+          selected={view.resolution}
+          labelFor={resolution => t(`log.resolution.${resolution}`)}
+          onSelect={resolution => applyView({ resolution })}
+        />
       </Appbar.Header>
 
       <TagFilterBar
@@ -193,6 +166,14 @@ export default function LogScreen() {
           )
         }
       />
+
+      <Snackbar
+        visible={error !== null}
+        onDismiss={dismissError}
+        duration={ERROR_SNACKBAR_DURATION}
+      >
+        {t('log.errors.save')}
+      </Snackbar>
     </Surface>
   );
 }

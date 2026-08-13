@@ -81,6 +81,9 @@
     "empty": {
       "title": "No highlights",
       "subtitle": "The highlights you chip off your stones collect here, in layers."
+    },
+    "errors": {
+      "save": "Something went wrong."
     }
   },
   "period": {

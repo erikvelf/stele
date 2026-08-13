@@ -81,6 +81,9 @@
     "empty": {
       "title": "Nessuna scaglia",
       "subtitle": "Le scaglie che stacchi dai tuoi sassi si raccolgono qui, in strati."
+    },
+    "errors": {
+      "save": "Qualcosa è andato storto."
     }
   },
   "period": {
