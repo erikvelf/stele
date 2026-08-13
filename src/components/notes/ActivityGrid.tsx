@@ -64,6 +64,9 @@ function activityCells(
     const range = rangesByDay.get(day.getTime());
     return {
       day,
+      // A note only covers days that have happened, so a future square has
+      // nothing to open and nothing to write.
+      disabled: !range && day.getTime() > today.getTime(),
       fill: range
         ? { color: theme.colors.primary, runKey: range.id }
         : { color: theme.colors.surfaceVariant },
@@ -159,12 +162,14 @@ export interface ActivityGridProps {
   ranges: DayRanges;
   scrollY?: SharedValue<number>;
   onSelectRange?: (range: DayRange) => void;
+  onCreateDay?: (day: Date) => void;
 }
 
 export function ActivityGrid({
   ranges,
   scrollY,
   onSelectRange,
+  onCreateDay,
 }: ActivityGridProps) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
@@ -195,12 +200,14 @@ export function ActivityGrid({
   }, []);
 
   const handleDayPress = useCallback(
-    (_day: Date, data: ActivityDay | undefined) => {
+    (day: Date, data: ActivityDay | undefined) => {
       if (data?.range) {
         onSelectRange?.(data.range);
+        return;
       }
+      onCreateDay?.(day);
     },
-    [onSelectRange]
+    [onSelectRange, onCreateDay]
   );
 
   const renderDay = useCallback(

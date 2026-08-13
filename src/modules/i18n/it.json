@@ -50,7 +50,8 @@
     },
     "errors": {
       "deleteNote": "Impossibile eliminare la nota. Riprova.",
-      "setDayRange": "Impossibile impostare l'intervallo di giorni. Riprova."
+      "setDayRange": "Impossibile impostare l'intervallo di giorni. Riprova.",
+      "createNote": "Impossibile creare la nota. Riprova."
     }
   },
   "creationVerbs": {
@@ -121,6 +122,10 @@
   "dayRange": {
     "title": "Imposta l'intervallo di giorni",
     "instructions": "Modifica la nota di %{day} toccando i quadrati."
+  },
+  "createDayNote": {
+    "title": "Nuovo sasso",
+    "body": "Vuoi posare un sasso per %{day}?"
   },
   "folders": {
     "title": "Scaffale",

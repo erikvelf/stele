@@ -15,6 +15,7 @@ import {
 } from '@/components/folders';
 import { ActivityGrid } from '@/components/notes/ActivityGrid';
 import { ActivityList } from '@/components/notes/ActivityList';
+import { CreateDayNoteModal } from '@/components/notes/CreateDayNoteModal';
 import { DayRangeModal } from '@/components/notes/DayRangeModal';
 import { NotesEmptyState } from '@/components/notes/NotesEmptyState';
 import { ConfirmDeleteModal } from '@/components/shared';
@@ -26,6 +27,8 @@ import { useFolders } from '@/hooks/useFolders';
 import { useHighlightCounts } from '@/hooks/useHighlightCounts';
 import { useJournalComposer } from '@/hooks/useJournalComposer';
 import { useJournalFeed } from '@/hooks/useJournalFeed';
+import type { PendingDelete } from '@/hooks/usePendingDelete';
+import { usePendingDelete } from '@/hooks/usePendingDelete';
 import { useTranslation } from '@/hooks/useTranslation';
 import { countHighlights } from '@/modules/highlights';
 import type { Translate } from '@/modules/i18n';
@@ -103,18 +106,14 @@ interface JournalNoteActionsOptions {
   refresh: () => void;
   refreshCreationStats: () => void;
   rescheduleDailyReminder: () => void;
+  reportError: (message: string) => void;
 }
 
 interface JournalNoteActions {
-  error: string | null;
-  dismissError: () => void;
-  pendingDelete: JournalNote | null;
+  noteDelete: PendingDelete<JournalNote>;
   pendingDayRange: JournalNote | null;
-  requestDelete: (note: JournalNote) => void;
   requestDayRange: (note: JournalNote) => void;
-  cancelDelete: () => void;
   cancelDayRange: () => void;
-  confirmDelete: () => void;
   confirmDayRange: (note: JournalNote) => void;
 }
 
@@ -124,63 +123,59 @@ function useJournalNoteActions({
   refresh,
   refreshCreationStats,
   rescheduleDailyReminder,
+  reportError,
 }: JournalNoteActionsOptions): JournalNoteActions {
   const { t } = useTranslation();
-  const [error, setError] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<JournalNote | null>(null);
   const [pendingDayRange, setPendingDayRange] = useState<JournalNote | null>(
     null
   );
 
   // The row leaves the list first; a failed delete puts it back through the
   // refresh.
-  const confirmDelete = useCallback(() => {
-    if (!pendingDelete) {
-      return;
-    }
-    removeNote(pendingDelete.id);
-    void deleteJournalNote(pendingDelete.id).then(result => {
-      if (!result.success) {
-        setError(t('home.errors.deleteNote'));
-        refresh();
-        return;
-      }
-      refreshCreationStats();
-      rescheduleDailyReminder();
-    });
-  }, [
-    pendingDelete,
-    removeNote,
-    refresh,
-    refreshCreationStats,
-    rescheduleDailyReminder,
-    t,
-  ]);
+  const noteDelete = usePendingDelete<JournalNote>(
+    useCallback(
+      (note: JournalNote) => {
+        removeNote(note.id);
+        void deleteJournalNote(note.id).then(result => {
+          if (!result.success) {
+            reportError(t('home.errors.deleteNote'));
+            refresh();
+            return;
+          }
+          refreshCreationStats();
+          rescheduleDailyReminder();
+        });
+      },
+      [
+        removeNote,
+        refresh,
+        refreshCreationStats,
+        rescheduleDailyReminder,
+        reportError,
+        t,
+      ]
+    )
+  );
 
   const confirmDayRange = useCallback(
     (note: JournalNote) => {
       setPendingDayRange(null);
       void writeJournalNote(note).then(result => {
         if (!result.success) {
-          setError(t('home.errors.setDayRange'));
+          reportError(t('home.errors.setDayRange'));
           return;
         }
         refresh();
       });
     },
-    [refresh, t]
+    [refresh, reportError, t]
   );
 
   return {
-    error,
-    dismissError: useCallback(() => setError(null), []),
-    pendingDelete,
+    noteDelete,
     pendingDayRange,
-    requestDelete: setPendingDelete,
     requestDayRange: setPendingDayRange,
-    cancelDelete: useCallback(() => setPendingDelete(null), []),
     cancelDayRange: useCallback(() => setPendingDayRange(null), []),
-    confirmDelete,
     confirmDayRange,
   };
 }
@@ -195,11 +190,14 @@ export default function HomeScreen() {
   const highlightCounts = useHighlightCounts(notes);
   const { rows: creationStatRows, refresh: refreshCreationStats } =
     useCreationStats();
+  const [error, setError] = useState<string | null>(null);
+  const [pendingCreateDay, setPendingCreateDay] = useState<Date | null>(null);
   const noteActions = useJournalNoteActions({
     removeNote,
     refresh,
     refreshCreationStats,
     rescheduleDailyReminder,
+    reportError: setError,
   });
 
   const ranges = useMemo(
@@ -223,6 +221,7 @@ export default function HomeScreen() {
     isCreating,
     pendingNoteId,
     handleCreate,
+    createNoteForDay,
     handleTopNoteSettled,
     resetCreating,
   } = useJournalComposer({
@@ -230,6 +229,10 @@ export default function HomeScreen() {
     isLoadingNotes: isLoading,
     prependNote,
     onCreated: refreshCreationStats,
+    onCreateFailed: useCallback(
+      () => setError(t('home.errors.createNote')),
+      [t]
+    ),
   });
 
   useFocusEffect(
@@ -255,6 +258,7 @@ export default function HomeScreen() {
           ranges={ranges}
           scrollY={scrollY}
           onSelectRange={range => router.push(`/note/${range.id}`)}
+          onCreateDay={setPendingCreateDay}
         />
 
         <View style={styles.statsRow}>
@@ -287,16 +291,25 @@ export default function HomeScreen() {
             onTopNoteSettled={handleTopNoteSettled}
             onOpenNote={note => router.push(`/note/${note.id}`)}
             onSetDayRangeNote={noteActions.requestDayRange}
-            onDeleteNote={noteActions.requestDelete}
+            onDeleteNote={noteActions.noteDelete.request}
           />
         )}
       </Animated.ScrollView>
 
       <ConfirmDeleteModal
-        visible={noteActions.pendingDelete !== null}
+        visible={noteActions.noteDelete.isVisible}
         subject={t('common.stone')}
-        onConfirm={noteActions.confirmDelete}
-        onDismiss={noteActions.cancelDelete}
+        onConfirm={noteActions.noteDelete.confirm}
+        onDismiss={noteActions.noteDelete.cancel}
+      />
+
+      <CreateDayNoteModal
+        day={pendingCreateDay}
+        onDismiss={() => setPendingCreateDay(null)}
+        onConfirm={day => {
+          setPendingCreateDay(null);
+          createNoteForDay(day);
+        }}
       />
 
       <DayRangeModal
@@ -314,11 +327,11 @@ export default function HomeScreen() {
       />
 
       <Snackbar
-        visible={noteActions.error !== null}
-        onDismiss={noteActions.dismissError}
+        visible={error !== null}
+        onDismiss={() => setError(null)}
         duration={ERROR_SNACKBAR_DURATION}
       >
-        {noteActions.error}
+        {error}
       </Snackbar>
     </Surface>
   );

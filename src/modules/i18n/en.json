@@ -50,7 +50,8 @@
     },
     "errors": {
       "deleteNote": "Couldn't delete the note. Please try again.",
-      "setDayRange": "Couldn't set the day range. Please try again."
+      "setDayRange": "Couldn't set the day range. Please try again.",
+      "createNote": "Couldn't create the note. Please try again."
     }
   },
   "creationVerbs": {
@@ -121,6 +122,10 @@
   "dayRange": {
     "title": "Set day range",
     "instructions": "Edit the note of %{day} by tapping the squares."
+  },
+  "createDayNote": {
+    "title": "New stone",
+    "body": "Lay a stone for %{day}?"
   },
   "folders": {
     "title": "Shelf",
