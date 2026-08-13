@@ -1,11 +1,8 @@
+import { format } from 'date-fns';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import {
-  ActivityIndicator,
-  Surface,
-  Text,
-} from 'react-native-paper';
+import { ActivityIndicator, Surface, Text } from 'react-native-paper';
 
 import { HighlightList, TagPickerSheet } from '@/components/highlights';
 import type { ResolvedHighlight } from '@/components/highlights';
@@ -21,6 +18,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { recessedSurfaceFor } from '@/modules/palette';
 
 const BLUR_CLOSE_DELAY_MS = 150;
+const TITLE_DATE_FORMAT = 'dd-MM-yyyy';
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,8 +54,16 @@ export default function NoteScreen() {
   );
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const startTimestamp = note?.start_timestamp ?? null;
+
   useLayoutEffect(() => {
     navigation.setOptions({
+      title:
+        startTimestamp === null
+          ? t('routes.stone')
+          : t('routes.stoneDated', {
+              date: format(new Date(startTimestamp), TITLE_DATE_FORMAT),
+            }),
       headerRight: () => (
         <HeaderIconButton
           icon={isRenderMode ? 'pencil' : 'eye'}
@@ -65,7 +71,7 @@ export default function NoteScreen() {
         />
       ),
     });
-  }, [navigation, isRenderMode, toggleRenderMode]);
+  }, [navigation, isRenderMode, toggleRenderMode, startTimestamp, t]);
 
   const focusHighlight = (id: string) => {
     if (blurTimeoutRef.current) {

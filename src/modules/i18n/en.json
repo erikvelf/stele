@@ -27,6 +27,7 @@
   },
   "routes": {
     "stone": "Stone",
+    "stoneDated": "Stone %{date}",
     "note": "Note",
     "folder": "Tablet",
     "folderColor": "Colour",

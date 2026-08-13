@@ -27,6 +27,7 @@
   },
   "routes": {
     "stone": "Sasso",
+    "stoneDated": "Sasso %{date}",
     "note": "Nota",
     "folder": "Tavola",
     "folderColor": "Colore",
