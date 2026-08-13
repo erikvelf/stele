@@ -6,6 +6,8 @@ import {
 } from 'react-native-enriched-markdown';
 import { useTheme } from 'react-native-paper';
 
+import { TRANSPARENT } from '@/modules/palette';
+
 interface MarkdownPreviewProps {
   markdown: string;
   fontSize?: number;
@@ -15,6 +17,8 @@ interface MarkdownPreviewProps {
 }
 
 const FLUSH_BLOCK = { marginTop: 0, marginBottom: 0 };
+const CHECKBOX_SIZE = 18;
+const CHECKBOX_RADIUS = 2;
 
 export function MarkdownPreview({
   markdown,
@@ -44,11 +48,20 @@ export function MarkdownPreview({
       h5: heading,
       h6: heading,
       blockquote: {
-        color,
+        color: theme.colors.outline,
+        backgroundColor: TRANSPARENT,
         borderColor: theme.colors.outlineVariant,
         ...sizing,
       },
       list: { color, bulletColor: color, markerColor: color, ...sizing },
+      taskList: {
+        borderColor: theme.colors.onSurfaceVariant,
+        checkedColor: theme.colors.primary,
+        checkmarkColor: theme.colors.onPrimary,
+        checkedTextColor: theme.colors.onSurfaceVariant,
+        checkboxSize: CHECKBOX_SIZE,
+        checkboxBorderRadius: CHECKBOX_RADIUS,
+      },
       code: { color, ...(fontSize !== undefined && { fontSize }) },
       codeBlock: {
         color,
