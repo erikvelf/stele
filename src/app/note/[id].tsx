@@ -11,6 +11,7 @@ import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
 import { HeaderIconButton } from '@/components/shared';
 import { RADIUS, SPACING } from '@/constants/layout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFormatBarInset } from '@/hooks/useFormatBarInset';
 import { useHighlights } from '@/hooks/useHighlights';
 import { useJournalNote } from '@/hooks/useJournalNote';
 import { useMarkdownFormat } from '@/hooks/useMarkdownFormat';
@@ -58,6 +59,9 @@ export default function NoteScreen() {
   const focusedHighlight = highlights.find(
     highlight => highlight.id === focusedHighlightId
   );
+  const isFormatBarOpen =
+    formatting.isFocused && !isRenderMode && focusedHighlightId === null;
+  const formatBar = useFormatBarInset(isFormatBarOpen);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startTimestamp = note?.start_timestamp ?? null;
@@ -108,6 +112,7 @@ export default function NoteScreen() {
         value={note?.text ?? ''}
         onChangeText={setText}
         isRenderMode={isRenderMode}
+        bottomInset={formatBar.inset}
         selection={formatting.selection}
         onSelectionChange={formatting.onSelectionChange}
         onFocus={formatting.onFocus}
@@ -139,11 +144,10 @@ export default function NoteScreen() {
       ) : null}
 
       <FormatBar
-        isOpen={
-          formatting.isFocused && !isRenderMode && focusedHighlightId === null
-        }
+        isOpen={isFormatBarOpen}
         activeFormats={formatting.formats}
         onFormatPress={formatting.onFormatPress}
+        onHeightChange={formatBar.onHeightChange}
       />
 
       <TagPickerSheet

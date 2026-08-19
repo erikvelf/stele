@@ -7,6 +7,7 @@ import { FormatBar } from '@/components/notes/FormatBar';
 import { NoteEditorArea } from '@/components/notes/NoteEditorArea';
 import { HeaderIconButton } from '@/components/shared';
 import { SPACING } from '@/constants/layout';
+import { useFormatBarInset } from '@/hooks/useFormatBarInset';
 import { useMarkdownFormat } from '@/hooks/useMarkdownFormat';
 import { useNote } from '@/hooks/useNote';
 import { useRenderMode } from '@/hooks/useRenderMode';
@@ -26,6 +27,8 @@ export default function PlainNoteScreen() {
     isLoading,
     hasText: (note?.text ?? '').length > 0,
   });
+  const isFormatBarOpen = formatting.isFocused && !isRenderMode;
+  const formatBar = useFormatBarInset(isFormatBarOpen);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -53,6 +56,7 @@ export default function PlainNoteScreen() {
         value={note?.text ?? ''}
         onChangeText={setText}
         isRenderMode={isRenderMode}
+        bottomInset={formatBar.inset}
         selection={formatting.selection}
         onSelectionChange={formatting.onSelectionChange}
         onFocus={formatting.onFocus}
@@ -60,9 +64,10 @@ export default function PlainNoteScreen() {
       />
 
       <FormatBar
-        isOpen={formatting.isFocused && !isRenderMode}
+        isOpen={isFormatBarOpen}
         activeFormats={formatting.formats}
         onFormatPress={formatting.onFormatPress}
+        onHeightChange={formatBar.onHeightChange}
       />
     </Surface>
   );

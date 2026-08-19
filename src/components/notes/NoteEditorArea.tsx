@@ -14,6 +14,8 @@ interface NoteEditorAreaProps extends EditorCaretProps {
   onChangeText: (text: string) => void;
   isRenderMode: boolean;
   placeholder?: string;
+  // Height of whatever floats between the keyboard and the editor.
+  bottomInset: number;
   children?: ReactNode;
 }
 
@@ -22,6 +24,7 @@ export function NoteEditorArea({
   onChangeText,
   isRenderMode,
   placeholder,
+  bottomInset,
   children,
   selection,
   onSelectionChange,
@@ -31,8 +34,7 @@ export function NoteEditorArea({
   return (
     <KeyboardAwareScrollView
       style={styles.editorArea}
-      mode="layout"
-      bottomOffset={CARET_KEYBOARD_GAP}
+      bottomOffset={bottomInset + CARET_KEYBOARD_GAP}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >

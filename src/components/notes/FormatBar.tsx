@@ -31,6 +31,7 @@ interface FormatBarProps {
   isOpen: boolean;
   activeFormats: readonly MarkdownFormat[];
   onFormatPress: (format: MarkdownFormat) => void;
+  onHeightChange: (height: number) => void;
 }
 
 // Stays mounted at all times and only toggles visibility, for the same reason
@@ -40,6 +41,7 @@ export function FormatBar({
   isOpen,
   activeFormats,
   onFormatPress,
+  onHeightChange,
 }: FormatBarProps) {
   const { t } = useTranslation();
 
@@ -49,7 +51,11 @@ export function FormatBar({
       style={[styles.sticky, !isOpen && styles.hidden]}
       pointerEvents={isOpen ? 'auto' : 'none'}
     >
-      <Surface style={styles.bar} elevation={2}>
+      <Surface
+        style={styles.bar}
+        elevation={2}
+        onLayout={event => onHeightChange(event.nativeEvent.layout.height)}
+      >
         <EdgeScroller contentContainerStyle={styles.buttons} keepKeyboardOnTap>
           {FORMAT_BUTTONS.map(({ format, icon }) => (
             <ToggleButton
