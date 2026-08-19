@@ -24,6 +24,7 @@ const FORMAT_BUTTONS: readonly FormatButton[] = [
   { format: 'heading3', icon: 'format-header-3' },
   { format: 'bullet', icon: 'format-list-bulleted' },
   { format: 'quote', icon: 'format-quote-close' },
+  { format: 'rule', icon: 'minus' },
 ];
 
 interface FormatBarProps {

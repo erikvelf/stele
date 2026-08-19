@@ -114,7 +114,8 @@
       "heading2": "Heading 2",
       "heading3": "Heading 3",
       "bullet": "List",
-      "quote": "Quote"
+      "quote": "Quote",
+      "rule": "Divider"
     }
   },
   "noteActions": {

@@ -7,7 +7,8 @@ export type MarkdownFormat =
   | 'heading2'
   | 'heading3'
   | 'bullet'
-  | 'quote';
+  | 'quote'
+  | 'rule';
 
 export interface TextSelection {
   start: number;
@@ -36,11 +37,6 @@ const LINE_PREFIXES = new Map<MarkdownFormat, string>([
 
 // One heading level replaces another, so the longest match is stripped first.
 const HEADING_PREFIXES = ['### ', '## ', '# '];
-
-export const MARKDOWN_FORMATS: readonly MarkdownFormat[] = [
-  ...WRAP_MARKERS.keys(),
-  ...LINE_PREFIXES.keys(),
-];
 
 interface LineBounds {
   start: number;
@@ -214,11 +210,39 @@ function applyPrefix(
   };
 }
 
+const RULE_LINE = '---\n';
+
+// A rule needs an empty line above it, otherwise the text right before it turns
+// the dashes into a setext heading.
+function leadingBreaks(before: string): string {
+  if (before === '' || before.endsWith('\n\n')) {
+    return '';
+  }
+  return before.endsWith('\n') ? '\n' : '\n\n';
+}
+
+function insertRule(text: string, selection: TextSelection): FormattedText {
+  const before = text.slice(0, selection.start);
+  const after = text.slice(selection.end);
+  const lead = leadingBreaks(before);
+  const trail = after === '' || after.startsWith('\n') ? '' : '\n';
+  const caret = before.length + lead.length + RULE_LINE.length;
+
+  return {
+    text: before + lead + RULE_LINE + trail + after,
+    selection: { start: caret, end: caret },
+  };
+}
+
 export function applyFormat(
   text: string,
   selection: TextSelection,
   format: MarkdownFormat
 ): FormattedText {
+  if (format === 'rule') {
+    return insertRule(text, selection);
+  }
+
   const marker = WRAP_MARKERS.get(format);
   if (marker !== undefined) {
     return applyWrap(text, selection, marker);

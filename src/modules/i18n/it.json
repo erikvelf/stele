@@ -114,7 +114,8 @@
       "heading2": "Titolo 2",
       "heading3": "Titolo 3",
       "bullet": "Elenco",
-      "quote": "Citazione"
+      "quote": "Citazione",
+      "rule": "Separatore"
     }
   },
   "noteActions": {
