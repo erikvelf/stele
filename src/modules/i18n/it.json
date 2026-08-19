@@ -173,7 +173,8 @@
   },
   "highlights": {
     "placeholder": "Una piccola vittoria…",
-    "untagged": "senza tag"
+    "untagged": "senza tag",
+    "reorder": "Riordina"
   },
   "tags": {
     "empty": {

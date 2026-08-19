@@ -56,6 +56,7 @@ export default function NoteScreen() {
   const [focusedHighlightId, setFocusedHighlightId] = useState<string | null>(
     null
   );
+  const [isReorderingHighlights, setIsReorderingHighlights] = useState(false);
   const focusedHighlight = highlights.find(
     highlight => highlight.id === focusedHighlightId
   );
@@ -113,6 +114,7 @@ export default function NoteScreen() {
         onChangeText={setText}
         isRenderMode={isRenderMode}
         bottomInset={formatBar.inset}
+        isScrollEnabled={!isReorderingHighlights}
         selection={formatting.selection}
         onSelectionChange={formatting.onSelectionChange}
         onFocus={formatting.onFocus}
@@ -131,6 +133,7 @@ export default function NoteScreen() {
             onFocusHighlight={focusHighlight}
             onBlurHighlight={blurHighlight}
             onReorderHighlights={reorderHighlights}
+            onDragActiveChange={setIsReorderingHighlights}
           />
         </View>
       </NoteEditorArea>
