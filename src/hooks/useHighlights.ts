@@ -14,6 +14,10 @@ import type { AppError, Result } from '@/modules/types';
 
 import { useAutosave } from './useAutosave';
 
+// A blank highlight is not dropped the moment the field settles: the row
+// stays put long enough to type into again.
+const BLANK_REMOVE_DELAY_MS = 1000;
+
 function isBlank(text: string): boolean {
   return text.trim().length === 0;
 }
@@ -57,14 +61,66 @@ function persistSettled(
   id: string,
   highlight: DayHighlight,
   run: RunOperation,
-  setHighlights: Dispatch<SetStateAction<DayHighlight[]>>
+  scheduleRemoval: (id: string) => void
 ): void {
   if (isBlank(highlight.text)) {
-    setHighlights(previous => previous.filter(current => current.id !== id));
-    run(id, () => deleteHighlight(id));
+    scheduleRemoval(id);
     return;
   }
   run(id, () => writeHighlight(highlight));
+}
+
+interface DelayedRemoval {
+  scheduleRemoval: (id: string) => void;
+  cancelRemoval: (id: string) => void;
+}
+
+// Removal on a timer, cancellable while it runs. A row still waiting to go
+// when the screen closes is deleted rather than reprieved, the way a pending
+// write is flushed rather than dropped.
+function useDelayedRemoval(
+  run: RunOperation,
+  setHighlights: Dispatch<SetStateAction<DayHighlight[]>>
+): DelayedRemoval {
+  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const cancelRemoval = useCallback((id: string) => {
+    const timer = timers.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timers.current.delete(id);
+    }
+  }, []);
+
+  const scheduleRemoval = useCallback(
+    (id: string) => {
+      cancelRemoval(id);
+      timers.current.set(
+        id,
+        setTimeout(() => {
+          timers.current.delete(id);
+          setHighlights(previous =>
+            previous.filter(current => current.id !== id)
+          );
+          run(id, () => deleteHighlight(id));
+        }, BLANK_REMOVE_DELAY_MS)
+      );
+    },
+    [cancelRemoval, run, setHighlights]
+  );
+
+  useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      pending.forEach((timer, id) => {
+        clearTimeout(timer);
+        run(id, () => deleteHighlight(id));
+      });
+      pending.clear();
+    };
+  }, [run]);
+
+  return { scheduleRemoval, cancelRemoval };
 }
 
 interface UseHighlightsResult {
@@ -95,8 +151,13 @@ export function useHighlights(journalNoteId: string): UseHighlightsResult {
     enqueue(chainsRef.current, id, operation, setError);
   }, []);
 
+  const { scheduleRemoval, cancelRemoval } = useDelayedRemoval(
+    run,
+    setHighlights
+  );
+
   const { schedule, peek } = useAutosave<string, DayHighlight>(
-    (id, highlight) => persistSettled(id, highlight, run, setHighlights)
+    (id, highlight) => persistSettled(id, highlight, run, scheduleRemoval)
   );
 
   if (loadedNoteId !== journalNoteId) {
@@ -168,6 +229,7 @@ export function useHighlights(journalNoteId: string): UseHighlightsResult {
 
   const updateText = useCallback(
     (id: string, text: string) => {
+      cancelRemoval(id);
       setHighlights(previous =>
         previous.map(highlight =>
           highlight.id === id ? { ...highlight, text } : highlight
@@ -182,7 +244,7 @@ export function useHighlights(journalNoteId: string): UseHighlightsResult {
         : { id, journal_note_id: journalNoteId, text, tag_id: null };
       schedule(id, highlight);
     },
-    [journalNoteId, schedule]
+    [journalNoteId, schedule, cancelRemoval]
   );
 
   const assignTag = useCallback(
