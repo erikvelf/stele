@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   Card,
+  Divider,
   Icon,
   IconButton,
   Menu,
@@ -27,10 +28,21 @@ export interface NoteCardProps {
   onDeletePress: () => void;
 }
 
-const PREVIEW_TITLE_LINES = 1;
 const PREVIEW_BODY_LINES = 3;
+const TITLE_MEDIUM_LENGTH = 28;
+const TITLE_SMALL_LENGTH = 56;
 const MENU_ICON_SIZE = 16;
 const HIGHLIGHT_ICON_SIZE = 12;
+
+function titleVariantFor(title: string) {
+  if (title.length > TITLE_SMALL_LENGTH) {
+    return 'titleSmall';
+  }
+  if (title.length > TITLE_MEDIUM_LENGTH) {
+    return 'titleMedium';
+  }
+  return 'titleLarge';
+}
 
 function HighlightCount({ count }: { count: number }) {
   const theme = useTheme();
@@ -125,27 +137,27 @@ export function NoteCard({
       onPress={onOpenPress}
       style={[styles.card, { backgroundColor: theme.colors.elevation.level3 }]}
     >
-      <Card.Content style={styles.textSection}>
-        {previewTitle ? (
+      {previewTitle ? (
+        <View style={styles.titleSection}>
           <Text
-            variant="titleLarge"
-            numberOfLines={PREVIEW_TITLE_LINES}
+            variant={titleVariantFor(previewTitle)}
             style={{ color: theme.colors.onSurface }}
           >
             {previewTitle}
           </Text>
-        ) : null}
-        {previewBody ? (
-          <View style={styles.previewBody}>
-            <MarkdownPreview
-              markdown={previewBody}
-              fontSize={theme.fonts.bodyMedium.fontSize}
-              lineHeight={theme.fonts.bodyMedium.lineHeight}
-              maxLines={PREVIEW_BODY_LINES}
-            />
-          </View>
-        ) : null}
-      </Card.Content>
+        </View>
+      ) : null}
+      {previewTitle ? <Divider /> : null}
+      {previewBody ? (
+        <View style={styles.bodySection}>
+          <MarkdownPreview
+            markdown={previewBody}
+            fontSize={theme.fonts.bodyMedium.fontSize}
+            lineHeight={theme.fonts.bodyMedium.lineHeight}
+            maxLines={PREVIEW_BODY_LINES}
+          />
+        </View>
+      ) : null}
 
       <View
         style={[
@@ -179,12 +191,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     overflow: 'hidden',
   },
-  textSection: {
+  titleSection: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.xs,
   },
-  previewBody: {
-    marginTop: SPACING.xs,
+  bodySection: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   menuButton: {
     marginVertical: 0,
